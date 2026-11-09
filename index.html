@@ -1795,6 +1795,17 @@
     /* ==========================================================================
        12. FIREBASE / BROADCAST CLOUD SYNC
        ========================================================================== */
+    // Default built-in project config provided by user
+    const DEFAULT_FIREBASE_CONFIG = {
+      apiKey: "AIzaSyCRgoBOwtGRQyvCj3huinnhwB4Pzv6Nv_o",
+      authDomain: "okinawa-new-year-trip.firebaseapp.com",
+      projectId: "okinawa-new-year-trip",
+      storageBucket: "okinawa-new-year-trip.firebasestorage.app",
+      messagingSenderId: "263791427961",
+      appId: "1:263791427961:web:52f7d410b02e1fa194afa8",
+      measurementId: "G-ZM6TJKBZ9T"
+    };
+
     let fbApp = null;
     let fbDb = null;
     let fbAuth = null;
@@ -1802,27 +1813,38 @@
     let currentRoomId = localStorage.getItem("okinawa_fb_room") || "okinawa2027";
 
     function initFirebaseClient() {
+      // Prioritize custom saved config or use default project configuration
       const storedConfig = localStorage.getItem("okinawa_fb_config");
-      if (!storedConfig || !window.FirebaseModule) return;
+      const config = storedConfig ? JSON.parse(storedConfig) : DEFAULT_FIREBASE_CONFIG;
+
+      if (!window.FirebaseModule) {
+        updateFirebaseStatusUi(false, "Firebase SDK 載入中，請稍候...");
+        return;
+      }
 
       try {
-        const config = JSON.parse(storedConfig);
         const { initializeApp, getFirestore, getAuth, signInAnonymously } = window.FirebaseModule;
 
-        fbApp = initializeApp(config, "okinawaApp_" + Date.now());
+        // Initialize single instance
+        if (!fbApp) {
+          fbApp = initializeApp(config);
+        }
         fbDb = getFirestore(fbApp);
         fbAuth = getAuth(fbApp);
 
+        // Try anonymous login with fallback
         signInAnonymously(fbAuth).then(() => {
           updateFirebaseStatusUi(true);
           listenToFirestoreChanges();
-        }).catch(err => {
-          console.warn("Firebase Auth error:", err);
-          updateFirebaseStatusUi(false, "驗證失敗，請檢查金鑰");
+        }).catch(authErr => {
+          console.warn("Firebase Auth bypassed or not enabled, attempting direct database link:", authErr);
+          // If Anonymous Auth is not turned on in console, still connect to Firestore in test mode!
+          updateFirebaseStatusUi(true, "已連線 (直連資料庫模式)");
+          listenToFirestoreChanges();
         });
       } catch (err) {
         console.error("Firebase init error:", err);
-        updateFirebaseStatusUi(false, "設定格式錯誤");
+        updateFirebaseStatusUi(false, `連線錯誤: ${err.message || '請確認 Firestore 規則'}`);
       }
     }
 
@@ -1832,7 +1854,8 @@
 
       if (fbUnsubscribe) fbUnsubscribe();
 
-      const docRef = doc(fbDb, "artifacts", "okinawa-guide", "public", "data", currentRoomId);
+      // Path in public artifacts
+      const docRef = doc(fbDb, "artifacts", "okinawa-new-year", "public", "data", currentRoomId);
       fbUnsubscribe = onSnapshot(docRef, (docSnap) => {
         if (docSnap.exists()) {
           const data = docSnap.data();
@@ -1847,6 +1870,11 @@
         }
       }, (err) => {
         console.warn("Firestore snapshot error:", err);
+        if (err.code === "permission-denied") {
+          updateFirebaseStatusUi(false, "權限不足：請在 Firebase 後台將 Firestore 規則設為測試模式");
+        } else {
+          updateFirebaseStatusUi(false, `監聽錯誤: ${err.message}`);
+        }
       });
     }
 
@@ -1854,7 +1882,7 @@
       if (fbDb && window.FirebaseModule) {
         try {
           const { doc, setDoc } = window.FirebaseModule;
-          const docRef = doc(fbDb, "artifacts", "okinawa-guide", "public", "data", currentRoomId);
+          const docRef = doc(fbDb, "artifacts", "okinawa-new-year", "public", "data", currentRoomId);
           await setDoc(docRef, {
             daysData: DAYS_DATA,
             updatedAt: new Date().toISOString()
@@ -1863,6 +1891,9 @@
           return;
         } catch (e) {
           console.warn("Firebase save error:", e);
+          if (e.code === "permission-denied") {
+            alertModalNotice("⚠️ 寫入失敗：請至 Firebase 後台開啟 Firestore 讀寫規則");
+          }
         }
       }
 
@@ -1876,7 +1907,7 @@
 
     function openCloudConfigModal() {
       document.getElementById("firebase-room-id").value = currentRoomId;
-      document.getElementById("firebase-config-input").value = localStorage.getItem("okinawa_fb_config") || "";
+      document.getElementById("firebase-config-input").value = localStorage.getItem("okinawa_fb_config") || JSON.stringify(DEFAULT_FIREBASE_CONFIG, null, 2);
       document.getElementById("cloud-config-modal").classList.remove("hidden");
       document.getElementById("cloud-config-modal").classList.add("flex");
     }
@@ -1892,11 +1923,11 @@
       if (!pill || !desc) return;
 
       if (connected) {
-        pill.innerText = "已連線 (即時監聽中)";
+        pill.innerText = "已連線 (即時同步中)";
         pill.className = "text-[10px] px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 font-bold";
-        desc.innerText = `● 目前同步房間：${currentRoomId}。改動將秒級同步全員。`;
+        desc.innerText = customMsg || `● 已連接專案【okinawa-new-year-trip】房間【${currentRoomId}】。任何手機改動將秒級推播！`;
       } else {
-        pill.innerText = "未連線";
+        pill.innerText = "未連線 / 異常";
         pill.className = "text-[10px] px-2 py-0.5 rounded-full bg-rose-100 text-rose-800 font-bold";
         desc.innerText = customMsg || "尚未連線至 Firebase。";
       }
