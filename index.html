@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
-  <title>沖繩跨年 5 天 4 夜 行程手冊 (離線地圖版)</title>
+  <title>沖繩跨年 5 天 4 夜 行程手冊</title>
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
   <meta name="theme-color" content="#0284c7" />
@@ -124,6 +124,9 @@
           <i data-lucide="shield-check" class="w-3.5 h-3.5"></i> 管理員模式已啟用
         </span>
         <div class="flex items-center gap-2">
+          <button onclick="openNewPlaceModal()" class="text-[11px] font-bold text-slate-900 bg-amber-300 hover:bg-amber-200 px-2 py-0.5 rounded shadow flex items-center gap-1">
+            <i data-lucide="plus-circle" class="w-3 h-3"></i> 新增地點
+          </button>
           <button onclick="openCloudConfigModal()" class="text-[11px] font-bold text-slate-900 bg-emerald-400 hover:bg-emerald-300 px-2 py-0.5 rounded shadow flex items-center gap-1">
             <i data-lucide="cloud" class="w-3 h-3"></i> 雲端同步
           </button>
@@ -139,10 +142,16 @@
         <span id="network-badge" class="inline-flex items-center gap-1.5 font-medium">
           <span class="w-1.5 h-1.5 rounded-full bg-emerald-300"></span> 離線就緒
         </span>
-        <button onclick="downloadSelfHtml()" class="inline-flex items-center gap-1 text-sky-100 hover:text-white underline font-semibold active:opacity-75 transition">
-          <i data-lucide="download" class="w-3.5 h-3.5 text-emerald-300"></i>
-          <span>下載離線檔</span>
-        </button>
+        <div class="flex items-center gap-3">
+          <button onclick="openNewPlaceModal()" class="inline-flex items-center gap-1 text-amber-200 hover:text-amber-100 font-bold active:opacity-75 transition">
+            <i data-lucide="plus-circle" class="w-3.5 h-3.5 text-amber-300"></i>
+            <span>新增地點</span>
+          </button>
+          <button onclick="downloadSelfHtml()" class="inline-flex items-center gap-1 text-sky-100 hover:text-white underline font-semibold active:opacity-75 transition">
+            <i data-lucide="download" class="w-3.5 h-3.5 text-emerald-300"></i>
+            <span>下載離線檔</span>
+          </button>
+        </div>
       </div>
 
       <!-- Day Navigation Bar -->
@@ -235,13 +244,16 @@
 
       <!-- Unscheduled / Backup View Slide -->
       <section id="view-unscheduled" class="tab-slide pr-2 space-y-3">
-        <!-- Concise Header Banner with Working Reset Option -->
+        <!-- Header Banner with working Reset & Add New buttons -->
         <div class="bg-gradient-to-r from-amber-50 via-orange-50 to-yellow-50 border border-amber-200 rounded-2xl px-3.5 py-2.5 text-xs text-amber-900 shadow-sm flex items-center justify-between">
           <div class="font-bold flex items-center gap-1.5 text-amber-800 text-sm truncate">
             <i data-lucide="sparkles" class="w-4 h-4 text-amber-600 shrink-0"></i>
-            <span class="truncate">未排入景點（點擊可排入行程）</span>
+            <span class="truncate">未排入景點（備選寶庫）</span>
           </div>
           <div class="flex items-center gap-1.5 shrink-0">
+            <button type="button" onclick="openNewPlaceModal()" class="text-[11px] font-bold text-amber-900 bg-amber-300 hover:bg-amber-400 px-2 py-0.5 rounded-lg border border-amber-400 shadow-sm active:scale-95 transition flex items-center gap-1">
+              <i data-lucide="plus" class="w-3 h-3"></i> 新增地點
+            </button>
             <span id="unscheduled-count-tag" class="text-[11px] font-semibold text-amber-700 bg-amber-100/80 px-2 py-0.5 rounded-full border border-amber-200">共 16 處</span>
             <button type="button" onclick="resetCustomSchedule()" class="text-[11px] font-bold text-rose-600 hover:text-rose-700 bg-white px-2 py-0.5 rounded-lg border border-rose-200 shadow-sm active:scale-95 transition" title="重設為原定行程">
               重設行程
@@ -264,15 +276,20 @@
       <!-- Backup & Full List View Slide -->
       <section id="view-all" class="tab-slide pr-2 space-y-3">
         <div class="bg-white p-3.5 rounded-2xl shadow-sm border border-slate-200 space-y-2.5">
-          <div class="relative">
-            <i data-lucide="search" class="w-4 h-4 absolute left-3 top-3 text-slate-400"></i>
-            <input
-              id="all-search-input"
-              type="text"
-              placeholder="搜尋清單景點、美食或備註..."
-              oninput="filterMasterList()"
-              class="w-full pl-9 pr-4 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-sky-500"
-            />
+          <div class="flex items-center gap-2">
+            <div class="relative flex-1">
+              <i data-lucide="search" class="w-4 h-4 absolute left-3 top-3 text-slate-400"></i>
+              <input
+                id="all-search-input"
+                type="text"
+                placeholder="搜尋清單景點、美食或備註..."
+                oninput="filterMasterList()"
+                class="w-full pl-9 pr-4 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-sky-500"
+              />
+            </div>
+            <button onclick="openNewPlaceModal()" class="shrink-0 px-3 py-2 bg-amber-500 hover:bg-amber-600 text-white rounded-xl font-bold text-xs flex items-center gap-1 shadow-sm active:scale-95 transition">
+              <i data-lucide="plus" class="w-3.5 h-3.5"></i> 新增
+            </button>
           </div>
           
           <!-- Filter Category Badges -->
@@ -292,6 +309,113 @@
   </main>
 
   <!-- Modals -->
+
+  <!-- Add Brand-New Place Modal (新增全新地點彈窗) -->
+  <div id="new-place-modal" class="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm hidden items-center justify-center p-4">
+    <div class="bg-white rounded-3xl p-5 w-full max-w-sm shadow-2xl space-y-3 max-h-[90vh] overflow-y-auto text-xs">
+      <div class="flex items-center justify-between">
+        <div class="flex items-center gap-2">
+          <div class="p-2 rounded-xl bg-amber-100 text-amber-700">
+            <i data-lucide="map-pin-plus" class="w-5 h-5"></i>
+          </div>
+          <div>
+            <h3 class="font-bold text-base text-slate-800">新增全新地點</h3>
+            <p class="text-[11px] text-slate-500">自訂新餐廳、景點或商場，全員雲端同步</p>
+          </div>
+        </div>
+        <button onclick="closeNewPlaceModal()" class="text-slate-400 hover:text-slate-600 p-1">
+          <i data-lucide="x" class="w-5 h-5"></i>
+        </button>
+      </div>
+
+      <div class="space-y-2.5">
+        <div>
+          <label class="font-bold text-slate-700 block mb-1">地點名稱 <span class="text-rose-500">*</span></label>
+          <input type="text" id="new-place-name" placeholder="例如：傑克牛排 (Jack's Steak House)"
+                 class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl font-bold text-slate-800 focus:ring-2 focus:ring-sky-500" />
+        </div>
+
+        <div class="grid grid-cols-2 gap-2">
+          <div>
+            <label class="font-bold text-slate-700 block mb-1">所屬地區</label>
+            <select id="new-place-region" class="w-full p-2 bg-slate-50 border border-slate-200 rounded-xl font-semibold text-slate-800">
+              <option value="那霸市區">那霸市區</option>
+              <option value="中部/恩納">中部/恩納</option>
+              <option value="北部">北部</option>
+              <option value="南部">南部</option>
+            </select>
+          </div>
+          <div>
+            <label class="font-bold text-slate-700 block mb-1">分類類別</label>
+            <select id="new-place-cat" class="w-full p-2 bg-slate-50 border border-slate-200 rounded-xl font-semibold text-slate-800">
+              <option value="美食">美食</option>
+              <option value="景點">景點</option>
+              <option value="購物">購物</option>
+              <option value="住宿">住宿/交通</option>
+            </select>
+          </div>
+        </div>
+
+        <div>
+          <label class="font-bold text-slate-700 block mb-1">特色短評或亮點</label>
+          <input type="text" id="new-place-highlight" placeholder="例如：超人氣昭和復古美式牛排館"
+                 class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-slate-800" />
+        </div>
+
+        <div>
+          <label class="font-bold text-slate-700 block mb-1">備註 / 必吃攻略 / 停車資訊</label>
+          <textarea id="new-place-note" rows="2" placeholder="例如：推薦特選里肌牛排，門口附停車位，建議提早抽號碼牌..."
+                    class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-slate-800"></textarea>
+        </div>
+
+        <div>
+          <label class="font-bold text-slate-700 block mb-1">Google Maps 網址或搜尋關鍵字</label>
+          <input type="text" id="new-place-url" placeholder="可貼上 Google Maps 分享連結或空白自動搜尋"
+                 class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-[11px] text-slate-800 font-mono" />
+        </div>
+
+        <!-- Destination Option -->
+        <div>
+          <label class="font-bold text-slate-700 block mb-1">儲存至何處？</label>
+          <div class="grid grid-cols-2 gap-2">
+            <label class="flex items-center gap-1.5 p-2 bg-slate-50 border border-slate-200 rounded-xl cursor-pointer">
+              <input type="radio" name="new-dest" value="unscheduled" checked class="text-amber-600 focus:ring-amber-500" onchange="toggleNewPlaceTarget(false)" />
+              <span class="font-bold text-slate-700">放進未排入景點</span>
+            </label>
+            <label class="flex items-center gap-1.5 p-2 bg-slate-50 border border-slate-200 rounded-xl cursor-pointer">
+              <input type="radio" name="new-dest" value="schedule" class="text-sky-600 focus:ring-sky-500" onchange="toggleNewPlaceTarget(true)" />
+              <span class="font-bold text-slate-700">直接排入行程</span>
+            </label>
+          </div>
+        </div>
+
+        <!-- Conditional Schedule Details -->
+        <div id="new-place-schedule-fields" class="hidden p-2.5 bg-sky-50/70 border border-sky-100 rounded-xl space-y-2">
+          <div class="grid grid-cols-2 gap-2">
+            <div>
+              <label class="font-bold text-sky-900 block mb-1">指定天數</label>
+              <select id="new-place-day" class="w-full p-1.5 bg-white border border-sky-200 rounded-lg font-bold text-sky-800">
+                <option value="d1">Day 1 (12/30)</option>
+                <option value="d2">Day 2 (12/31)</option>
+                <option value="d3">Day 3 (1/1)</option>
+                <option value="d4">Day 4 (1/2)</option>
+                <option value="d5">Day 5 (1/3)</option>
+              </select>
+            </div>
+            <div>
+              <label class="font-bold text-sky-900 block mb-1">預計時間</label>
+              <input type="text" id="new-place-time" value="14:00 - 15:30" class="w-full px-2 py-1.5 bg-white border border-sky-200 rounded-lg font-bold text-slate-800" />
+            </div>
+          </div>
+        </div>
+
+        <div class="pt-2 flex items-center gap-2">
+          <button type="button" onclick="closeNewPlaceModal()" class="w-1/3 py-2.5 bg-slate-100 text-slate-600 font-bold rounded-xl">取消</button>
+          <button type="button" onclick="saveNewPlace()" class="w-2/3 py-2.5 bg-amber-500 hover:bg-amber-600 text-white font-bold rounded-xl shadow-md active:scale-95 transition">確認新增地點</button>
+        </div>
+      </div>
+    </div>
+  </div>
 
   <!-- Add to Schedule Modal (排入行程彈窗) -->
   <div id="schedule-modal" class="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm hidden items-center justify-center p-4">
@@ -336,7 +460,7 @@
             <button type="button" onclick="setScheduleMode('replace')" id="sch-mode-replace"
                     class="p-2.5 rounded-xl border border-slate-200 bg-slate-50 text-slate-600 font-bold text-left transition">
               <div class="flex items-center gap-1.5"><i data-lucide="refresh-cw" class="w-4 h-4 text-slate-500"></i><span>替換現有景點</span></div>
-              <p class="text-[10px] text-slate-400 font-normal mt-0.5">直接取代當天某個行程</p>
+              <p class="text-[10px] text-amber-700 font-bold mt-0.5">被取代者自動移回未排入</p>
             </button>
           </div>
         </div>
@@ -943,9 +1067,9 @@
     }
 
     /* ==========================================================================
-       2. UNSCHEDULED PLACES (未排入景點清單・共 16 處)
+       2. UNSCHEDULED PLACES (未排入景點清單・支援動態擴充與存儲)
        ========================================================================== */
-    const UNSCHEDULED_PLACES = [
+    const INITIAL_UNSCHEDULED_PLACES = [
       {
         name: "Buchi Kumojiten",
         region: "那霸市區",
@@ -1076,10 +1200,16 @@
       }
     ];
 
+    let UNSCHEDULED_PLACES = JSON.parse(localStorage.getItem("okinawa_unscheduled_v2") || "null") || JSON.parse(JSON.stringify(INITIAL_UNSCHEDULED_PLACES));
+
+    function saveUnscheduledPlaces() {
+      localStorage.setItem("okinawa_unscheduled_v2", JSON.stringify(UNSCHEDULED_PLACES));
+    }
+
     /* ==========================================================================
-       3. MASTER DIRECTORY (清單 36 處全部地點)
+       3. MASTER DIRECTORY (清單全部地點・支援動態擴充)
        ========================================================================== */
-    const MASTER_PLACES = [
+    const INITIAL_MASTER_PLACES = [
       { name: "琉球新麵 通堂 小祿本店", cat: "美食", note: "每次去都要吃一下的男人麵/女人麵", url: "https://www.google.com/maps/place/%E7%90%89%E7%90%83%E6%96%B0%E9%BA%B5+%E9%80%9A%E5%A0%82+%E5%B0%8F%E7%A5%BF%E6%9C%AC%E5%BA%97/data=!4m2!3m1!1s0x34e569b140b3a219:0xdaaf5d41d37c6862" },
       { name: "3 Chome Tsubogawa", cat: "住宿", note: "12/30 壺川第一晚住宿", url: "https://www.google.com/maps/place/3+Chome+Tsubogawa/data=!4m2!3m1!1s0x34e569a1b4ef6bd3:0xb73ef9c9533c140b" },
       { name: "國際通屋台村（夜市）", cat: "美食", note: "深夜露天居酒屋熱炒串燒", url: "https://www.google.com/maps/place/%E5%9C%8B%E9%9A%9B%E9%80%9A%E5%B1%8B%E5%8F%B0%E6%9D%91%EF%BC%88%E5%A4%9C%E5%B8%82%EF%BC%89/data=!4m2!3m1!1s0x34e56917cdebf7a7:0x384644a940676d33" },
@@ -1117,6 +1247,12 @@
       { name: "Ryoshi Shokudo 魚大統領", cat: "美食", note: "YouTuber推薦當地人海鮮定食", url: "https://www.google.com/maps/place/Ryoshi+Shokudo+Obanburumai+Sakana+Daitoryo/data=!4m2!3m1!1s0x34e56b047c4b65c9:0x3e70d1280ee22c7a" },
       { name: "イツクマの浜", cat: "景點", note: "秘境純白自然沙灘", url: "https://www.google.com/maps/place/%E3%82%A4%E3%83%84%E3%82%AF%E3%83%9E%E3%81%AE%E6%B5%9C/data=!4m2!3m1!1s0x34e5a933a30aaa83:0x100e8098a5a47513" }
     ];
+
+    let MASTER_PLACES = JSON.parse(localStorage.getItem("okinawa_master_v2") || "null") || JSON.parse(JSON.stringify(INITIAL_MASTER_PLACES));
+
+    function saveMasterPlaces() {
+      localStorage.setItem("okinawa_master_v2", JSON.stringify(MASTER_PLACES));
+    }
 
     /* ==========================================================================
        4. TAB & CAROUSEL SLIDING LOGIC
@@ -1206,7 +1342,7 @@
                     <button onclick="openEditSpotModal('${dayKey}', '${spot.id}')" class="p-1.5 text-slate-400 hover:text-amber-600 rounded-lg hover:bg-slate-100" title="編輯此行程">
                       <i data-lucide="pencil" class="w-4 h-4"></i>
                     </button>
-                    <button onclick="deleteSpot('${dayKey}', '${spot.id}')" class="p-1.5 text-slate-400 hover:text-rose-600 rounded-lg hover:bg-slate-100" title="刪除此行程">
+                    <button onclick="deleteSpot('${dayKey}', '${spot.id}')" class="p-1.5 text-slate-400 hover:text-rose-600 rounded-lg hover:bg-slate-100" title="刪除此行程 (自動移至未排入)">
                       <i data-lucide="trash-2" class="w-4 h-4"></i>
                     </button>
                   </div>
@@ -1352,7 +1488,43 @@
     }
 
     /* ==========================================================================
-       8. INTERACTIVE SCHEDULE MODAL (排入行程邏輯)
+       8. HELPER: MOVE A SPOT TO UNSCHEDULED (自動移入未排入清單)
+       ========================================================================== */
+    function moveSpotToUnscheduled(spot) {
+      if (!spot) return;
+
+      // Check if spot is already in unscheduled places
+      const exists = UNSCHEDULED_PLACES.some(u => u.name === spot.name);
+      if (!exists) {
+        // Infer region from spot name or tag
+        let region = "那霸市區";
+        if (spot.name.includes("泡瀨") || spot.name.includes("具志川") || spot.name.includes("海中道路") || spot.name.includes("PARCO") || spot.name.includes("濱比嘉")) {
+          region = "中部/恩納";
+        } else if (spot.name.includes("美麗海") || spot.name.includes("古宇利") || spot.name.includes("本部") || spot.name.includes("名護")) {
+          region = "北部";
+        } else if (spot.name.includes("奧武島") || spot.name.includes("Gangala") || spot.name.includes("南城")) {
+          region = "南部";
+        }
+
+        const unscheduledItem = {
+          name: spot.name,
+          region: region,
+          category: spot.tag?.includes("美食") || spot.tag?.includes("晚餐") ? "美食" :
+                    spot.tag?.includes("購物") ? "購物" :
+                    spot.tag?.includes("交通") || spot.tag?.includes("住宿") ? "住宿" : "景點",
+          highlight: `從原行程替換退出的點位 (${spot.tag || '備選'})`,
+          note: spot.desc || spot.tips || "原排定行程，替換後暫存在未排入清單。",
+          mapsUrl: spot.mapsUrl
+        };
+
+        UNSCHEDULED_PLACES.unshift(unscheduledItem);
+        saveUnscheduledPlaces();
+        renderUnscheduledList(UNSCHEDULED_PLACES);
+      }
+    }
+
+    /* ==========================================================================
+       9. INTERACTIVE SCHEDULE MODAL (排入行程邏輯・含替換自動移回)
        ========================================================================== */
     let pendingSpot = null;
     let selectedDay = "d1";
@@ -1403,7 +1575,7 @@
       } else {
         replaceBtn.className = "p-2.5 rounded-xl border border-amber-500 bg-amber-50 text-amber-800 font-bold text-left transition";
         insertBtn.className = "p-2.5 rounded-xl border border-slate-200 bg-slate-50 text-slate-600 font-bold text-left transition";
-        if (label) label.innerText = "3. 選擇要替換掉的原景點";
+        if (label) label.innerText = "3. 選擇要替換掉的原景點 (被取代者移至未排入)";
       }
       populateTargetSpots();
     }
@@ -1449,7 +1621,7 @@
         id: `custom-${Date.now()}`,
         time: plannedTime,
         name: pendingSpot.name,
-        tag: "自訂新增",
+        tag: "自訂排入",
         tagColor: "bg-amber-100 text-amber-800 font-bold",
         desc: pendingSpot.note || "從備選清單加入的推薦行程。",
         mapsUrl: pendingSpot.url,
@@ -1458,8 +1630,15 @@
 
       if (!DAYS_DATA[selectedDay]) DAYS_DATA[selectedDay] = [];
 
+      let replacedSpot = null;
       if (scheduleMode === "replace") {
+        replacedSpot = DAYS_DATA[selectedDay][targetIdx];
         DAYS_DATA[selectedDay][targetIdx] = newSpot;
+
+        // Automatically move the displaced spot to Unscheduled places!
+        if (replacedSpot) {
+          moveSpotToUnscheduled(replacedSpot);
+        }
       } else {
         DAYS_DATA[selectedDay].splice(targetIdx, 0, newSpot);
       }
@@ -1471,24 +1650,143 @@
       pushScheduleToCloud();
 
       closeScheduleModal();
-      alertModalNotice(`✅ 已成功將【${newSpot.name}】排入 ${selectedDay.toUpperCase()} 行程！`);
+
+      if (replacedSpot) {
+        alertModalNotice(`✅ 已將【${newSpot.name}】替換原景點，【${replacedSpot.name}】已自動移回未排入清單！`);
+      } else {
+        alertModalNotice(`✅ 已成功將【${newSpot.name}】排入 ${selectedDay.toUpperCase()} 行程！`);
+      }
       switchTab(selectedDay);
     }
 
     function resetCustomSchedule() {
-      if (confirm("確定要將所有行程重設為最初的官方 5 天預設版本嗎？")) {
+      if (confirm("確定要將所有行程與備選景點重設為最初的官方 5 天預設版本嗎？")) {
         localStorage.removeItem("okinawa_schedule_v2");
+        localStorage.removeItem("okinawa_unscheduled_v2");
+        localStorage.removeItem("okinawa_master_v2");
+
         DAYS_DATA = JSON.parse(JSON.stringify(INITIAL_DAYS_DATA));
+        UNSCHEDULED_PLACES = JSON.parse(JSON.stringify(INITIAL_UNSCHEDULED_PLACES));
+        MASTER_PLACES = JSON.parse(JSON.stringify(INITIAL_MASTER_PLACES));
+
         renderDays();
+        renderUnscheduledList(UNSCHEDULED_PLACES);
+        renderMasterList(MASTER_PLACES);
         updateCheckedUi();
         updateProgress();
         pushScheduleToCloud();
-        alertModalNotice("行程已還原為官方預設版本！");
+        alertModalNotice("行程與地點庫已還原為官方預設版本！");
       }
     }
 
     /* ==========================================================================
-       9. ADMIN EDIT & PIN CODE (密碼 0000)
+       10. ADD BRAND-NEW PLACE FEATURE (新增全新地點)
+       ========================================================================== */
+    function openNewPlaceModal() {
+      document.getElementById("new-place-name").value = "";
+      document.getElementById("new-place-highlight").value = "";
+      document.getElementById("new-place-note").value = "";
+      document.getElementById("new-place-url").value = "";
+      document.getElementById("new-place-time").value = "14:00 - 15:30";
+      
+      toggleNewPlaceTarget(false);
+      document.querySelector('input[name="new-dest"][value="unscheduled"]').checked = true;
+
+      document.getElementById("new-place-modal").classList.remove("hidden");
+      document.getElementById("new-place-modal").classList.add("flex");
+      document.getElementById("new-place-name").focus();
+    }
+
+    function closeNewPlaceModal() {
+      document.getElementById("new-place-modal").classList.add("hidden");
+      document.getElementById("new-place-modal").classList.remove("flex");
+    }
+
+    function toggleNewPlaceTarget(isDirectSchedule) {
+      const field = document.getElementById("new-place-schedule-fields");
+      if (field) {
+        if (isDirectSchedule) {
+          field.classList.remove("hidden");
+        } else {
+          field.classList.add("hidden");
+        }
+      }
+    }
+
+    function saveNewPlace() {
+      const name = document.getElementById("new-place-name").value.trim();
+      if (!name) {
+        alertModalNotice("請輸入地點名稱！");
+        return;
+      }
+
+      const region = document.getElementById("new-place-region").value;
+      const cat = document.getElementById("new-place-cat").value;
+      const highlight = document.getElementById("new-place-highlight").value.trim() || `${region}・自訂新點`;
+      const note = document.getElementById("new-place-note").value.trim() || "旅伴自訂推薦地點。";
+      let url = document.getElementById("new-place-url").value.trim();
+
+      if (!url) {
+        url = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(name + ' 沖繩')}`;
+      }
+
+      const isDirectSchedule = document.querySelector('input[name="new-dest"]:checked')?.value === 'schedule';
+
+      // 1. Add to Master Directory
+      MASTER_PLACES.unshift({ name, cat, note, url });
+      saveMasterPlaces();
+      renderMasterList(MASTER_PLACES);
+
+      // 2. Either insert to itinerary directly or add to unscheduled list
+      if (isDirectSchedule) {
+        const dayKey = document.getElementById("new-place-day").value;
+        const plannedTime = document.getElementById("new-place-time").value.trim() || "14:00 - 15:30";
+
+        const newSpot = {
+          id: `custom-${Date.now()}`,
+          time: plannedTime,
+          name: name,
+          tag: cat || "自訂景點",
+          tagColor: "bg-amber-100 text-amber-800 font-bold",
+          desc: note,
+          mapsUrl: url,
+          tips: highlight
+        };
+
+        if (!DAYS_DATA[dayKey]) DAYS_DATA[dayKey] = [];
+        DAYS_DATA[dayKey].push(newSpot);
+
+        saveDaysData();
+        renderDays();
+        updateProgress();
+        pushScheduleToCloud();
+
+        closeNewPlaceModal();
+        alertModalNotice(`✅ 已將全新地點【${name}】直接排入 ${dayKey.toUpperCase()} 行程！`);
+        switchTab(dayKey);
+      } else {
+        const unscheduledItem = {
+          name: name,
+          region: region,
+          category: cat,
+          highlight: highlight,
+          note: note,
+          mapsUrl: url
+        };
+
+        UNSCHEDULED_PLACES.unshift(unscheduledItem);
+        saveUnscheduledPlaces();
+        renderUnscheduledList(UNSCHEDULED_PLACES);
+        pushScheduleToCloud();
+
+        closeNewPlaceModal();
+        alertModalNotice(`✅ 全新地點【${name}】已加入未排入清單！`);
+        switchTab("unscheduled");
+      }
+    }
+
+    /* ==========================================================================
+       11. ADMIN EDIT & PIN CODE (密碼 0000)
        ========================================================================== */
     function toggleAdminPrompt() {
       if (isAdminLoggedIn) {
@@ -1570,18 +1868,22 @@
     }
 
     function deleteSpot(dayKey, spotId) {
-      if (confirm("確定要刪除這個景點嗎？")) {
+      const spotToDelete = (DAYS_DATA[dayKey] || []).find(s => s.id === spotId);
+      if (confirm(`確定要將【${spotToDelete ? spotToDelete.name : '此行程'}】自當天移除嗎？它會自動移至「未排入景點」備存。`)) {
+        if (spotToDelete) {
+          moveSpotToUnscheduled(spotToDelete);
+        }
         DAYS_DATA[dayKey] = (DAYS_DATA[dayKey] || []).filter(s => s.id !== spotId);
         saveDaysData();
         renderDays();
         updateProgress();
         pushScheduleToCloud();
-        alertModalNotice("景點已刪除");
+        alertModalNotice("行程已自當天移除，並自動歸入未排入景點！");
       }
     }
 
     /* ==========================================================================
-       10. REAL-TIME TAIWAN BANK CURRENCY CALCULATOR
+       12. REAL-TIME TAIWAN BANK CURRENCY CALCULATOR
        ========================================================================== */
     let currentRate = 0.2150;
     let isTaxFree = false;
@@ -1674,7 +1976,7 @@
     }
 
     /* ==========================================================================
-       11. CHECKBOXES, PROGRESS, AND TOASTS
+       13. CHECKBOXES, PROGRESS, AND TOASTS
        ========================================================================== */
     function toggleCheck(id) {
       const checks = JSON.parse(localStorage.getItem("okinawa_checked") || "{}");
@@ -1793,7 +2095,7 @@
     }
 
     /* ==========================================================================
-       12. FIREBASE / BROADCAST CLOUD SYNC
+       14. FIREBASE / BROADCAST CLOUD SYNC
        ========================================================================== */
     // Default built-in project config provided by user
     const DEFAULT_FIREBASE_CONFIG = {
@@ -1813,7 +2115,6 @@
     let currentRoomId = localStorage.getItem("okinawa_fb_room") || "okinawa2027";
 
     function initFirebaseClient() {
-      // Prioritize custom saved config or use default project configuration
       const storedConfig = localStorage.getItem("okinawa_fb_config");
       const config = storedConfig ? JSON.parse(storedConfig) : DEFAULT_FIREBASE_CONFIG;
 
@@ -1825,20 +2126,17 @@
       try {
         const { initializeApp, getFirestore, getAuth, signInAnonymously } = window.FirebaseModule;
 
-        // Initialize single instance
         if (!fbApp) {
           fbApp = initializeApp(config);
         }
         fbDb = getFirestore(fbApp);
         fbAuth = getAuth(fbApp);
 
-        // Try anonymous login with fallback
         signInAnonymously(fbAuth).then(() => {
           updateFirebaseStatusUi(true);
           listenToFirestoreChanges();
         }).catch(authErr => {
           console.warn("Firebase Auth bypassed or not enabled, attempting direct database link:", authErr);
-          // If Anonymous Auth is not turned on in console, still connect to Firestore in test mode!
           updateFirebaseStatusUi(true, "已連線 (直連資料庫模式)");
           listenToFirestoreChanges();
         });
@@ -1854,15 +2152,31 @@
 
       if (fbUnsubscribe) fbUnsubscribe();
 
-      // Path in public artifacts
       const docRef = doc(fbDb, "artifacts", "okinawa-new-year", "public", "data", currentRoomId);
       fbUnsubscribe = onSnapshot(docRef, (docSnap) => {
         if (docSnap.exists()) {
           const data = docSnap.data();
+          let shouldReRender = false;
           if (data && data.daysData) {
             DAYS_DATA = data.daysData;
             saveDaysData();
+            shouldReRender = true;
+          }
+          if (data && data.unscheduledPlaces) {
+            UNSCHEDULED_PLACES = data.unscheduledPlaces;
+            saveUnscheduledPlaces();
+            shouldReRender = true;
+          }
+          if (data && data.masterPlaces) {
+            MASTER_PLACES = data.masterPlaces;
+            saveMasterPlaces();
+            shouldReRender = true;
+          }
+
+          if (shouldReRender) {
             renderDays();
+            renderUnscheduledList(UNSCHEDULED_PLACES);
+            renderMasterList(MASTER_PLACES);
             updateCheckedUi();
             updateProgress();
             alertModalNotice("⚡ 收到最新行程更新！已即時同步");
@@ -1885,9 +2199,11 @@
           const docRef = doc(fbDb, "artifacts", "okinawa-new-year", "public", "data", currentRoomId);
           await setDoc(docRef, {
             daysData: DAYS_DATA,
+            unscheduledPlaces: UNSCHEDULED_PLACES,
+            masterPlaces: MASTER_PLACES,
             updatedAt: new Date().toISOString()
           }, { merge: true });
-          alertModalNotice("🔥 行程已自動同步至全員雲端！");
+          alertModalNotice("🔥 行程與地點已自動同步至全員雲端！");
           return;
         } catch (e) {
           console.warn("Firebase save error:", e);
@@ -1900,7 +2216,7 @@
       if (window.BroadcastChannel) {
         try {
           const bc = new BroadcastChannel(`okinawa_channel_${currentRoomId}`);
-          bc.postMessage({ type: 'SCHEDULE_UPDATE', data: DAYS_DATA });
+          bc.postMessage({ type: 'SCHEDULE_UPDATE', data: { daysData: DAYS_DATA, unscheduledPlaces: UNSCHEDULED_PLACES, masterPlaces: MASTER_PLACES } });
         } catch (e) {}
       }
     }
@@ -1982,7 +2298,7 @@
     }
 
     /* ==========================================================================
-       13. INIT ON DOM READY
+       15. INIT ON DOM READY
        ========================================================================== */
     window.addEventListener("DOMContentLoaded", () => {
       renderDays();
