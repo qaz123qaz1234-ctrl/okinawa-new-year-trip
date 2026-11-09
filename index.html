@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
-  <title>沖繩跨年 5 天 4 夜 行程手冊</title>
+  <title>沖繩跨年 5 天 4 夜 行程手冊 (離線地圖版)</title>
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
   <meta name="theme-color" content="#0284c7" />
@@ -12,6 +12,23 @@
   <script src="https://cdn.tailwindcss.com"></script>
   <!-- Lucide Icons -->
   <script src="https://unpkg.com/lucide@latest"></script>
+
+  <!-- Google Firebase App & Firestore Modular SDKs -->
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+    import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+    import { getFirestore, doc, setDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+    window.FirebaseModule = {
+      initializeApp,
+      getAuth,
+      signInAnonymously,
+      getFirestore,
+      doc,
+      setDoc,
+      onSnapshot
+    };
+  </script>
 
   <script>
     tailwind.config = {
@@ -49,9 +66,23 @@
       -ms-overflow-style: none;
       scrollbar-width: none;
     }
+
+    /* Swipe Carousel & View Transition Animation */
+    #views-wrapper {
+      display: flex;
+      width: 700%;
+      transition: transform 0.28s cubic-bezier(0.25, 1, 0.5, 1);
+      will-change: transform;
+    }
+    .tab-slide {
+      width: calc(100% / 7);
+      flex-shrink: 0;
+      box-sizing: border-box;
+      min-height: 50vh;
+    }
   </style>
 </head>
-<body class="bg-slate-100 text-slate-800 antialiased min-h-screen pb-24">
+<body class="bg-slate-100 text-slate-800 antialiased min-h-screen pb-24 overflow-x-hidden">
 
   <!-- Top Sticky Header -->
   <header class="sticky top-0 z-50 bg-gradient-to-r from-sky-700 via-sky-600 to-teal-600 text-white shadow-md">
@@ -81,6 +112,25 @@
           <button onclick="openEmergencyModal()" class="p-2 rounded-xl bg-white/15 hover:bg-white/25 active:scale-95 transition" title="應急資訊">
             <i data-lucide="shield-alert" class="w-4 h-4 text-rose-300"></i>
           </button>
+          <button onclick="toggleAdminPrompt()" id="admin-lock-btn" class="p-2 rounded-xl bg-white/15 hover:bg-white/25 active:scale-95 transition text-amber-300" title="管理員權限 (密碼 0000)">
+            <i data-lucide="lock" id="admin-lock-icon" class="w-4 h-4"></i>
+          </button>
+        </div>
+      </div>
+
+      <!-- Admin Status Bar (Hidden until unlocked) -->
+      <div id="admin-active-bar" class="hidden mt-2 pt-1.5 pb-1 border-t border-amber-300/30 flex items-center justify-between text-xs text-amber-200 bg-amber-950/30 px-2 rounded-lg">
+        <span class="inline-flex items-center gap-1 font-bold text-amber-300">
+          <i data-lucide="shield-check" class="w-3.5 h-3.5"></i> 管理員模式已啟用
+        </span>
+        <div class="flex items-center gap-2">
+          <button onclick="openCloudConfigModal()" class="text-[11px] font-bold text-slate-900 bg-emerald-400 hover:bg-emerald-300 px-2 py-0.5 rounded shadow flex items-center gap-1">
+            <i data-lucide="cloud" class="w-3 h-3"></i> 雲端同步
+          </button>
+          <button onclick="exportUpdatedCodeForGithub()" class="text-[11px] font-bold text-slate-900 bg-amber-400 hover:bg-amber-300 px-2 py-0.5 rounded shadow">
+            匯出代碼
+          </button>
+          <button onclick="exitAdminMode()" class="text-[10px] text-amber-200/80 hover:text-white underline">登出</button>
         </div>
       </div>
 
@@ -97,148 +147,225 @@
 
       <!-- Day Navigation Bar -->
       <nav class="flex items-center gap-2 overflow-x-auto hide-scrollbar mt-2.5 pt-1 pb-1 text-xs">
-        <button onclick="switchTab('d1')" id="tab-btn-d1" class="tab-btn whitespace-nowrap px-3.5 py-1.5 rounded-full font-bold transition bg-white text-sky-700 shadow-sm">
+        <button onclick="switchTab('d1')" id="tab-btn-d1" class="tab-btn whitespace-nowrap px-3.5 py-1.5 rounded-full font-bold transition bg-white text-sky-700 shadow-sm shrink-0">
           D1 12/30
         </button>
-        <button onclick="switchTab('d2')" id="tab-btn-d2" class="tab-btn whitespace-nowrap px-3.5 py-1.5 rounded-full font-medium transition text-white/80 hover:bg-white/10">
+        <button onclick="switchTab('d2')" id="tab-btn-d2" class="tab-btn whitespace-nowrap px-3.5 py-1.5 rounded-full font-medium transition text-white/80 hover:bg-white/10 shrink-0">
           D2 12/31
         </button>
-        <button onclick="switchTab('d3')" id="tab-btn-d3" class="tab-btn whitespace-nowrap px-3.5 py-1.5 rounded-full font-medium transition text-white/80 hover:bg-white/10">
+        <button onclick="switchTab('d3')" id="tab-btn-d3" class="tab-btn whitespace-nowrap px-3.5 py-1.5 rounded-full font-medium transition text-white/80 hover:bg-white/10 shrink-0">
           D3 1/1
         </button>
-        <button onclick="switchTab('d4')" id="tab-btn-d4" class="tab-btn whitespace-nowrap px-3.5 py-1.5 rounded-full font-medium transition text-white/80 hover:bg-white/10">
+        <button onclick="switchTab('d4')" id="tab-btn-d4" class="tab-btn whitespace-nowrap px-3.5 py-1.5 rounded-full font-medium transition text-white/80 hover:bg-white/10 shrink-0">
           D4 1/2
         </button>
-        <button onclick="switchTab('d5')" id="tab-btn-d5" class="tab-btn whitespace-nowrap px-3.5 py-1.5 rounded-full font-medium transition text-white/80 hover:bg-white/10">
+        <button onclick="switchTab('d5')" id="tab-btn-d5" class="tab-btn whitespace-nowrap px-3.5 py-1.5 rounded-full font-medium transition text-white/80 hover:bg-white/10 shrink-0">
           D5 1/3
         </button>
-        <button onclick="switchTab('unscheduled')" id="tab-btn-unscheduled" class="tab-btn whitespace-nowrap px-3.5 py-1.5 rounded-full font-medium transition text-white/80 hover:bg-white/10 flex items-center gap-1">
-          <i data-lucide="compass" class="w-3.5 h-3.5 text-amber-300"></i> 未排入景點
+        <button onclick="switchTab('unscheduled')" id="tab-btn-unscheduled" class="tab-btn whitespace-nowrap px-3.5 py-1.5 rounded-full font-medium transition text-white/80 hover:bg-white/10 inline-flex items-center gap-1.5 shrink-0">
+          <i data-lucide="compass" class="w-3.5 h-3.5 text-amber-300 shrink-0"></i>
+          <span class="whitespace-nowrap">未排入景點</span>
         </button>
-        <button onclick="switchTab('all')" id="tab-btn-all" class="tab-btn whitespace-nowrap px-3.5 py-1.5 rounded-full font-medium transition text-white/80 hover:bg-white/10 flex items-center gap-1">
-          <i data-lucide="bookmark" class="w-3.5 h-3.5"></i> 全部清單
+        <button onclick="switchTab('all')" id="tab-btn-all" class="tab-btn whitespace-nowrap px-3.5 py-1.5 rounded-full font-medium transition text-white/80 hover:bg-white/10 inline-flex items-center gap-1.5 shrink-0">
+          <i data-lucide="bookmark" class="w-3.5 h-3.5 shrink-0"></i>
+          <span class="whitespace-nowrap">全部清單</span>
         </button>
       </nav>
     </div>
   </header>
 
-  <!-- Main Container -->
-  <main class="max-w-md mx-auto px-4 mt-4">
+  <!-- Main Container & Smooth Sliding Views Track -->
+  <main id="main-content" class="max-w-md mx-auto px-4 mt-4 overflow-hidden">
+    <div id="views-wrapper">
 
-    <!-- Day 1 View -->
-    <section id="view-d1" class="tab-view space-y-3">
-      <div class="bg-gradient-to-r from-sky-50 to-indigo-50 border border-sky-100 rounded-2xl p-3.5 text-xs text-sky-900 shadow-sm">
-        <div class="font-bold flex items-center gap-1.5 text-sky-800 text-sm mb-1">
-          <i data-lucide="navigation" class="w-4 h-4 text-sky-600"></i>
-          Day 1：抵達那霸・必吃拉麵・市區採買
+      <!-- Day 1 View Slide -->
+      <section id="view-d1" class="tab-slide pr-2 space-y-3">
+        <div class="bg-gradient-to-r from-sky-50 to-indigo-50 border border-sky-100 rounded-2xl p-3.5 text-xs text-sky-900 shadow-sm">
+          <div class="font-bold flex items-center justify-between text-sky-800 text-sm mb-1">
+            <span class="flex items-center gap-1.5"><i data-lucide="navigation" class="w-4 h-4 text-sky-600"></i> Day 1：抵達那霸・必吃拉麵・市區採買</span>
+          </div>
+          <p class="text-slate-600 leading-relaxed">利用單軌電車移動（壺川住宿）。晚上直奔通堂小祿店，放完行李後享受屋台村與24H超市補貨。</p>
         </div>
-        <p class="text-slate-600">利用單軌電車移動（壺川住宿）。晚上直奔通堂小祿店，放完行李後享受屋台村與24H超市補貨。</p>
-      </div>
+        <div id="d1-cards" class="space-y-3"></div>
+      </section>
 
-      <!-- Spot Cards Container -->
-      <div id="d1-cards" class="space-y-3"></div>
-    </section>
-
-    <!-- Day 2 View -->
-    <section id="view-d2" class="tab-view hidden space-y-3">
-      <div class="bg-gradient-to-r from-amber-50 to-orange-50 border border-amber-100 rounded-2xl p-3.5 text-xs text-amber-900 shadow-sm">
-        <div class="font-bold flex items-center gap-1.5 text-amber-800 text-sm mb-1">
-          <i data-lucide="car" class="w-4 h-4 text-amber-600"></i>
-          Day 2：DFS取車・天久採買・初詣祈願・泡瀨跨年
+      <!-- Day 2 View Slide -->
+      <section id="view-d2" class="tab-slide pr-2 space-y-3">
+        <div class="bg-gradient-to-r from-amber-50 to-orange-50 border border-amber-100 rounded-2xl p-3.5 text-xs text-amber-900 shadow-sm">
+          <div class="font-bold flex items-center justify-between text-amber-800 text-sm mb-1">
+            <span class="flex items-center gap-1.5"><i data-lucide="car" class="w-4 h-4 text-amber-600"></i> Day 2：DFS取車・天久採買・初詣・泡瀨跨年</span>
+          </div>
+          <p class="text-slate-600 leading-relaxed">11:00 新都心取車，天久商圈補齊裝備，前往達摩寺為新年祈願，入住具志川迎跨年！</p>
         </div>
-        <p class="text-slate-600">11:00 新都心取車，天久商圈補齊裝備，前往達摩寺為新年祈願，入住具志川迎跨年！</p>
-      </div>
-      <div id="d2-cards" class="space-y-3"></div>
-    </section>
+        <div id="d2-cards" class="space-y-3"></div>
+      </section>
 
-    <!-- Day 3 View -->
-    <section id="view-d3" class="tab-view hidden space-y-3">
-      <div class="bg-gradient-to-r from-blue-50 to-cyan-50 border border-blue-100 rounded-2xl p-3.5 text-xs text-blue-900 shadow-sm">
-        <div class="font-bold flex items-center gap-1.5 text-blue-800 text-sm mb-1">
-          <i data-lucide="waves" class="w-4 h-4 text-blue-600"></i>
-          Day 3：元旦北部海景・黑潮水族館・古宇利大橋
+      <!-- Day 3 View Slide -->
+      <section id="view-d3" class="tab-slide pr-2 space-y-3">
+        <div class="bg-gradient-to-r from-blue-50 to-cyan-50 border border-blue-100 rounded-2xl p-3.5 text-xs text-blue-900 shadow-sm">
+          <div class="font-bold flex items-center justify-between text-blue-800 text-sm mb-1">
+            <span class="flex items-center gap-1.5"><i data-lucide="waves" class="w-4 h-4 text-blue-600"></i> Day 3：元旦北部海景・美麗海水族館・古宇利</span>
+          </div>
+          <p class="text-slate-600 leading-relaxed">早晨外帶人氣三明治與果昔，參觀美麗海水族館，午後在古宇利大橋南端放空賞夕陽。</p>
         </div>
-        <p class="text-slate-600">早晨外帶人氣三明治與果昔，參觀美麗海水族館，午後在古宇利大橋南端放空賞夕陽。</p>
-      </div>
-      <div id="d3-cards" class="space-y-3"></div>
-    </section>
+        <div id="d3-cards" class="space-y-3"></div>
+      </section>
 
-    <!-- Day 4 View -->
-    <section id="view-d4" class="tab-view hidden space-y-3">
-      <div class="bg-gradient-to-r from-teal-50 to-emerald-50 border border-teal-100 rounded-2xl p-3.5 text-xs text-teal-900 shadow-sm">
-        <div class="font-bold flex items-center gap-1.5 text-teal-800 text-sm mb-1">
-          <i data-lucide="shopping-bag" class="w-4 h-4 text-teal-600"></i>
-          Day 4：海中道路・古民家午餐・PARCO CITY 採買日
+      <!-- Day 4 View Slide -->
+      <section id="view-d4" class="tab-slide pr-2 space-y-3">
+        <div class="bg-gradient-to-r from-teal-50 to-emerald-50 border border-teal-100 rounded-2xl p-3.5 text-xs text-teal-900 shadow-sm">
+          <div class="font-bold flex items-center justify-between text-teal-800 text-sm mb-1">
+            <span class="flex items-center gap-1.5"><i data-lucide="shopping-bag" class="w-4 h-4 text-teal-600"></i> Day 4：海中道路・古民家午餐・PARCO CITY 採買</span>
+          </div>
+          <p class="text-slate-600 leading-relaxed">享受宇流麻跨海兜風，中午吃濱比嘉島家常料理，下午前往 PARCO CITY 採買，買完直接回民宿打包！</p>
         </div>
-        <p class="text-slate-600">享受宇流麻跨海兜風，中午吃濱比嘉島家常料理，下午前往 PARCO CITY 採買，買完直接回民宿打包！</p>
-      </div>
-      <div id="d4-cards" class="space-y-3"></div>
-    </section>
+        <div id="d4-cards" class="space-y-3"></div>
+      </section>
 
-    <!-- Day 5 View -->
-    <section id="view-d5" class="tab-view hidden space-y-3">
-      <div class="bg-gradient-to-r from-rose-50 to-orange-50 border border-rose-100 rounded-2xl p-3.5 text-xs text-rose-900 shadow-sm">
-        <div class="font-bold flex items-center gap-1.5 text-rose-800 text-sm mb-1">
-          <i data-lucide="plane-takeoff" class="w-4 h-4 text-rose-600"></i>
-          Day 5：南部秘境海鮮・自然榕樹山谷・16:00還車・返台
+      <!-- Day 5 View Slide -->
+      <section id="view-d5" class="tab-slide pr-2 space-y-3">
+        <div class="bg-gradient-to-r from-rose-50 to-orange-50 border border-rose-100 rounded-2xl p-3.5 text-xs text-rose-900 shadow-sm">
+          <div class="font-bold flex items-center justify-between text-rose-800 text-sm mb-1">
+            <span class="flex items-center gap-1.5"><i data-lucide="plane-takeoff" class="w-4 h-4 text-rose-600"></i> Day 5：奧武島海鮮・Gangala之谷・還車返台</span>
+          </div>
+          <p class="text-slate-600 leading-relaxed">南下至奧武島吃海產炸物，探訪 Gangala之谷鐘乳石洞穴咖啡，請注意於 16:00 前完成 DFS 還車手續！</p>
         </div>
-        <p class="text-slate-600">南下至奧武島吃海產炸物，探訪 Gangala之谷鐘乳石洞穴咖啡，請注意於 16:00 前完成 DFS 還車手續！</p>
-      </div>
-      <div id="d5-cards" class="space-y-3"></div>
-    </section>
+        <div id="d5-cards" class="space-y-3"></div>
+      </section>
 
-    <!-- Unscheduled / Backup View -->
-    <section id="view-unscheduled" class="tab-view hidden space-y-3">
-      <!-- Concise Single-Line Header Banner -->
-      <div class="bg-gradient-to-r from-amber-50 via-orange-50 to-yellow-50 border border-amber-200 rounded-2xl px-3.5 py-2.5 text-xs text-amber-900 shadow-sm flex items-center justify-between">
-        <div class="font-bold flex items-center gap-1.5 text-amber-800 text-sm truncate">
-          <i data-lucide="sparkles" class="w-4 h-4 text-amber-600 shrink-0"></i>
-          <span class="truncate">未排入景點與備用庫</span>
+      <!-- Unscheduled / Backup View Slide -->
+      <section id="view-unscheduled" class="tab-slide pr-2 space-y-3">
+        <!-- Concise Header Banner with Working Reset Option -->
+        <div class="bg-gradient-to-r from-amber-50 via-orange-50 to-yellow-50 border border-amber-200 rounded-2xl px-3.5 py-2.5 text-xs text-amber-900 shadow-sm flex items-center justify-between">
+          <div class="font-bold flex items-center gap-1.5 text-amber-800 text-sm truncate">
+            <i data-lucide="sparkles" class="w-4 h-4 text-amber-600 shrink-0"></i>
+            <span class="truncate">未排入景點（點擊可排入行程）</span>
+          </div>
+          <div class="flex items-center gap-1.5 shrink-0">
+            <span id="unscheduled-count-tag" class="text-[11px] font-semibold text-amber-700 bg-amber-100/80 px-2 py-0.5 rounded-full border border-amber-200">共 16 處</span>
+            <button type="button" onclick="resetCustomSchedule()" class="text-[11px] font-bold text-rose-600 hover:text-rose-700 bg-white px-2 py-0.5 rounded-lg border border-rose-200 shadow-sm active:scale-95 transition" title="重設為原定行程">
+              重設行程
+            </button>
+          </div>
         </div>
-        <span class="shrink-0 text-[11px] font-semibold text-amber-700 bg-amber-100/80 px-2 py-0.5 rounded-full border border-amber-200">共 16 處</span>
-      </div>
 
-      <!-- Single-Line Region Filter Tabs (Strictly 1 Line with Horizontal Scroll) -->
-      <div class="flex items-center gap-1.5 overflow-x-auto hide-scrollbar text-xs py-1 whitespace-nowrap">
-        <button onclick="filterUnscheduledRegion('全部')" class="unscheduled-pill shrink-0 px-3 py-1 rounded-full font-bold bg-amber-600 text-white shadow-sm">全部地區</button>
-        <button onclick="filterUnscheduledRegion('那霸市區')" class="unscheduled-pill shrink-0 px-3 py-1 rounded-full bg-slate-100 text-slate-600">那霸市區</button>
-        <button onclick="filterUnscheduledRegion('中部/恩納')" class="unscheduled-pill shrink-0 px-3 py-1 rounded-full bg-slate-100 text-slate-600">中部/恩納</button>
-        <button onclick="filterUnscheduledRegion('北部')" class="unscheduled-pill shrink-0 px-3 py-1 rounded-full bg-slate-100 text-slate-600">北部</button>
-        <button onclick="filterUnscheduledRegion('南部')" class="unscheduled-pill shrink-0 px-3 py-1 rounded-full bg-slate-100 text-slate-600">南部</button>
-      </div>
-
-      <div id="unscheduled-cards" class="space-y-3"></div>
-    </section>
-
-    <!-- Backup & Full List View -->
-    <section id="view-all" class="tab-view hidden space-y-3">
-      <div class="bg-white p-3.5 rounded-2xl shadow-sm border border-slate-200 space-y-2.5">
-        <div class="relative">
-          <i data-lucide="search" class="w-4 h-4 absolute left-3 top-3 text-slate-400"></i>
-          <input
-            id="all-search-input"
-            type="text"
-            placeholder="搜尋清單景點、美食或備註..."
-            oninput="filterMasterList()"
-            class="w-full pl-9 pr-4 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-sky-500"
-          />
+        <!-- Single-Line Region Filter Tabs -->
+        <div class="flex items-center gap-1.5 overflow-x-auto hide-scrollbar text-xs py-1 whitespace-nowrap">
+          <button onclick="filterUnscheduledRegion('全部')" class="unscheduled-pill shrink-0 px-3 py-1 rounded-full font-bold bg-amber-600 text-white shadow-sm">全部地區</button>
+          <button onclick="filterUnscheduledRegion('那霸市區')" class="unscheduled-pill shrink-0 px-3 py-1 rounded-full bg-slate-100 text-slate-600">那霸市區</button>
+          <button onclick="filterUnscheduledRegion('中部/恩納')" class="unscheduled-pill shrink-0 px-3 py-1 rounded-full bg-slate-100 text-slate-600">中部/恩納</button>
+          <button onclick="filterUnscheduledRegion('北部')" class="unscheduled-pill shrink-0 px-3 py-1 rounded-full bg-slate-100 text-slate-600">北部</button>
+          <button onclick="filterUnscheduledRegion('南部')" class="unscheduled-pill shrink-0 px-3 py-1 rounded-full bg-slate-100 text-slate-600">南部</button>
         </div>
-        
-        <!-- Filter Category Badges (Strictly 1 Line with Horizontal Scroll) -->
-        <div class="flex items-center gap-1.5 overflow-x-auto hide-scrollbar text-xs whitespace-nowrap py-0.5">
-          <button onclick="setFilterCategory('全部')" class="cat-pill shrink-0 px-3 py-1 rounded-full font-bold bg-sky-600 text-white">全部</button>
-          <button onclick="setFilterCategory('美食')" class="cat-pill shrink-0 px-3 py-1 rounded-full bg-slate-100 text-slate-600">美食</button>
-          <button onclick="setFilterCategory('景點')" class="cat-pill shrink-0 px-3 py-1 rounded-full bg-slate-100 text-slate-600">景點</button>
-          <button onclick="setFilterCategory('購物')" class="cat-pill shrink-0 px-3 py-1 rounded-full bg-slate-100 text-slate-600">購物</button>
-          <button onclick="setFilterCategory('住宿')" class="cat-pill shrink-0 px-3 py-1 rounded-full bg-slate-100 text-slate-600">住宿/交通</button>
-        </div>
-      </div>
 
-      <div id="master-cards" class="space-y-3"></div>
-    </section>
+        <div id="unscheduled-cards" class="space-y-3"></div>
+      </section>
+
+      <!-- Backup & Full List View Slide -->
+      <section id="view-all" class="tab-slide pr-2 space-y-3">
+        <div class="bg-white p-3.5 rounded-2xl shadow-sm border border-slate-200 space-y-2.5">
+          <div class="relative">
+            <i data-lucide="search" class="w-4 h-4 absolute left-3 top-3 text-slate-400"></i>
+            <input
+              id="all-search-input"
+              type="text"
+              placeholder="搜尋清單景點、美食或備註..."
+              oninput="filterMasterList()"
+              class="w-full pl-9 pr-4 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-sky-500"
+            />
+          </div>
+          
+          <!-- Filter Category Badges -->
+          <div class="flex items-center gap-1.5 overflow-x-auto hide-scrollbar text-xs whitespace-nowrap py-0.5">
+            <button onclick="setFilterCategory('全部')" class="cat-pill shrink-0 px-3 py-1 rounded-full font-bold bg-sky-600 text-white">全部</button>
+            <button onclick="setFilterCategory('美食')" class="cat-pill shrink-0 px-3 py-1 rounded-full bg-slate-100 text-slate-600">美食</button>
+            <button onclick="setFilterCategory('景點')" class="cat-pill shrink-0 px-3 py-1 rounded-full bg-slate-100 text-slate-600">景點</button>
+            <button onclick="setFilterCategory('購物')" class="cat-pill shrink-0 px-3 py-1 rounded-full bg-slate-100 text-slate-600">購物</button>
+            <button onclick="setFilterCategory('住宿')" class="cat-pill shrink-0 px-3 py-1 rounded-full bg-slate-100 text-slate-600">住宿/交通</button>
+          </div>
+        </div>
+
+        <div id="master-cards" class="space-y-3"></div>
+      </section>
+
+    </div>
   </main>
 
   <!-- Modals -->
+
+  <!-- Add to Schedule Modal (排入行程彈窗) -->
+  <div id="schedule-modal" class="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm hidden items-center justify-center p-4">
+    <div class="bg-white rounded-3xl p-5 w-full max-w-sm shadow-2xl space-y-4 max-h-[90vh] overflow-y-auto">
+      <div class="flex items-center justify-between">
+        <div class="flex items-center gap-2">
+          <div class="p-2 rounded-xl bg-amber-100 text-amber-700">
+            <i data-lucide="calendar-plus" class="w-5 h-5"></i>
+          </div>
+          <div>
+            <h3 class="font-bold text-base text-slate-800">排入行程安排</h3>
+            <p id="schedule-modal-spot-name" class="text-xs text-amber-700 font-semibold truncate max-w-[180px]">選擇景點</p>
+          </div>
+        </div>
+        <button onclick="closeScheduleModal()" class="text-slate-400 hover:text-slate-600 p-1">
+          <i data-lucide="x" class="w-5 h-5"></i>
+        </button>
+      </div>
+
+      <div class="space-y-3 text-xs">
+        <!-- Day Selection -->
+        <div>
+          <label class="font-bold text-slate-700 block mb-1">1. 選擇要排入的天數</label>
+          <div class="grid grid-cols-5 gap-1.5">
+            <button type="button" onclick="selectScheduleDay('d1')" id="sch-day-d1" class="sch-day-btn py-2 rounded-xl font-bold border border-slate-200 bg-sky-600 text-white shadow-sm">D1</button>
+            <button type="button" onclick="selectScheduleDay('d2')" id="sch-day-d2" class="sch-day-btn py-2 rounded-xl font-bold border border-slate-200 bg-slate-100 text-slate-700">D2</button>
+            <button type="button" onclick="selectScheduleDay('d3')" id="sch-day-d3" class="sch-day-btn py-2 rounded-xl font-bold border border-slate-200 bg-slate-100 text-slate-700">D3</button>
+            <button type="button" onclick="selectScheduleDay('d4')" id="sch-day-d4" class="sch-day-btn py-2 rounded-xl font-bold border border-slate-200 bg-slate-100 text-slate-700">D4</button>
+            <button type="button" onclick="selectScheduleDay('d5')" id="sch-day-d5" class="sch-day-btn py-2 rounded-xl font-bold border border-slate-200 bg-slate-100 text-slate-700">D5</button>
+          </div>
+        </div>
+
+        <!-- Mode Selection: Insert vs Replace -->
+        <div>
+          <label class="font-bold text-slate-700 block mb-1">2. 排入模式</label>
+          <div class="grid grid-cols-2 gap-2">
+            <button type="button" onclick="setScheduleMode('insert')" id="sch-mode-insert"
+                    class="p-2.5 rounded-xl border border-sky-500 bg-sky-50 text-sky-800 font-bold text-left transition">
+              <div class="flex items-center gap-1.5"><i data-lucide="plus-circle" class="w-4 h-4 text-sky-600"></i><span>插入並順延</span></div>
+              <p class="text-[10px] text-sky-700 font-normal mt-0.5">原有行程時間自動往後延</p>
+            </button>
+            <button type="button" onclick="setScheduleMode('replace')" id="sch-mode-replace"
+                    class="p-2.5 rounded-xl border border-slate-200 bg-slate-50 text-slate-600 font-bold text-left transition">
+              <div class="flex items-center gap-1.5"><i data-lucide="refresh-cw" class="w-4 h-4 text-slate-500"></i><span>替換現有景點</span></div>
+              <p class="text-[10px] text-slate-400 font-normal mt-0.5">直接取代當天某個行程</p>
+            </button>
+          </div>
+        </div>
+
+        <!-- Target Existing Spot dropdown -->
+        <div id="sch-target-spot-box" class="space-y-1">
+          <label id="sch-target-label" class="font-bold text-slate-700 block">3. 插入位置（原行程順序）</label>
+          <select id="sch-target-select" class="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold text-slate-800 focus:ring-2 focus:ring-sky-500">
+          </select>
+        </div>
+
+        <!-- Custom Planned Time Input -->
+        <div>
+          <label class="font-bold text-slate-700 block mb-1">4. 指定預計停留時間</label>
+          <div class="flex items-center gap-2">
+            <input type="text" id="sch-time-input" placeholder="例如：14:00 - 15:30"
+                   class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-800 focus:ring-2 focus:ring-sky-500" />
+            <button type="button" onclick="quickFillTime('current')" class="shrink-0 px-2.5 py-2 rounded-xl bg-slate-200 hover:bg-slate-300 font-semibold text-[11px] text-slate-700">帶入位置時間</button>
+          </div>
+        </div>
+
+        <!-- Action Buttons -->
+        <div class="pt-2 flex items-center gap-2">
+          <button type="button" onclick="closeScheduleModal()" class="w-1/3 py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-600 font-bold transition">取消</button>
+          <button type="button" onclick="confirmAddToSchedule()" class="w-2/3 py-2.5 rounded-xl bg-amber-600 hover:bg-amber-700 text-white font-bold shadow-md active:scale-95 transition">確認排入行程</button>
+        </div>
+      </div>
+    </div>
+  </div>
 
   <!-- Currency Calculator Modal -->
   <div id="calc-modal" class="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm hidden items-center justify-center p-4">
@@ -302,103 +429,210 @@
                    class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-800 focus:outline-none focus:ring-2 focus:ring-sky-500" />
           </div>
           <div>
-            <label class="text-[11px] font-semibold text-slate-500 block mb-1">消費稅折抵 (Tax-Free)</label>
-            <button id="calc-tax-btn" onclick="toggleTaxFree()"
-                    class="w-full py-2 rounded-xl text-xs font-bold border border-slate-200 bg-slate-100 text-slate-700 transition">
+            <label class="text-[11px] font-semibold text-slate-500 block mb-1">消費稅折抵</label>
+            <button id="calc-tax-btn" type="button" onclick="toggleTaxFree()"
+                    class="w-full py-2 rounded-xl text-xs font-bold border border-slate-200 bg-slate-100 text-slate-700 hover:bg-slate-200 transition">
               含稅 (點我免稅 10%)
             </button>
           </div>
         </div>
 
-        <!-- Conversion Result Display -->
-        <div class="bg-gradient-to-br from-sky-50 to-indigo-50 border border-sky-100 rounded-2xl p-4 text-center">
-          <span class="text-xs font-medium text-sky-800 block">約合新台幣</span>
-          <div class="text-3xl font-black text-sky-700 mt-0.5 tracking-tight" id="calc-twd">NT$ 0</div>
-          <div class="text-[11px] text-slate-500 mt-1" id="calc-breakdown">¥ 0 × 0.2150</div>
+        <!-- Quick Preset Amounts -->
+        <div class="flex items-center gap-1.5 overflow-x-auto hide-scrollbar text-xs">
+          <button onclick="setQuickJpy(1000)" class="px-2.5 py-1 rounded-lg bg-slate-100 hover:bg-slate-200 font-semibold text-slate-600">¥1,000</button>
+          <button onclick="setQuickJpy(3000)" class="px-2.5 py-1 rounded-lg bg-slate-100 hover:bg-slate-200 font-semibold text-slate-600">¥3,000</button>
+          <button onclick="setQuickJpy(5500)" class="px-2.5 py-1 rounded-lg bg-slate-100 hover:bg-slate-200 font-semibold text-slate-600">¥5,500 (免稅門檻)</button>
+          <button onclick="setQuickJpy(10000)" class="px-2.5 py-1 rounded-lg bg-slate-100 hover:bg-slate-200 font-semibold text-slate-600">¥10,000</button>
         </div>
 
-        <!-- Quick conversion shortcut chips -->
-        <div class="space-y-1.5 pt-0.5">
-          <div class="flex items-center justify-between text-[11px] text-slate-500">
-            <span>快速帶入金額：</span>
-            <div class="flex items-center gap-1">
-              <button onclick="setQuickJpy(1000)" class="px-2 py-1 bg-slate-100 hover:bg-slate-200 rounded-md font-medium">1千</button>
-              <button onclick="setQuickJpy(5000)" class="px-2 py-1 bg-slate-100 hover:bg-slate-200 rounded-md font-medium">5千</button>
-              <button onclick="setQuickJpy(10000)" class="px-2 py-1 bg-slate-100 hover:bg-slate-200 rounded-md font-medium">1萬</button>
-              <button onclick="setQuickJpy(30000)" class="px-2 py-1 bg-slate-100 hover:bg-slate-200 rounded-md font-medium">3萬</button>
-              <button onclick="setQuickJpy(50000)" class="px-2 py-1 bg-slate-100 hover:bg-slate-200 rounded-md font-medium">5萬</button>
-            </div>
-          </div>
-          <!-- Preset backup rates -->
-          <div class="flex items-center justify-between text-[11px] text-slate-400">
-            <span>常用檔位：</span>
-            <div class="flex items-center gap-1">
-              <button onclick="applyPresetRate(0.2100)" class="px-1.5 py-0.5 rounded bg-slate-50 border border-slate-200 text-slate-600 hover:bg-slate-100">0.210</button>
-              <button onclick="applyPresetRate(0.2150)" class="px-1.5 py-0.5 rounded bg-slate-50 border border-slate-200 text-slate-600 hover:bg-slate-100">0.215</button>
-              <button onclick="applyPresetRate(0.2200)" class="px-1.5 py-0.5 rounded bg-slate-50 border border-slate-200 text-slate-600 hover:bg-slate-100">0.220</button>
-              <button onclick="applyPresetRate(0.2250)" class="px-1.5 py-0.5 rounded bg-slate-50 border border-slate-200 text-slate-600 hover:bg-slate-100">0.225</button>
-            </div>
-          </div>
+        <!-- Calculation Result -->
+        <div class="bg-gradient-to-br from-sky-50 to-indigo-50 border border-sky-200 rounded-2xl p-4 text-center">
+          <span class="text-xs text-sky-700 font-semibold block">折合新台幣約</span>
+          <div id="calc-twd" class="text-3xl font-extrabold text-sky-800 tracking-tight my-0.5">NT$ 0</div>
+          <p id="calc-breakdown" class="text-[11px] text-sky-600">¥ 0 × 0.2150</p>
         </div>
       </div>
     </div>
   </div>
 
-  <!-- Emergency & Travel Memo Modal -->
+  <!-- Emergency Modal -->
   <div id="emergency-modal" class="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm hidden items-center justify-center p-4">
-    <div class="bg-white rounded-3xl p-5 w-full max-w-sm shadow-2xl space-y-4 max-h-[85vh] overflow-y-auto">
+    <div class="bg-white rounded-3xl p-5 w-full max-w-sm shadow-2xl space-y-4 max-h-[85vh] overflow-y-auto text-xs">
       <div class="flex items-center justify-between">
         <div class="flex items-center gap-2">
           <div class="p-2 rounded-xl bg-rose-100 text-rose-700">
-            <i data-lucide="phone-call" class="w-5 h-5"></i>
+            <i data-lucide="shield-alert" class="w-5 h-5"></i>
           </div>
-          <div>
-            <h3 class="font-bold text-base text-slate-800">重要應急 & 旅程備忘</h3>
-            <p class="text-xs text-slate-500">建議截圖保存隨身備用</p>
-          </div>
+          <h3 class="font-bold text-base text-slate-800">旅日急難聯絡資訊</h3>
         </div>
         <button onclick="closeEmergencyModal()" class="text-slate-400 hover:text-slate-600 p-1">
           <i data-lucide="x" class="w-5 h-5"></i>
         </button>
       </div>
 
-      <div class="space-y-3 text-xs">
-        <div class="bg-rose-50 border border-rose-200 rounded-2xl p-3 text-rose-900 space-y-1">
-          <div class="font-bold flex items-center justify-between">
-            <span>緊急報警 / 救護車</span>
-            <span class="text-rose-600 font-extrabold text-sm">110 / 119</span>
+      <div class="space-y-2.5">
+        <div class="p-3 rounded-2xl bg-rose-50 border border-rose-200 space-y-1">
+          <div class="font-bold text-rose-900 flex items-center justify-between">
+            <span>台灣駐日代表處那霸辦事處</span>
+            <span class="text-[10px] bg-rose-200 text-rose-900 px-1.5 py-0.5 rounded">24H 急難救助</span>
           </div>
-          <div class="font-bold flex items-center justify-between pt-1 border-t border-rose-200/50">
-            <span>台北駐日經濟文化代表處 那霸分處</span>
-          </div>
-          <p class="text-[11px] text-rose-800">急難救助電話：<a href="tel:+819019421107" class="underline font-bold">+81-90-1942-1107</a></p>
+          <p class="text-slate-600">電話：<a href="tel:+81988627008" class="font-bold text-rose-700 underline">098-862-7008</a></p>
+          <p class="text-[11px] text-rose-800 font-medium">緊急直撥專線：<a href="tel:+818015386016" class="font-bold underline">080-1538-6016</a></p>
         </div>
 
-        <div class="bg-sky-50 border border-sky-200 rounded-2xl p-3 text-sky-900 space-y-1.5">
-          <div class="font-bold flex items-center gap-1.5">
-            <i data-lucide="car" class="w-4 h-4 text-sky-600"></i>
-            OTS 租車新都心 DFS 營業所
+        <div class="grid grid-cols-2 gap-2">
+          <div class="p-3 rounded-2xl bg-slate-50 border border-slate-200">
+            <div class="font-bold text-slate-800">日本報警</div>
+            <p class="text-slate-500 mt-0.5">交通事故/緊急事態</p>
+            <a href="tel:110" class="mt-2 block text-center py-1.5 rounded-xl bg-slate-800 text-white font-bold text-sm">直撥 110</a>
           </div>
-          <p class="text-[11px] text-slate-600 font-bold text-rose-600">取車：12/31 11:00｜還車：1/3 16:00 前（需滿油）</p>
-          <p class="text-[11px] text-slate-600">地址：沖繩縣那霸市歌町 4-1 T Galleria 2F</p>
+          <div class="p-3 rounded-2xl bg-slate-50 border border-slate-200">
+            <div class="font-bold text-slate-800">消防 / 救護車</div>
+            <p class="text-slate-500 mt-0.5">急病/受傷救助</p>
+            <a href="tel:119" class="mt-2 block text-center py-1.5 rounded-xl bg-rose-600 text-white font-bold text-sm">直撥 119</a>
+          </div>
         </div>
 
-        <div class="bg-amber-50 border border-amber-200 rounded-2xl p-3 text-amber-900 space-y-1">
-          <div class="font-bold flex items-center gap-1.5">
-            <i data-lucide="plane" class="w-4 h-4 text-amber-600"></i>
-            回程航班重要提醒
-          </div>
-          <p class="text-[11px] text-slate-700">1/3 20:25 起飛回台灣。16:00 還車後搭乘單軌直達機場，時間非常從容，可自在逛國內線免稅伴手禮。</p>
+        <div class="p-3 rounded-2xl bg-sky-50 border border-sky-200 space-y-1">
+          <div class="font-bold text-sky-900">OTS 租車 DFS 營業所</div>
+          <p class="text-slate-600">營業時間：09:00 - 19:00</p>
+          <p class="text-slate-600">還車提醒：<span class="font-bold text-rose-600">1/3 請於 16:00 前完成還車</span></p>
+          <p class="text-slate-600">電話：<a href="tel:+81988607700" class="font-bold text-sky-700 underline">098-860-7700</a></p>
         </div>
+      </div>
+    </div>
+  </div>
 
-        <div class="bg-slate-50 border border-slate-200 rounded-2xl p-3 text-slate-700 space-y-1">
-          <div class="font-bold">日本自駕注意重點</div>
-          <ul class="list-disc list-inside space-y-0.5 text-[11px] text-slate-600">
-            <li>右駕靠左行駛，轉彎「左小右大」。</li>
-            <li>看到紅色倒三角形「止まれ」標誌務必完全煞停 3 秒。</li>
-            <li>高速公路過收費站請確認走 ETC 或 一般（現金/信用卡）通道。</li>
-          </ul>
+  <!-- Admin PIN Modal (密碼 0000) -->
+  <div id="admin-pin-modal" class="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm hidden items-center justify-center p-4">
+    <div class="bg-white rounded-3xl p-5 w-full max-w-xs shadow-2xl space-y-4">
+      <div class="flex items-center justify-between">
+        <div class="flex items-center gap-2">
+          <div class="p-2 rounded-xl bg-amber-100 text-amber-700">
+            <i data-lucide="key-round" class="w-5 h-5"></i>
+          </div>
+          <h3 class="font-bold text-base text-slate-800">管理員身分驗證</h3>
         </div>
+        <button onclick="closeAdminPinModal()" class="text-slate-400 hover:text-slate-600 p-1">
+          <i data-lucide="x" class="w-5 h-5"></i>
+        </button>
+      </div>
+      <p class="text-xs text-slate-500">輸入密碼以解鎖行程即時修改、增刪景點與全員自動同步權限。</p>
+      <div>
+        <input type="password" id="admin-pin-input" maxlength="8" placeholder="請輸入密碼 (預設 0000)"
+               class="w-full text-center tracking-widest text-lg font-bold py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-amber-500 focus:outline-none" />
+      </div>
+      <div class="flex items-center gap-2 pt-1">
+        <button type="button" onclick="closeAdminPinModal()" class="w-1/2 py-2 rounded-xl bg-slate-100 text-slate-600 font-bold text-xs">取消</button>
+        <button type="button" onclick="verifyAdminPin()" class="w-1/2 py-2 rounded-xl bg-amber-500 hover:bg-amber-600 text-white font-bold text-xs shadow-sm active:scale-95 transition">解鎖管理員</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Admin Cloud Sync Config Modal (雲端免手動同步設定) -->
+  <div id="cloud-config-modal" class="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm hidden items-center justify-center p-4">
+    <div class="bg-white rounded-3xl p-5 w-full max-w-sm shadow-2xl space-y-3 max-h-[85vh] overflow-y-auto text-xs">
+      <div class="flex items-center justify-between">
+        <h3 class="font-bold text-base text-slate-800 flex items-center gap-1.5 text-sky-700">
+          <i data-lucide="flame" class="w-5 h-5 text-amber-500"></i> Firebase 雲端即時同步
+        </h3>
+        <button onclick="closeCloudConfigModal()" class="text-slate-400 hover:text-slate-600 p-1">
+          <i data-lucide="x" class="w-5 h-5"></i>
+        </button>
+      </div>
+      <p class="text-slate-600 leading-relaxed">
+        將 Firebase 的 <code>firebaseConfig</code> 貼到下方，以後你在手機上改時間或排入景點，<b>旅伴的螢幕 0.1 秒內自動跟著變更</b>，完全免上傳！
+      </p>
+
+      <div class="p-3 bg-amber-50 border border-amber-200 rounded-2xl space-y-1">
+        <div class="font-bold text-amber-900 flex items-center justify-between">
+          <span>連線狀態</span>
+          <span id="firebase-status-pill" class="text-[10px] px-2 py-0.5 rounded-full bg-slate-200 text-slate-700 font-bold">未連接</span>
+        </div>
+        <p id="firebase-status-desc" class="text-[11px] text-slate-600">目前處於單機模式，請貼上金鑰啟動雲端同步。</p>
+      </div>
+
+      <div class="space-y-2">
+        <div>
+          <label class="font-bold text-slate-700 block mb-1">自訂旅程代碼 (Room ID)</label>
+          <input type="text" id="firebase-room-id" placeholder="例如：okinawa2027" class="w-full p-2 bg-slate-50 border border-slate-200 rounded-xl font-bold text-slate-800" />
+        </div>
+        <div>
+          <label class="font-bold text-slate-700 block mb-1">Firebase Config (貼上整段 JSON 或物件)</label>
+          <textarea id="firebase-config-input" rows="5" placeholder='{\n  "apiKey": "AIzaSy...",\n  "authDomain": "...",\n  "projectId": "..."\n}' class="w-full p-2.5 font-mono text-[11px] bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-amber-500 focus:outline-none"></textarea>
+        </div>
+      </div>
+
+      <div class="flex items-center gap-2 pt-2">
+        <button type="button" onclick="closeCloudConfigModal()" class="w-1/3 py-2 bg-slate-100 rounded-xl font-bold text-xs">關閉</button>
+        <button type="button" onclick="saveAndConnectFirebase()" class="w-2/3 py-2 bg-amber-500 hover:bg-amber-600 text-white font-bold text-xs rounded-xl shadow active:scale-95 transition">啟動 Firebase 同步</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Admin Edit Spot Modal -->
+  <div id="edit-spot-modal" class="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm hidden items-center justify-center p-4">
+    <div class="bg-white rounded-3xl p-5 w-full max-w-sm shadow-2xl space-y-3 max-h-[90vh] overflow-y-auto">
+      <div class="flex items-center justify-between">
+        <h3 class="font-bold text-sm text-slate-800">編輯行程點位</h3>
+        <button onclick="closeEditSpotModal()" class="text-slate-400 hover:text-slate-600 p-1">
+          <i data-lucide="x" class="w-5 h-5"></i>
+        </button>
+      </div>
+      <input type="hidden" id="edit-spot-day" />
+      <input type="hidden" id="edit-spot-id" />
+      <div class="space-y-2 text-xs">
+        <div>
+          <label class="font-bold text-slate-600 block mb-1">地點名稱</label>
+          <input type="text" id="edit-spot-name" class="w-full p-2 bg-slate-50 border border-slate-200 rounded-xl font-bold" />
+        </div>
+        <div>
+          <label class="font-bold text-slate-600 block mb-1">時間區間</label>
+          <input type="text" id="edit-spot-time" class="w-full p-2 bg-slate-50 border border-slate-200 rounded-xl font-bold" />
+        </div>
+        <div>
+          <label class="font-bold text-slate-600 block mb-1">分類標籤</label>
+          <input type="text" id="edit-spot-tag" class="w-full p-2 bg-slate-50 border border-slate-200 rounded-xl font-bold" />
+        </div>
+        <div>
+          <label class="font-bold text-slate-600 block mb-1">行程備註與攻略</label>
+          <textarea id="edit-spot-desc" rows="3" class="w-full p-2 bg-slate-50 border border-slate-200 rounded-xl"></textarea>
+        </div>
+        <div>
+          <label class="font-bold text-slate-600 block mb-1">Google Maps 網址</label>
+          <input type="text" id="edit-spot-url" class="w-full p-2 bg-slate-50 border border-slate-200 rounded-xl font-mono text-[11px]" />
+        </div>
+      </div>
+      <div class="flex items-center gap-2 pt-2">
+        <button type="button" onclick="closeEditSpotModal()" class="w-1/3 py-2 bg-slate-100 rounded-xl font-bold text-xs">取消</button>
+        <button type="button" onclick="saveSpotEdit()" class="w-2/3 py-2 bg-amber-600 hover:bg-amber-700 text-white font-bold text-xs rounded-xl shadow">儲存修改</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Admin Publish to Everyone Modal -->
+  <div id="publish-modal" class="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm hidden items-center justify-center p-4">
+    <div class="bg-white rounded-3xl p-5 w-full max-w-sm shadow-2xl space-y-3 max-h-[85vh] overflow-y-auto text-xs">
+      <div class="flex items-center justify-between">
+        <h3 class="font-bold text-base text-slate-800 flex items-center gap-1.5 text-amber-700">
+          <i data-lucide="cloud-upload" class="w-5 h-5"></i> 發布更新給所有旅伴
+        </h3>
+        <button onclick="closePublishModal()" class="text-slate-400 hover:text-slate-600 p-1">
+          <i data-lucide="x" class="w-5 h-5"></i>
+        </button>
+      </div>
+      <p class="text-slate-600 leading-relaxed">
+        你已經在管理員模式下完成了行程調整！若未串接 Firebase，請點擊下方按鈕取得更新後的檔案，貼到 GitHub 上提交，大家重新整理就全部能看到最新版本：
+      </p>
+      <div class="space-y-2 pt-1">
+        <button onclick="downloadUpdatedHtmlFile()" class="w-full py-2.5 rounded-xl bg-amber-500 hover:bg-amber-600 text-white font-bold shadow flex items-center justify-center gap-1.5 active:scale-95 transition">
+          <i data-lucide="download" class="w-4 h-4"></i>
+          <span>下載最新 index.html (覆蓋上傳到 GitHub)</span>
+        </button>
+        <button onclick="copyUpdatedHtmlCode()" id="copy-code-btn" class="w-full py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold border border-slate-200 flex items-center justify-center gap-1.5 active:scale-95 transition">
+          <i data-lucide="copy" class="w-4 h-4"></i>
+          <span>一鍵複製全網頁代碼</span>
+        </button>
       </div>
     </div>
   </div>
@@ -416,823 +650,946 @@
     </div>
   </div>
 
+  <!-- Custom Alert Toast Modal -->
+  <div id="notice-toast" class="fixed top-14 inset-x-0 mx-auto max-w-xs z-50 pointer-events-none transition-all duration-300 opacity-0 -translate-y-2 flex justify-center">
+    <div class="bg-slate-900/95 text-white text-xs font-semibold px-4 py-2.5 rounded-2xl shadow-2xl border border-slate-700/80 flex items-center gap-2">
+      <i data-lucide="info" class="w-4 h-4 text-sky-400 shrink-0"></i>
+      <span id="notice-toast-text">通知訊息</span>
+    </div>
+  </div>
+
   <script>
     /* ==========================================================================
-       DATA DEFINITIONS FOR ITINERARY & MASTER LIST
+       1. CORE ITINERARY DATA (完整 5 天行程資料)
        ========================================================================== */
-    const DAYS_DATA = {
+    const INITIAL_DAYS_DATA = {
       d1: [
         {
           id: "d1-1",
           time: "19:25 - 20:20",
-          name: "那霸機場",
-          category: "交通",
-          note: "抵達沖繩，入境領取行李，直接步行至 2 樓搭乘單軌電車 (ゆいレール)",
-          mapUrl: "https://www.google.com/maps/search/?api=1&query=Naha+Airport+Okinawa",
-          tag: "單軌起點",
-          color: "sky"
+          name: "那霸機場 (OKA) 抵達入境",
+          tag: "交通移動",
+          tagColor: "bg-sky-100 text-sky-800",
+          desc: "班機降落出關，步行前往單軌電車站（國內線2F連通口），搭乘單軌往小祿站。",
+          mapsUrl: "https://www.google.com/maps/search/?api=1&query=Naha+Airport+Okinawa",
+          tips: "購買單軌單程票或直接刷西瓜卡/ICOCA。"
         },
         {
           id: "d1-2",
           time: "20:20 - 21:15",
           name: "琉球新麵 通堂 小祿本店",
-          category: "美食",
-          note: "搭單軌至「小祿站」。每次去都要吃的經典拉麵，必吃男人麵/女人麵搭配特製辣豆芽",
-          mapUrl: "https://www.google.com/maps/place/%E7%8F%8A%E7%91%9A%E6%96%B0%E9%BA%B5+%E9%80%9A%E5%A0%82+%E5%B0%8F%E7%A5%BF%E6%9C%AC%E5%BA%97/data=!4m2!3m1!1s0x34e569b140b3a219:0xdaaf5d41d37c6862",
-          tag: "必吃宵夜",
-          color: "amber"
+          tag: "必吃晚餐",
+          tagColor: "bg-amber-100 text-amber-800",
+          desc: "「沒有說特別好吃，但就是每次去都要吃一下，請成全鼠叔我」。出站步行 2 分鐘即達。",
+          mapsUrl: "https://www.google.com/maps/place/%E7%90%89%E7%90%83%E6%96%B0%E9%BA%B5+%E9%80%9A%E5%A0%82+%E5%B0%8F%E7%A5%BF%E6%9C%AC%E5%BA%97/data=!4m2!3m1!1s0x34e569b140b3a219:0xdaaf5d41d37c6862",
+          tips: "必點濃郁男人麵 (豚骨) 或清爽女人麵 (鹽味雞湯)，配免費辣豆芽超開胃。"
         },
         {
           id: "d1-3",
-          time: "21:15 - 21:45",
-          name: "壺川住宿 (3 Chome Tsubogawa)",
-          category: "住宿",
-          note: "從小祿搭單軌至「壺川站」，前往住宿 Check-in 並放好行李",
-          mapUrl: "https://www.google.com/maps/place/3+Chome+Tsubogawa/data=!4m2!3m1!1s0x34e569a1b4ef6bd3:0xb73ef9c9533c140b",
-          tag: "首晚住宿",
-          color: "indigo"
+          time: "21:20 - 21:50",
+          name: "壺川住宿 Check-in (3 Chome Tsubogawa)",
+          tag: "住宿放行李",
+          tagColor: "bg-emerald-100 text-emerald-800",
+          desc: "从小禄站搭單軌往壺川站（僅2站），辦理入住並放妥行李，輕裝出發。",
+          mapsUrl: "https://www.google.com/maps/place/3+Chome+Tsubogawa/data=!4m2!3m1!1s0x34e569a1b4ef6bd3:0xb73ef9c9533c140b",
+          tips: "第一晚落腳處，周邊交通非常方便。"
         },
         {
           id: "d1-4",
-          time: "21:45 - 23:15",
+          time: "22:00 - 23:15",
           name: "國際通屋台村（夜市）",
-          category: "美食",
-          note: "搭單軌至牧志站。約 20 間特色攤位，深夜阿古豬串燒、熱炒小酌，體驗熱鬧氛圍",
-          mapUrl: "https://www.google.com/maps/place/%E5%9C%8B%E9%9A%9B%E9%80%9A%E5%B1%8B%E5%8F%B0%E6%9D%91%EF%BC%88%E5%A4%9C%E5%B8%82%EF%BC%89/data=!4m2!3m1!1s0x34e56917cdebf7a7:0x384644a940676d33",
-          tag: "熱鬧市區",
-          color: "rose"
+          tag: "夜生活小酌",
+          tagColor: "bg-rose-100 text-rose-800",
+          desc: "搭單軌至牧志站。聚集 20 間特色熱炒小攤，阿古豬肉串燒、沖繩炒苦瓜與泡盛酒吧。",
+          mapsUrl: "https://www.google.com/maps/place/%E5%9C%8B%E9%9A%9B%E9%80%9A%E5%B1%8B%E5%8F%B0%E6%9D%91%EF%BC%88%E5%A4%9C%E5%B8%82%EF%BC%89/data=!4m2!3m1!1s0x34e56917cdebf7a7:0x384644a940676d33",
+          tips: "營業至 24:00，感受沖繩深夜熱鬧屋台風情。"
         },
         {
           id: "d1-5",
-          time: "23:15 - 00:15",
-          name: "MaxValu Makishi (牧志店)",
-          category: "採買",
-          note: "24 小時營業的 AEON 超大型超市，無壓力補給跨年泡麵、水果飲料與零食",
-          mapUrl: "https://www.google.com/maps/place/MaxValu+Makishi/data=!4m2!3m1!1s0x34e5697b5cdc4c33:0x202b4331951f2689",
-          tag: "24H 營業",
-          color: "teal"
+          time: "23:20 - 00:20",
+          name: "MaxValu 牧志店",
+          tag: "24H補貨",
+          tagColor: "bg-purple-100 text-purple-800",
+          desc: "牧志站旁 24 小時不打烊超大 AEON 生鮮超市，採買零食、沖繩泡麵、熱帶水果與飲料。",
+          mapsUrl: "https://www.google.com/maps/place/MaxValu+Makishi/data=!4m2!3m1!1s0x34e5697b5cdc4c33:0x202b4331951f2689",
+          tips: "採買完可直接搭計程車回壺川住宿（車資約 ¥800-1,000，免趕電車）。"
         }
       ],
       d2: [
         {
           id: "d2-1",
-          time: "11:00 - 11:45",
-          name: "OTS租車 DFS營業所",
-          category: "租車",
-          note: "退房搭單軌至新都心（おもろまち站），DFS 2F 辦理取車與驗車",
-          mapUrl: "https://www.google.com/maps/place/OTS%E7%A7%9F%E8%BB%8A+DFS%E7%87%9F%E6%A5%AD%E6%89%80/data=!4m2!3m1!1s0x34e56bdf4c4bbb81:0x44d863f78e1d4e09",
-          tag: "租車自駕",
-          color: "sky"
+          time: "10:00 - 10:45",
+          name: "壺川退房 → 搭單軌往新都心站",
+          tag: "交通移動",
+          tagColor: "bg-sky-100 text-sky-800",
+          desc: "從壺川站搭單軌直達おもろまち站（歌町站），出站連通 T Galleria DFS。",
+          mapsUrl: "https://www.google.com/maps/search/?api=1&query=Omoromachi+Station+Naha",
+          tips: "單軌車程約 11 分鐘。"
         },
         {
           id: "d2-2",
-          time: "11:45 - 13:30",
-          name: "Sports Depo 天久店 (天久樂市)",
-          category: "購物",
-          note: "開車 5 分鐘抵達天久樂市，採買運動休閒用品與戶外裝備",
-          mapUrl: "https://www.google.com/maps/search/?api=1&query=Sports+Depo+Ameku+Store+Naha",
-          tag: "購物首站",
-          color: "emerald"
+          time: "11:00 - 11:45",
+          name: "OTS租車 DFS營業所 (取車)",
+          tag: "租車自駕",
+          tagColor: "bg-blue-100 text-blue-800",
+          desc: "11:00 預約準時於 DFS 櫃檯報到取車，檢查外觀與加購安心保險。",
+          mapsUrl: "https://www.google.com/maps/place/OTS%E7%A7%9F%E8%BB%8A+DFS%E7%87%9F%E6%A5%AD%E6%89%80/data=!4m2!3m1!1s0x34e56bdf4c4bbb81:0x44d863f78e1d4e09",
+          tips: "請備妥台灣駕照正本與日文譯本。"
         },
         {
           id: "d2-3",
-          time: "13:30 - 15:00",
-          name: "達摩寺 (西来院)",
-          category: "景點",
-          note: "首里特色寺院，擺滿祈願達摩不倒翁，祈求新的一年平安順遂",
-          mapUrl: "https://www.google.com/maps/place/%E9%81%94%E6%91%A9%E5%AF%BA/data=!4m2!3m1!1s0x34e56bff7290bbe7:0x193892a7ae016d6d",
-          tag: "初詣祈福",
-          color: "rose"
+          time: "11:50 - 13:40",
+          name: "Sports Depo 天久店 (天久樂市商圈)",
+          tag: "購物採買",
+          tagColor: "bg-indigo-100 text-indigo-800",
+          desc: "開車 5 分鐘抵達天久樂市，超大運動用品專門店，採買戶外運動服飾與休閒用品。",
+          mapsUrl: "https://www.google.com/maps/search/?api=1&query=Sports+Depo+Ameku+Store",
+          tips: "商圈附免費停車場，午餐可在此隨興享用。"
         },
         {
           id: "d2-4",
-          time: "15:30 - 16:30",
-          name: "具志川/泡瀨住宿 (Awase)",
-          category: "住宿",
-          note: "走高速公路北上至宇流麻/泡瀨，辦理連住 3 晚的入住手續",
-          mapUrl: "https://www.google.com/maps/place/Awase+Piano+Lessons/data=!4m2!3m1!1s0x34e50dd9d36a8d8f:0xe0278a784154b7e",
-          tag: "跨年中部",
-          color: "indigo"
+          time: "13:50 - 15:00",
+          name: "首里 達摩寺 (西来院)",
+          tag: "初詣祈福",
+          tagColor: "bg-amber-100 text-amber-800",
+          desc: "供奉滿滿不倒翁達摩的特色古剎，跨年祈求旅途平安與新年新氣象。",
+          mapsUrl: "https://www.google.com/maps/place/%E9%81%94%E6%91%A9%E5%AF%BA/data=!4m2!3m1!1s0x34e56bff7290bbe7:0x193892a7ae016d6d",
+          tips: "可購買可愛的達摩御守或祈願達摩點睛寫字。"
         },
         {
           id: "d2-5",
-          time: "17:00 - 18:30",
-          name: "壽司市場 泡瀨店",
-          category: "美食",
-          note: "民宿附近高 CP 值在地迴轉壽司，食材新鮮價格實惠",
-          mapUrl: "https://www.google.com/maps/place/%E5%A3%BD%E5%8F%B8%E5%B8%82%E5%A0%B4+%E6%B3%A1%E7%80%AC%E5%BA%97/data=!4m2!3m1!1s0x34e50d91181ba19d:0x57375191496328a8",
-          tag: "平價海鮮",
-          color: "amber"
+          time: "15:00 - 16:30",
+          name: "北上中部住宿 (Awase Piano Lessons)",
+          tag: "入住中谷",
+          tagColor: "bg-emerald-100 text-emerald-800",
+          desc: "走高速公路（那霸IC $\\rightarrow$ 沖繩南IC）前往宇流麻/泡瀨周邊住宿辦理 Check-in。",
+          mapsUrl: "https://www.google.com/maps/place/Awase+Piano+Lessons/data=!4m2!3m1!1s0x34e50dd9d36a8d8f:0xe0278a784154b7e",
+          tips: "12/31-1/3 連住三晚的大本營，放行李稍作休息。"
         },
         {
           id: "d2-6",
-          time: "19:00 - 跨年",
-          name: "AEON 具志川店",
-          category: "採買",
-          note: "大型永旺商場，買日本跨年蕎麥麵、草莓與飲料，回民宿跨年倒數",
-          mapUrl: "https://www.google.com/maps/search/?api=1&query=AEON+Gushikawa+Store",
-          tag: "跨年採買",
-          color: "teal"
+          time: "17:00 - 18:45",
+          name: "壽司市場 泡瀨店",
+          tag: "在地晚餐",
+          tagColor: "bg-amber-100 text-amber-800",
+          desc: "泡瀨在地深受好評的平價迴轉壽司，食材新鮮、種類豐富，CP值極高。",
+          mapsUrl: "https://www.google.com/maps/place/%E5%A3%BD%E5%8F%B8%E5%B8%82%E5%A0%B4+%E6%B3%A1%E7%80%AC%E5%BA%97/data=!4m2!3m1!1s0x34e50d91181ba19d:0x57375191496328a8",
+          tips: "跨年夜建議提早於 17:00 抵達避開排隊人潮。"
+        },
+        {
+          id: "d2-7",
+          time: "19:00 - 21:00",
+          name: "AEON 具志川店 (跨年採買)",
+          tag: "跨年夜宵",
+          tagColor: "bg-purple-100 text-purple-800",
+          desc: "住宿旁大型綜合購物中心，採買跨年炸雞、草莓、零食與跨年蕎麥麵，迎接 2027！",
+          mapsUrl: "https://www.google.com/maps/search/?api=1&query=AEON+Gushikawa+Store",
+          tips: "商場規模極大，亦可順便逛 UNIQLO 與超市。"
         }
       ],
       d3: [
         {
           id: "d3-1",
-          time: "10:00 - 10:30",
-          name: "CAMEL SANDWICH & SMOOTHIE",
-          category: "美食",
-          note: "去美麗海之前先預約外帶澎湃三明治與新鮮果昔",
-          mapUrl: "https://www.google.com/maps/place/CAMEL+SANDWICH+%26+SMOOTHIE/data=!4m2!3m1!1s0x34e4fbe39a7051ad:0x310396d0840a630a",
-          tag: "外帶輕食",
-          color: "amber"
+          time: "08:30 - 10:00",
+          name: "出發北上前往本部町",
+          tag: "景觀兜風",
+          tagColor: "bg-blue-100 text-blue-800",
+          desc: "走沖繩自動車道一路開往本部半島，沿途欣賞蔚藍海岸風光。",
+          mapsUrl: "https://www.google.com/maps/search/?api=1&query=Motobu+Okinawa",
+          tips: "避開元旦午後北上車潮，早點出發路況最順暢。"
         },
         {
           id: "d3-2",
-          time: "10:45 - 14:30",
-          name: "沖繩美麗海水族館",
-          category: "景點",
-          note: "震撼的「黑潮之海」主水槽看鯨鯊與魟魚，戶外海豚秀與海龜館",
-          mapUrl: "https://www.google.com/maps/place/%E6%B2%96%E7%B9%A9%E7%BE%8E%E9%BA%97%E6%B5%B7%E6%B0%B4%E6%97%8F%E9%A4%A8/data=!4m2!3m1!1s0x34e4fa3152619e3d:0xea08a6700fdd9ffe",
-          tag: "元旦必訪",
-          color: "sky"
+          time: "10:00 - 10:30",
+          name: "CAMEL SANDWICH & SMOOTHIE",
+          tag: "特色輕食",
+          tagColor: "bg-amber-100 text-amber-800",
+          desc: "「去美麗海之前可以先訂再開去拿」。外帶超澎湃三明治與新鮮果昔。",
+          mapsUrl: "https://www.google.com/maps/place/CAMEL+SANDWICH+%26+SMOOTHIE/data=!4m2!3m1!1s0x34e4fbe39a7051ad:0x310396d0840a630a",
+          tips: "外帶到水族館戶外公園區野餐極為享受。"
         },
         {
           id: "d3-3",
+          time: "10:45 - 14:30",
+          name: "沖繩美麗海水族館",
+          tag: "經典必訪",
+          tagColor: "bg-cyan-100 text-cyan-800",
+          desc: "全球聞名的「黑潮之海」巨型水槽，看鯨鯊與鬼蝠魟悠游，戶外還有海豚表演。",
+          mapsUrl: "https://www.google.com/maps/place/%E6%B2%96%E7%B9%A9%E7%BE%8E%E9%BA%97%E6%B5%B7%E6%B0%B4%E6%97%8F%E9%A4%A8/data=!4m2!3m1!1s0x34e4fa3152619e3d:0xea08a6700fdd9ffe",
+          tips: "建議停在 P7 停車場（立體停車場距水族館最近）。"
+        },
+        {
+          id: "d3-4",
           time: "15:00 - 16:45",
           name: "古宇利大橋 南端觀景台",
-          category: "景點",
-          note: "絕美古宇利藍，站在觀景台眺望筆直跨海大橋，開車兜風環島",
-          mapUrl: "https://www.google.com/maps/place/%E5%8F%A4%E5%AE%87%E5%88%A9%E5%A4%A7%E6%A9%8B+%E5%8D%97%E7%AB%AF%E8%A7%80%E6%99%AF%E5%8F%B0/data=!4m2!3m1!1s0x34e4578504115a47:0xb012af2b4d8bdc0e",
-          tag: "海景夕陽",
-          color: "teal"
+          tag: "古宇利藍",
+          tagColor: "bg-teal-100 text-teal-800",
+          desc: "眺望筆直延伸跨海大橋與漸層翡翠藍海水，散步吹海風、拍照取景。",
+          mapsUrl: "https://www.google.com/maps/place/%E5%8F%A4%E5%AE%87%E5%88%A9%E5%A4%A7%E6%A9%8B+%E5%8D%97%E7%AB%AF%E8%A7%80%E6%99%AF%E5%8F%B0/data=!4m2!3m1!1s0x34e4578504115a47:0xb012af2b4d8bdc0e",
+          tips: "附免費停車場，亦可開車過橋至島上環島一圈。"
+        },
+        {
+          id: "d3-5",
+          time: "18:00 - 20:00",
+          name: "返回中部住宿 & 晚餐休息",
+          tag: "自由晚餐",
+          tagColor: "bg-slate-100 text-slate-800",
+          desc: "南下返回具志川/泡瀨住宿，可在住宿周邊享用拉麵或沖繩料理。",
+          mapsUrl: "https://www.google.com/maps/search/?api=1&query=Gushikawa+Uruma",
+          tips: "開車一天較辛苦，提早回住處泡澡休息。"
         }
       ],
       d4: [
         {
           id: "d4-1",
-          time: "10:00 - 11:30",
-          name: "海中道路沙灘 (海洋驛站)",
-          category: "景點",
-          note: "勝連半島開闊海景，行經筆直海中道路，在 Ayahashi 館旁踩沙吹海風",
-          mapUrl: "https://www.google.com/maps/place/%E6%B5%B7%E4%B8%AD%E9%81%93%E8%B7%AF%E6%B2%99%E7%81%98/data=!4m2!3m1!1s0x34e509d000146c77:0xaf68edcf341e8c04",
-          tag: "絕美公路",
-          color: "sky"
+          time: "10:00 - 11:20",
+          name: "海中道路沙灘 (海洋驛站 Ayahashi 館)",
+          tag: "海中道路",
+          tagColor: "bg-blue-100 text-blue-800",
+          desc: "從具志川出發開往勝連半島，行經筆直蔚藍跨海公路，停留中途休息站散步賞海。",
+          mapsUrl: "https://www.google.com/maps/place/%E6%B5%B7%E4%B8%AD%E9%81%93%E8%B7%AF%E6%B2%99%E7%81%98/data=!4m2!3m1!1s0x34e509d000146c77:0xaf68edcf341e8c04",
+          tips: "兩側都是無垠淺灘，退潮時景色極具特色。"
         },
         {
           id: "d4-2",
           time: "11:30 - 13:00",
-          name: "古民家食堂てぃーらぶい",
-          category: "美食",
-          note: "濱比嘉島傳統紅瓦古民家，品嘗在地島蔬菜家庭定食，感受悠閒海島時光",
-          mapUrl: "https://www.google.com/maps/place/%E5%8F%A4%E6%B0%91%E5%AE%B6%E9%A3%9F%E5%A0%82%E3%81%A6%E3%81%83%E3%83%BC%E3%82%89%E3%81%B6%E3%81%84/data=!4m2!3m1!1s0x34e509be693b0b73:0x9723a2a7366d05a7",
-          tag: "特色定食",
-          color: "amber"
+          name: "古民家食堂てぃーらぶい (濱比嘉島)",
+          tag: "沖繩古民家",
+          tagColor: "bg-amber-100 text-amber-800",
+          desc: "跨海開往濱比嘉島傳統聚落，由琉球紅瓦古屋改建，品嘗充滿島野菜溫度的傳統家庭定食。",
+          mapsUrl: "https://www.google.com/maps/place/%E5%8F%A4%E6%B0%91%E5%AE%B6%E9%A3%9F%E5%A0%82%E3%81%A6%E3%81%83%E3%83%BC%E3%82%89%E3%81%B6%E3%81%84/data=!4m2!3m1!1s0x34e509be693b0b73:0x9723a2a7366d05a7",
+          tips: "環境極具海島氛圍，建議提早到達登記候位。"
         },
         {
           id: "d4-3",
           time: "14:00 - 18:30",
-          name: "PARCO CITY (浦添西海岸)",
-          category: "購物",
-          note: "沖繩最大海景商場！元旦折扣初賣，買完大包小包先載回民宿裝箱",
-          mapUrl: "https://www.google.com/maps/place/PARCO+CITY/data=!4m2!3m1!1s0x34e56b0af61f94c5:0x78aac934fb2b5c0",
-          tag: "免稅採買",
-          color: "emerald"
+          name: "PARCO CITY (西海岸超大購物商場)",
+          tag: "購物採買",
+          tagColor: "bg-emerald-100 text-emerald-800",
+          desc: "直面西海岸海景，沖繩規模最大複合型商場！新年折扣季全面採買，買完直接載回民宿打包放行李！",
+          mapsUrl: "https://www.google.com/maps/place/PARCO+CITY/data=!4m2!3m1!1s0x34e56b0af61f94c5:0x78aac934fb2b5c0",
+          tips: "各樓層皆有退稅櫃台，運動休閒、日系服飾、生活雜貨一網打盡。"
         },
         {
           id: "d4-4",
           time: "19:30 - 21:30",
           name: "魚がしの銀次 泡瀬店",
-          category: "美食",
-          note: "產地直送超澎湃生魚片、炭火燒烤熱鬧居酒屋，離住宿極近",
-          mapUrl: "https://www.google.com/maps/place/%E9%AD%9A%E3%81%8C%E3%81%97%E3%81%AE%E9%8A%80%E6%AC%A1+%E6%B3%A1%E7%80%AC%E5%BA%97/data=!4m2!3m1!1s0x34e50dbe0d82d217:0xf30bdfc3963e3f16",
           tag: "海鮮居酒屋",
-          color: "rose"
+          tagColor: "bg-rose-100 text-rose-800",
+          desc: "返回泡瀨住處旁超人氣居酒屋！產地直送超澎湃生魚片刺身拼盤、炭火烤魚與沖繩熱炒。",
+          mapsUrl: "https://www.google.com/maps/place/%E9%AD%9A%E3%81%8C%E3%81%97%E3%81%AE%E9%8A%80%E6%AC%A1+%E6%B3%A1%E7%80%AC%E5%BA%97/data=!4m2!3m1!1s0x34e50dbe0d82d217:0xf30bdfc3963e3f16",
+          tips: "氣氛熱鬧非凡，距離住處近，可安心盡情小酌海味。"
         }
       ],
       d5: [
         {
           id: "d5-1",
-          time: "10:30 - 12:00",
-          name: "奥武島海産物食堂",
-          category: "美食",
-          note: "南城貓島平價海鮮，鮮魚丼飯、熱騰騰魚湯與島上現炸天婦羅",
-          mapUrl: "https://www.google.com/maps/place/%E5%A5%A5%E6%AD%A6%E5%B3%B6%E6%B5%B7%E7%94%A3%E7%89%A9%E9%A3%9F%E5%A0%82/data=!4m2!3m1!1s0x34fa9b9e97fe8659:0x8d6658489261682e",
-          tag: "貓島海鮮",
-          color: "amber"
+          time: "09:30 - 10:30",
+          name: "中部退房 $\\rightarrow$ 行李全數上車往南部",
+          tag: "退房出發",
+          tagColor: "bg-sky-100 text-sky-800",
+          desc: "告別泡瀨住宿，行李全上後車廂，沿沖繩自動車道一路開往南城市。",
+          mapsUrl: "https://www.google.com/maps/search/?api=1&query=Nanjo+Okinawa",
+          tips: "最後一天自駕，沿途順暢南下。"
         },
         {
           id: "d5-2",
-          time: "12:15 - 14:15",
-          name: "Gangala之谷",
-          category: "景點",
-          note: "巨大的天然鐘乳石洞穴與數百年老榕樹，享受獨特的洞穴咖啡館悠閒氣氛",
-          mapUrl: "https://www.google.com/maps/place/Gangala%E4%B9%8B%E8%B0%B7/data=!4m2!3m1!1s0x34e56f694e9fa999:0xad0c7c6998743d6",
-          tag: "秘境咖啡",
-          color: "teal"
+          time: "10:30 - 12:00",
+          name: "奥武島海産物食堂 (貓咪島海產)",
+          tag: "產地海鮮",
+          tagColor: "bg-amber-100 text-amber-800",
+          desc: "開往可愛的貓咪之島奧武島，享用鮮甜實惠的海鮮丼飯、鮮魚湯定食，島上還能品嘗現炸天婦羅。",
+          mapsUrl: "https://www.google.com/maps/place/%E5%A5%A5%E6%AD%A6%E5%B3%B6%E6%B5%B7%E7%94%A3%E7%89%A9%E9%A3%9F%E5%A0%82/data=!4m2!3m1!1s0x34fa9b9e97fe8659:0x8d6658489261682e",
+          tips: "港邊常有親人的貓咪出沒，用餐兼賞海景。"
         },
         {
           id: "d5-3",
-          time: "15:00 - 16:00",
-          name: "OTS租車 DFS營業所 (還車)",
-          category: "租車",
-          note: "加滿油返回新都心 DFS 營業所，務必於 16:00 前完成還車手續",
-          mapUrl: "https://www.google.com/maps/place/OTS%E7%A7%9F%E8%BB%8A+DFS%E7%87%9F%E6%A5%AD%E6%89%80/data=!4m2!3m1!1s0x34e56bdf4c4bbb81:0x44d863f78e1d4e09",
-          tag: "16:00 準時還車",
-          color: "sky"
+          time: "12:15 - 14:15",
+          name: "Gangala之谷 (鐘乳石山谷秘境)",
+          tag: "自然秘境",
+          tagColor: "bg-teal-100 text-teal-800",
+          desc: "巨大古鐘乳石洞穴崩塌形成的山谷，數百年老榕樹生長其間，洞口處設有獨特的鐘乳石洞穴咖啡館。",
+          mapsUrl: "https://www.google.com/maps/place/Gangala%E4%B9%8B%E8%B0%B7/data=!4m2!3m1!1s0x34e56f694e9fa999:0xad0c7c6998743d6",
+          tips: "若參加導覽行程需事前預約，洞穴咖啡廳則可自由休憩。"
         },
         {
           id: "d5-4",
+          time: "15:00 - 16:00",
+          name: "新都心加油 & OTS DFS 還車",
+          tag: "準時還車",
+          tagColor: "bg-rose-100 text-rose-800",
+          desc: "開車返回新都心 DFS 附近將油箱加滿，於 16:00 前完成還車與驗車手續。",
+          mapsUrl: "https://www.google.com/maps/place/OTS%E7%A7%9F%E8%BB%8A+DFS%E7%87%9F%E6%A5%AD%E6%89%80/data=!4m2!3m1!1s0x34e56bdf4c4bbb81:0x44d863f78e1d4e09",
+          tips: "務必保留最後加油發票供還車人員確認。"
+        },
+        {
+          id: "d5-5",
           time: "16:15 - 20:25",
-          name: "那霸機場 (搭機返台)",
-          category: "交通",
-          note: "搭單軌至機場，時間充裕可先逛國內線採買伴手禮、用餐，再辦理報到託運（20:25 起飛）",
-          mapUrl: "https://www.google.com/maps/search/?api=1&query=Naha+Airport+Okinawa",
-          tag: "班機 20:25",
-          color: "indigo"
+          name: "單軌往那霸機場 $\\rightarrow$ 託運返台",
+          tag: "返國登機",
+          tagColor: "bg-purple-100 text-purple-800",
+          desc: "從新都心搭單軌到那霸機場約 20 分鐘。時間非常充裕，可在國內線 2F 買齊最後伴手禮，搭乘 20:25 班機回台灣！",
+          mapsUrl: "https://www.google.com/maps/search/?api=1&query=Naha+Airport+Departures",
+          tips: "20:25 班機建議於 18:25 前完成報到託運。"
         }
       ]
     };
 
-    // Full 36 places directory from uploaded sheet
-    const MASTER_PLACES = [
-      { name: "琉球新麵 通堂 小祿本店", note: "沒有說特別好吃，但就是每次去都要吃一下，請成全鼠叔我", category: "美食", url: "https://www.google.com/maps/place/%E7%8F%8A%E7%91%9A%E6%96%B0%E9%BA%B5+%E9%80%9A%E5%A0%82+%E5%B0%8F%E7%A5%BF%E6%9C%AC%E5%BA%97/data=!4m2!3m1!1s0x34e569b140b3a219:0xdaaf5d41d37c6862" },
-      { name: "3 Chome Tsubogawa", note: "12/30 住宿 (壺川站附近)", category: "住宿", url: "https://www.google.com/maps/place/3+Chome+Tsubogawa/data=!4m2!3m1!1s0x34e569a1b4ef6bd3:0xb73ef9c9533c140b" },
-      { name: "OTS租車 DFS營業所", note: "租車與還車的地方 (新都心 T Galleria)", category: "住宿", url: "https://www.google.com/maps/place/OTS%E7%A7%9F%E8%BB%8A+DFS%E7%87%9F%E6%A5%AD%E6%89%80/data=!4m2!3m1!1s0x34e56bdf4c4bbb81:0x44d863f78e1d4e09" },
-      { name: "Awase Piano Lessons", note: "12/31-1/3 具志川/泡瀨住宿", category: "住宿", url: "https://www.google.com/maps/place/Awase+Piano+Lessons/data=!4m2!3m1!1s0x34e50dd9d36a8d8f:0xe0278a784154b7e" },
-      { name: "國際通屋台村（夜市）", note: "深夜露天居酒屋熱炒、串燒小酌", category: "美食", url: "https://www.google.com/maps/place/%E5%9C%8B%E9%9A%9B%E9%80%9A%E5%B1%8B%E5%8F%B0%E6%9D%91%EF%BC%88%E5%A4%9C%E5%B8%82%EF%BC%89/data=!4m2!3m1!1s0x34e56917cdebf7a7:0x384644a940676d33" },
-      { name: "MaxValu Makishi", note: "24小時營業的超大AEON有需要可參考", category: "購物", url: "https://www.google.com/maps/place/MaxValu+Makishi/data=!4m2!3m1!1s0x34e5697b5cdc4c33:0x202b4331951f2689" },
-      { name: "壽司市場 泡瀨店", note: "泡瀨平價新鮮迴轉壽司", category: "美食", url: "https://www.google.com/maps/place/%E5%A3%BD%E5%8F%B8%E5%B8%82%E5%A0%B4+%E6%B3%A1%E7%80%AC%E5%BA%97/data=!4m2!3m1!1s0x34e50d91181ba19d:0x57375191496328a8" },
-      { name: "魚がしの銀次 泡瀬店", note: "產地直送海鮮料理居酒屋", category: "美食", url: "https://www.google.com/maps/place/%E9%AD%9A%E3%81%8C%E3%81%97%E3%81%AE%E9%8A%80%E6%AC%A1+%E6%B3%A1%E7%80%AC%E5%BA%97/data=!4m2!3m1!1s0x34e50dbe0d82d217:0xf30bdfc3963e3f16" },
-      { name: "達摩寺", note: "首里不倒翁祈願寺院 (初詣推薦)", category: "景點", url: "https://www.google.com/maps/place/%E9%81%94%E6%91%A9%E5%AF%BA/data=!4m2!3m1!1s0x34e56bff7290bbe7:0x193892a7ae016d6d" },
-      { name: "沖繩美麗海水族館", note: "黑潮之海巨型水槽、鯨鯊、海豚秀", category: "景點", url: "https://www.google.com/maps/place/%E6%B2%96%E7%B9%A9%E7%BE%8E%E9%BA%97%E6%B5%B7%E6%B0%B4%E6%97%8F%E9%A4%A8/data=!4m2!3m1!1s0x34e4fa3152619e3d:0xea08a6700fdd9ffe" },
-      { name: "CAMEL SANDWICH & SMOOTHIE", note: "去美麗海之前可以先訂再開去拿", category: "美食", url: "https://www.google.com/maps/place/CAMEL+SANDWICH+%26+SMOOTHIE/data=!4m2!3m1!1s0x34e4fbe39a7051ad:0x310396d0840a630a" },
-      { name: "古宇利大橋 南端觀景台", note: "古宇利藍海絕景眺望點", category: "景點", url: "https://www.google.com/maps/place/%E5%8F%A4%E5%AE%87%E5%88%A9%E5%A4%A7%E6%A9%8B+%E5%8D%97%E7%AB%AF%E8%A7%80%E6%99%AF%E5%8F%B0/data=!4m2!3m1!1s0x34e4578504115a47:0xb012af2b4d8bdc0e" },
-      { name: "海中道路沙灘", note: "勝連半島跨海公路與沙灘", category: "景點", url: "https://www.google.com/maps/place/%E6%B5%B7%E4%B8%AD%E9%81%93%E8%B7%AF%E6%B2%99%E7%81%98/data=!4m2!3m1!1s0x34e509d000146c77:0xaf68edcf341e8c04" },
-      { name: "古民家食堂てぃーらぶい", note: "濱比嘉島傳統紅瓦古民家島蔬菜套餐", category: "美食", url: "https://www.google.com/maps/place/%E5%8F%A4%E6%B0%91%E5%AE%B6%E9%A3%9F%E5%A0%82%E3%81%A6%E3%81%83%E3%83%BC%E3%82%89%E3%81%B6%E3%81%84/data=!4m2!3m1!1s0x34e509be693b0b73:0x9723a2a7366d05a7" },
-      { name: "PARCO CITY", note: "購物行程，免稅不是免費", category: "購物", url: "https://www.google.com/maps/place/PARCO+CITY/data=!4m2!3m1!1s0x34e56b0af61f94c5:0x78aac934fb2b5c0" },
-      { name: "奥武島海産物食堂", note: "南城貓島平價海產海鮮丼與天婦羅", category: "美食", url: "https://www.google.com/maps/place/%E5%A5%A5%E6%AD%A6%E5%B3%B6%E6%B5%B7%E7%94%A3%E7%89%A9%E9%A3%9F%E5%A0%82/data=!4m2!3m1!1s0x34fa9b9e97fe8659:0x8d6658489261682e" },
-      { name: "Gangala之谷", note: "鐘乳石洞穴咖啡與自然林秘境", category: "景點", url: "https://www.google.com/maps/place/Gangala%E4%B9%8B%E8%B0%B7/data=!4m2!3m1!1s0x34e56f694e9fa999:0xad0c7c6998743d6" },
-      { name: "Buchi Kumojiten", note: "久茂地人氣和牛燒肉", category: "美食", url: "https://www.google.com/maps/place/Buchi+Kumojiten/data=!4m2!3m1!1s0x34e56977dac0c9cd:0xa9b836cde5e24546" },
-      { name: "珊瑚田", note: "讀谷村在地沖繩居酒屋", category: "美食", url: "https://www.google.com/maps/place/%E7%8F%8A%E7%91%9A%E7%94%B0/data=!4m2!3m1!1s0x34e516d034353737:0x97f836f00564d37" },
-      { name: "LUCKY MAXIMUM", note: "有人推薦+看起來不錯先存", category: "美食", url: "https://www.google.com/maps/place/LUCKY+MAXIMUM/data=!4m2!3m1!1s0x34e569002b2928bf:0x7c6c40039de2d0dc" },
-      { name: "Henry's PIZZA", note: "美式紐約風格披薩名店", category: "美食", url: "https://www.google.com/maps/place/Henry's+PIZZA/data=!4m2!3m1!1s0x6000e734818d5af9:0xf626c9df135ab987" },
-      { name: "JUNKUDO Naha", note: "B1好像有很多扭蛋 (那霸淳久堂)", category: "購物", url: "https://www.google.com/maps/place/JUNKUDO+Naha/data=!4m2!3m1!1s0x34e5697977242e01:0x5fc247c2eb40fe16" },
-      { name: "Okinawa Sanchoku Ichiba", note: "可以試吃各種伴手禮食物 再決定要不要買", category: "購物", url: "https://www.google.com/maps/place/Okinawa+Sanchoku+Ichiba/data=!4m2!3m1!1s0x34e5698050092917:0xcc0cb11239c66009" },
-      { name: "Ryoshi Shokudo Obanburumai Sakana Daitoryo", note: "YouTuber推薦的小眾食堂，當地人會去吃，便宜的海鮮定食", category: "美食", url: "https://www.google.com/maps/place/Ryoshi+Shokudo+Obanburumai+Sakana+Daitoryo/data=!4m2!3m1!1s0x34e56b047c4b65c9:0x3e70d1280ee22c7a" },
-      { name: "Shima ShabuShabu NAKAMA", note: "恩納村阿古豬涮涮鍋名店", category: "美食", url: "https://www.google.com/maps/place/Shima+ShabuShabu+NAKAMA/data=!4m2!3m1!1s0x34e56976328c507b:0x2532b8d46bada01" },
-      { name: "ラーメン暖暮 首里店", note: "暖暮拉麵首里分店 (九州拉麵大賞)", category: "美食", url: "https://www.google.com/maps/place/%E3%83%A9%E3%83%BC%E3%83%A1%E3%83%B3%E6%9A%96%E6%9A%AE+%E9%A6%96%E9%87%8C%E5%BA%97/data=!4m2!3m1!1s0x34e56d00310093d9:0x9486bf8dbe9264fb" },
-      { name: "暖暮拉麵 那霸牧志店", note: "國際通人氣排隊拉麵店", category: "美食", url: "https://www.google.com/maps/place/%E6%9A%96%E6%9A%AE%E6%8B%89%E9%BA%B5+%E9%82%A3%E9%9C%B8%E7%89%A7%E5%BF%97%E5%BA%97/data=!4m2!3m1!1s0x34e5697bcfbeaaab:0x860befe404def6ef" },
-      { name: "イツクマの浜", note: "浜比嘉島清幽隱密的天然天然海灘", category: "景點", url: "https://www.google.com/maps/place/%E3%82%A4%E3%83%84%E3%82%AF%E3%83%9E%E3%81%AE%E6%B5%9C/data=!4m2!3m1!1s0x34e5a933a30aaa83:0x100e8098a5a47513" },
-      { name: "Umichurara", note: "美麗海水族館市區概念直營店 (國際通)", category: "購物", url: "https://www.google.com/maps/place/Umichurara/data=!4m2!3m1!1s0x34e5697628500001:0xb3c64c132922fe95" },
-      { name: "ミレメーレ", note: "世界第一蘋果派 (國際通點心)", category: "美食", url: "https://www.google.com/maps/place/%E3%83%9F%E3%83%AC%E3%83%A1%E3%83%BC%E3%83%AC/data=!4m2!3m1!1s0x34e5697905a63c47:0xb3adbef7169d38e5" },
-      { name: "Panza Okinawa Zipline", note: "喜來登海上高空溜索冒險", category: "景點", url: "https://www.google.com/maps/place/Panza+Okinawa+Zipline/data=!4m2!3m1!1s0x34e505417cfeee85:0xe8fc20a98b8f0e02" },
-      { name: "COSTCO好市多 沖繩店", note: "沖繩南部超大型好市多門市", category: "購物", url: "https://www.google.com/maps/place/COSTCO%E5%A5%BD%E5%B8%82%E5%A4%9A+%E6%B2%96%E7%B9%A9%E5%BA%97/data=!4m2!3m1!1s0x34e56f002d5171dd:0x6f86b1ebb56a155c" },
-      { name: "海人食堂", note: "讀谷村漁港旁鮮美海鮮丼定食", category: "美食", url: "https://www.google.com/maps/place/%E6%B5%B7%E4%BA%BA%E9%A3%9F%E5%A0%82/data=!4m2!3m1!1s0x34e516b4aa651d97:0x1431c220c0d52c32" },
-      { name: "かどや製麺所 KADOYA製麵所 星降森啤酒屋", note: "北部手工沖繩麵與精釀啤酒", category: "美食", url: "https://www.google.com/maps/place/%E3%81%8B%E3%81%A9%E3%82%84%E8%A3%BD%E9%BA%BA%E6%89%80+KADOYA%E8%A3%BD%E9%BA%B5%E6%89%80+%E6%98%9F%E9%99%8D%E6%A3%AE%E5%95%A4%E9%85%92%E5%B1%8B/data=!4m2!3m1!1s0x34e4fd71ce97f729:0x502b09d5fef9d3d3" },
-      { name: "Okinawa City Fishing Association Payao Market", note: "泡瀨漁港水產直銷直売所，焗烤龍蝦海膽定食", category: "美食", url: "https://www.google.com/maps/place/Okinawa+City+Fishing+Association+Payao+Market/data=!4m2!3m1!1s0x34e50dc1252fb713:0x49f85d7c13a12272" }
-    ];
+    // Load custom schedule from localStorage or fallback
+    let DAYS_DATA = JSON.parse(localStorage.getItem("okinawa_schedule_v2") || "null") || JSON.parse(JSON.stringify(INITIAL_DAYS_DATA));
 
-    // Explicit list of unscheduled spots with regional grouping and notes
+    function saveDaysData() {
+      localStorage.setItem("okinawa_schedule_v2", JSON.stringify(DAYS_DATA));
+    }
+
+    /* ==========================================================================
+       2. UNSCHEDULED PLACES (未排入景點清單・共 16 處)
+       ========================================================================== */
     const UNSCHEDULED_PLACES = [
       {
         name: "Buchi Kumojiten",
         region: "那霸市區",
         category: "美食",
         highlight: "久茂地嚴選和牛燒肉",
-        note: "單軌縣廳前站附近的高評價和牛燒肉，若第一晚不想吃拉麵想大口吃和牛可作為替換首選。",
-        url: "https://www.google.com/maps/place/Buchi+Kumojiten/data=!4m2!3m1!1s0x34e56977dac0c9cd:0xa9b836cde5e24546"
+        note: "高評價和牛燒肉店，肉質鮮嫩，適合想要奢華燒肉晚餐的時段。",
+        mapsUrl: "https://www.google.com/maps/place/Buchi+Kumojiten/data=!4m2!3m1!1s0x34e56977dac0c9cd:0xa9b836cde5e24546"
+      },
+      {
+        name: "LUCKY MAXIMUM",
+        region: "那霸市區",
+        category: "美食",
+        highlight: "有人推薦+看起來不錯先存",
+        note: "特色餐飲小店，氛圍輕鬆年輕。",
+        mapsUrl: "https://www.google.com/maps/place/LUCKY+MAXIMUM/data=!4m2!3m1!1s0x34e569002b2928bf:0x7c6c40039de2d0dc"
       },
       {
         name: "暖暮拉麵 那霸牧志店",
         region: "那霸市區",
         category: "美食",
-        highlight: "九州拉麵冠軍・國際通名店",
-        note: "營業至深夜，濃郁豚骨湯頭與特製辣醬。排隊人潮通常比小祿通堂多，可依當晚人潮互替。",
-        url: "https://www.google.com/maps/place/%E6%9A%96%E6%9A%AE%E6%8B%89%E9%BA%B5+%E9%82%A3%E9%9C%B8%E7%89%A7%E5%BF%97%E5%BA%97/data=!4m2!3m1!1s0x34e5697bcfbeaaab:0x860befe404def6ef"
+        highlight: "國際通人氣排隊拉麵",
+        note: "曾獲九州拉麵總選舉第一位，國際通逛街若想換換口味可備選。",
+        mapsUrl: "https://www.google.com/maps/place/%E6%9A%96%E6%9A%AE%E6%8B%89%E9%BA%B5+%E9%82%A3%E9%9C%B8%E7%89%A7%E5%BF%97%E5%BA%97/data=!4m2!3m1!1s0x34e5697bcfbeaaab:0x860befe404def6ef"
       },
       {
         name: "ラーメン暖暮 首里店",
         region: "那霸市區",
         category: "美食",
-        highlight: "首里分店・排隊人潮相對較少",
-        note: "位於首里城周邊，若 D2 去達摩寺參拜時碰上午餐時間，可就近在此享用拉麵。",
-        url: "https://www.google.com/maps/place/%E3%83%A9%E3%83%BC%E3%83%A1%E3%83%B3%E6%9A%96%E6%9A%AE+%E9%A6%96%E9%87%8C%E5%BA%97/data=!4m2!3m1!1s0x34e56d00310093d9:0x9486bf8dbe9264fb"
+        highlight: "暖暮首里分店排隊較少",
+        note: "造訪達摩寺或首里城周邊時的快速拉麵備選。",
+        mapsUrl: "https://www.google.com/maps/place/%E3%83%A9%E3%83%BC%E3%83%A1%E3%83%B3%E6%9A%96%E6%9A%AE+%E9%A6%96%E9%87%8C%E5%BA%97/data=!4m2!3m1!1s0x34e56d00310093d9:0x9486bf8dbe9264fb"
       },
       {
-        name: "JUNKUDO Naha (淳久堂那霸店)",
+        name: "Shima ShabuShabu NAKAMA",
         region: "那霸市區",
-        category: "購物",
-        highlight: "B1 巨型扭蛋專區",
-        note: "國際通美榮橋附近的大型書店，B1 設有數量極多的扭蛋機與文具公仔，扭蛋控必訪。",
-        url: "https://www.google.com/maps/place/JUNKUDO+Naha/data=!4m2!3m1!1s0x34e5697977242e01:0x5fc247c2eb40fe16"
+        category: "美食",
+        highlight: "阿古豬＆沖繩牛涮涮鍋",
+        note: "精緻島野菜與嚴選沖繩黑毛豬、石垣牛火鍋專門店。",
+        mapsUrl: "https://www.google.com/maps/place/Shima+ShabuShabu+NAKAMA/data=!4m2!3m1!1s0x34e56976328c507b:0x2532b8d46bada01"
       },
       {
-        name: "Okinawa Sanchoku Ichiba (沖繩產直市場)",
+        name: "Henry's PIZZA",
         region: "那霸市區",
-        category: "購物",
-        highlight: "伴手禮大方試吃",
-        note: "國際通上的伴手禮名店，可以試吃各種黑糖、紅芋塔、點心食物再決定要不要購買。",
-        url: "https://www.google.com/maps/place/Okinawa+Sanchoku+Ichiba/data=!4m2!3m1!1s0x34e5698050092917:0xcc0cb11239c66009"
+        category: "美食",
+        highlight: "美式紐約街頭切片披薩",
+        note: "人氣打卡美式披薩名店，餅皮酥脆香濃。",
+        mapsUrl: "https://www.google.com/maps/place/Henry's+PIZZA/data=!4m2!3m1!1s0x6000e734818d5af9:0xf626c9df135ab987"
       },
       {
-        name: "Umichurara (美麗海水族館市區店)",
+        name: "JUNKUDO Naha (淳久堂書店)",
         region: "那霸市區",
         category: "購物",
-        highlight: "市區水族館官方直營店",
-        note: "國際通上的美麗海水族館官方紀念品店，有微型水槽與巨型鯨鯊玩偶周邊。",
-        url: "https://www.google.com/maps/place/Umichurara/data=!4m2!3m1!1s0x34e5697628500001:0xb3c64c132922fe95"
+        highlight: "B1超多扭蛋機與文具書籍",
+        note: "那霸市區大型書店，B1 設有規模極大的扭蛋機專區，扭蛋控必訪！",
+        mapsUrl: "https://www.google.com/maps/place/JUNKUDO+Naha/data=!4m2!3m1!1s0x34e5697977242e01:0x5fc247c2eb40fe16"
+      },
+      {
+        name: "Okinawa Sanchoku Ichiba",
+        region: "那霸市區",
+        category: "購物",
+        highlight: "可試吃各種伴手禮後再買",
+        note: "沖繩產地產銷市場，匯集各種沖繩名產零食點心，提供豐富試吃。",
+        mapsUrl: "https://www.google.com/maps/place/Okinawa+Sanchoku+Ichiba/data=!4m2!3m1!1s0x34e5698050092917:0xcc0cb11239c66009"
+      },
+      {
+        name: "Umichurara (美麗海專賣店)",
+        region: "那霸市區",
+        category: "購物",
+        highlight: "美麗海水族館市區概念館",
+        note: "位在那霸市區的美麗海水族館直營周邊商品店，有小型水中造景。",
+        mapsUrl: "https://www.google.com/maps/place/Umichurara/data=!4m2!3m1!1s0x34e5697628500001:0xb3c64c132922fe95"
       },
       {
         name: "ミレメーレ (Mille Mele)",
         region: "那霸市區",
         category: "美食",
-        highlight: "世界第一香脆蘋果派",
-        note: "來自義大利主廚配方，酥脆外皮包裹卡士達醬與香濃蘋果粒，逛國際通時的美味散步甜點。",
-        url: "https://www.google.com/maps/place/%E3%83%9F%E3%83%AC%E3%83%A1%E3%83%BC%E3%83%AC/data=!4m2!3m1!1s0x34e5697905a63c47:0xb3adbef7169d38e5"
-      },
-      {
-        name: "Blue Seal Kokusaidori",
-        region: "那霸市區",
-        category: "美食",
-        highlight: "美式復古風冰淇淋",
-        note: "沖繩指標冰品，招牌鹽金楚糕、紅芋、香檬雪酪風味，營業至深夜 23:00。",
-        url: "https://www.google.com/maps/place/Blue+Seal+Kokusaidori/data=!4m2!3m1!1s0x34e5697767d5d0eb:0x530324c92d22e122"
-      },
-      {
-        name: "Okinawa City Fishing Association Payao Market (泡瀨漁港パヤオ直売店)",
-        region: "中部/恩納",
-        category: "美食",
-        highlight: "焗烤海膽龍蝦・鮮甜魚湯",
-        note: "離具志川/泡瀨住宿極近的產銷直賣所！名物為半隻焗烤海膽龍蝦定食與新鮮生魚片，非常適合替換午餐。",
-        url: "https://www.google.com/maps/place/Okinawa+City+Fishing+Association+Payao+Market/data=!4m2!3m1!1s0x34e50dc1252fb713:0x49f85d7c13a12272"
-      },
-      {
-        name: "イツクマの浜 (海水浴場/秘境海灘)",
-        region: "中部/恩納",
-        category: "景點",
-        highlight: "濱比嘉島隱密白沙灘",
-        note: "D4 走海中道路到濱比嘉島吃古民家時，如果時間充裕可開車順訪這處遊客稀少的純樸沙灘。",
-        url: "https://www.google.com/maps/place/%E3%82%A4%E3%83%84%E3%82%AF%E3%83%9E%E3%81%AE%E6%B5%9C/data=!4m2!3m1!1s0x34e5a933a30aaa83:0x100e8098a5a47513"
+        highlight: "世界第一香濃義大利蘋果派",
+        note: "外皮層層酥脆，包裹濃郁卡士達醬與青森新鮮蘋果肉的排隊甜點。",
+        mapsUrl: "https://www.google.com/maps/place/%E3%83%9F%E3%83%AC%E3%83%A1%E3%83%BC%E3%83%AC/data=!4m2!3m1!1s0x34e5697905a63c47:0xb3adbef7169d38e5"
       },
       {
         name: "珊瑚田",
         region: "中部/恩納",
         category: "美食",
-        highlight: "讀谷村在地家常居酒屋",
-        note: "位於中部讀谷村，在地人聚會的沖繩傳統料理居酒屋，料理精緻富有人情味。",
-        url: "https://www.google.com/maps/place/%E7%8F%8A%E7%91%9A%E7%94%B0/data=!4m2!3m1!1s0x34e516d034353737:0x97f836f00564d37"
+        highlight: "讀谷村特色海鮮與在地家常菜",
+        note: "遠離市區喧囂的純樸溫馨小食堂，在地食材料理細膩。",
+        mapsUrl: "https://www.google.com/maps/place/%E7%8F%8A%E7%91%9A%E7%94%B0/data=!4m2!3m1!1s0x34e516d034353737:0x97f836f00564d37"
       },
       {
-        name: "海人食堂",
+        name: "海人食堂 (讀谷村)",
         region: "中部/恩納",
         category: "美食",
-        highlight: "讀谷漁港直送・海人海鮮丼",
-        note: "位於都屋漁港旁，二樓可俯瞰漁港海景，炸鮪魚丼、海葡萄生魚片丼新鮮平價。",
-        url: "https://www.google.com/maps/place/%E6%B5%B7%E4%BA%BA%E9%A3%9F%E5%A0%82/data=!4m2!3m1!1s0x34e516b4aa651d97:0x1431c220c0d52c32"
+        highlight: "都屋漁港產地直送生魚片丼飯",
+        note: "坐在漁港邊吹海風大啖超澎湃海人丼、炸金楚魚定食。",
+        mapsUrl: "https://www.google.com/maps/place/%E6%B5%B7%E4%BA%BA%E9%A3%9F%E5%A0%82/data=!4m2!3m1!1s0x34e516b4aa651d97:0x1431c220c0d52c32"
       },
       {
-        name: "Shima ShabuShabu NAKAMA",
+        name: "Okinawa City Payao Market (泡瀨漁港)",
         region: "中部/恩納",
         category: "美食",
-        highlight: "恩納村頂級阿古豬涮涮鍋",
-        note: "主打沖繩島黑阿古豬與石垣牛涮涮鍋、蒸籠料理，肉質鮮甜細嫩，適合熱愛鍋物料理者。",
-        url: "https://www.google.com/maps/place/Shima+ShabuShabu+NAKAMA/data=!4m2!3m1!1s0x34e56976328c507b:0x2532b8d46bada01"
+        highlight: "焗烤半隻龍蝦海膽定食名店",
+        note: "離泡瀨住宿極近的產地直銷漁市，招牌焗烤海膽龍蝦是經典亮點。",
+        mapsUrl: "https://www.google.com/maps/place/Okinawa+City+Fishing+Association+Payao+Market/data=!4m2!3m1!1s0x34e50dc1252fb713:0x49f85d7c13a12272"
       },
       {
         name: "Panza Okinawa Zipline",
         region: "中部/恩納",
         category: "景點",
-        highlight: "喜來登海上極速高空滑索",
-        note: "長達 250 公尺、飛越碧藍海面的海上溜索體驗，刺激好玩，適合喜愛戶外冒險與海景攝影。",
-        url: "https://www.google.com/maps/place/Panza+Okinawa+Zipline/data=!4m2!3m1!1s0x34e505417cfeee85:0xe8fc20a98b8f0e02"
+        highlight: "喜來登海濱空中滑索冒險",
+        note: "跨越純白沙灘與翡翠綠海面的刺激海上空中飛索體驗。",
+        mapsUrl: "https://www.google.com/maps/place/Panza+Okinawa+Zipline/data=!4m2!3m1!1s0x34e505417cfeee85:0xe8fc20a98b8f0e02"
       },
       {
-        name: "かどや製麺所 KADOYA製麵所 星降森啤酒屋",
+        name: "かどや製麺所 (KADOYA製麵所 星降森啤酒屋)",
         region: "北部",
         category: "美食",
-        highlight: "北部手作沖繩麵與精釀啤酒",
-        note: "今歸仁/本部山林間的手工麵所，自家製彈牙麵條配上清甜湯頭，夜晚亦有星空精釀啤酒屋氛圍。",
-        url: "https://www.google.com/maps/place/%E3%81%8B%E3%81%A9%E3%82%84%E8%A3%BD%E9%BA%BA%E6%89%80+KADOYA%E8%A3%BD%E9%BA%B5%E6%89%80+%E6%98%9F%E9%99%8D%E6%A3%AE%E5%95%A4%E9%85%92%E5%B1%8B/data=!4m2!3m1!1s0x34e4fd71ce97f729:0x502b09d5fef9d3d3"
+        highlight: "名護特色自製麵條與精釀啤酒",
+        note: "北部特色製麵手作麵館，環境清幽獨特。",
+        mapsUrl: "https://www.google.com/maps/place/%E3%81%8B%E3%81%A9%E3%82%84%E8%A3%BD%E9%BA%BA%E6%89%80+KADOYA%E8%A3%BD%E9%BA%B5%E6%89%80+%E6%98%9F%E9%99%8D%E6%A3%AE%E5%95%A4%E9%85%92%E5%B1%8B/data=!4m2!3m1!1s0x34e4fd71ce97f729:0x502b09d5fef9d3d3"
       },
       {
         name: "COSTCO好市多 沖繩南城店",
         region: "南部",
         category: "購物",
-        highlight: "全新開幕沖繩旗艦好市多",
-        note: "沖繩南部超大型 CostCo 門市，若 D5 前往奧武島與 Gangala之谷時有大宗採買需求可順路排入。",
-        url: "https://www.google.com/maps/place/COSTCO%E5%A5%BD%E5%B8%82%E5%A4%9A+%E6%B2%96%E7%B9%A9%E5%BA%97/data=!4m2!3m1!1s0x34e56f002d5171dd:0x6f86b1ebb56a155c"
+        highlight: "全新沖繩好市多大賣場",
+        note: "沖繩最新開幕的巨型好市多，回台前採買日本獨家日用品好去處。",
+        mapsUrl: "https://www.google.com/maps/place/COSTCO%E5%A5%BD%E5%B8%82%E5%A4%9A+%E6%B2%96%E7%B9%A9%E5%BA%97/data=!4m2!3m1!1s0x34e56f002d5171dd:0x6f86b1ebb56a155c"
       }
     ];
 
     /* ==========================================================================
-       RENDER FUNCTIONS & UI LOGIC
+       3. MASTER DIRECTORY (清單 36 處全部地點)
        ========================================================================== */
-    let currentFilterCat = "全部";
-    let currentUnscheduledRegion = "全部";
+    const MASTER_PLACES = [
+      { name: "琉球新麵 通堂 小祿本店", cat: "美食", note: "每次去都要吃一下的男人麵/女人麵", url: "https://www.google.com/maps/place/%E7%90%89%E7%90%83%E6%96%B0%E9%BA%B5+%E9%80%9A%E5%A0%82+%E5%B0%8F%E7%A5%BF%E6%9C%AC%E5%BA%97/data=!4m2!3m1!1s0x34e569b140b3a219:0xdaaf5d41d37c6862" },
+      { name: "3 Chome Tsubogawa", cat: "住宿", note: "12/30 壺川第一晚住宿", url: "https://www.google.com/maps/place/3+Chome+Tsubogawa/data=!4m2!3m1!1s0x34e569a1b4ef6bd3:0xb73ef9c9533c140b" },
+      { name: "國際通屋台村（夜市）", cat: "美食", note: "深夜露天居酒屋熱炒串燒", url: "https://www.google.com/maps/place/%E5%9C%8B%E9%9A%9B%E9%80%9A%E5%B1%8B%E5%8F%B0%E6%9D%91%EF%BC%88%E5%A4%9C%E5%B8%82%EF%BC%89/data=!4m2!3m1!1s0x34e56917cdebf7a7:0x384644a940676d33" },
+      { name: "MaxValu Makishi", cat: "購物", note: "24小時營業超大AEON生鮮超市", url: "https://www.google.com/maps/place/MaxValu+Makishi/data=!4m2!3m1!1s0x34e5697b5cdc4c33:0x202b4331951f2689" },
+      { name: "OTS租車 DFS營業所", cat: "交通", note: "12/31 11:00 取車 / 1/3 16:00 還車", url: "https://www.google.com/maps/place/OTS%E7%A7%9F%E8%BB%8A+DFS%E7%87%9F%E6%A5%AD%E6%89%80/data=!4m2!3m1!1s0x34e56bdf4c4bbb81:0x44d863f78e1d4e09" },
+      { name: "Sports Depo 天久店", cat: "購物", note: "天久樂市運動用品大賣場", url: "https://www.google.com/maps/search/?api=1&query=Sports+Depo+Ameku+Store" },
+      { name: "達摩寺 (西来院)", cat: "景點", note: "首里不倒翁達摩初詣祈願古剎", url: "https://www.google.com/maps/place/%E9%81%94%E6%91%A9%E5%AF%BA/data=!4m2!3m1!1s0x34e56bff7290bbe7:0x193892a7ae016d6d" },
+      { name: "Awase Piano Lessons", cat: "住宿", note: "12/31-1/3 中部住宿周邊", url: "https://www.google.com/maps/place/Awase+Piano+Lessons/data=!4m2!3m1!1s0x34e50dd9d36a8d8f:0xe0278a784154b7e" },
+      { name: "壽司市場 泡瀨店", cat: "美食", note: "泡瀨高CP值平價在地迴轉壽司", url: "https://www.google.com/maps/place/%E5%A3%BD%E5%8F%B8%E5%B8%82%E5%A0%B4+%E6%B3%A1%E7%80%AC%E5%BA%97/data=!4m2!3m1!1s0x34e50d91181ba19d:0x57375191496328a8" },
+      { name: "CAMEL SANDWICH & SMOOTHIE", cat: "美食", note: "去美麗海之前先訂再拿的招牌三明治", url: "https://www.google.com/maps/place/CAMEL+SANDWICH+%26+SMOOTHIE/data=!4m2!3m1!1s0x34e4fbe39a7051ad:0x310396d0840a630a" },
+      { name: "沖繩美麗海水族館", cat: "景點", note: "黑潮之海巨型水槽、鯨鯊、海豚秀", url: "https://www.google.com/maps/place/%E6%B2%96%E7%B9%A9%E7%BE%8E%E9%BA%97%E6%B5%B7%E6%B0%B4%E6%97%8F%E9%A4%A8/data=!4m2!3m1!1s0x34e4fa3152619e3d:0xea08a6700fdd9ffe" },
+      { name: "古宇利大橋 南端觀景台", cat: "景點", note: "古宇利藍絕景跨海大橋拍照點", url: "https://www.google.com/maps/place/%E5%8F%A4%E5%AE%87%E5%88%A9%E5%A4%A7%E6%A9%8B+%E5%8D%97%E7%AB%AF%E8%A7%80%E6%99%AF%E5%8F%B0/data=!4m2!3m1!1s0x34e4578504115a47:0xb012af2b4d8bdc0e" },
+      { name: "海中道路沙灘", cat: "景點", note: "勝連半島跨海兜風休息站", url: "https://www.google.com/maps/place/%E6%B5%B7%E4%B8%AD%E9%81%93%E8%B7%AF%E6%B2%99%E7%81%98/data=!4m2!3m1!1s0x34e509d000146c77:0xaf68edcf341e8c04" },
+      { name: "古民家食堂てぃーらぶい", cat: "美食", note: "濱比嘉島紅瓦古民家島野菜定食", url: "https://www.google.com/maps/place/%E5%8F%A4%E6%B0%91%E5%AE%B6%E9%A3%9F%E5%A0%82%E3%81%A6%E3%81%83%E3%83%BC%E3%82%89%E3%81%B6%E3%81%84/data=!4m2!3m1!1s0x34e509be693b0b73:0x9723a2a7366d05a7" },
+      { name: "PARCO CITY", cat: "購物", note: "西海岸無敵海景超大免稅商場", url: "https://www.google.com/maps/place/PARCO+CITY/data=!4m2!3m1!1s0x34e56b0af61f94c5:0x78aac934fb2b5c0" },
+      { name: "魚がしの銀次 泡瀬店", cat: "美食", note: "泡瀨產地直送生魚片海鮮居酒屋", url: "https://www.google.com/maps/place/%E9%AD%9A%E3%81%8C%E3%81%97%E3%81%AE%E9%8A%80%E6%AC%A1+%E6%B3%A1%E7%80%AC%E5%BA%97/data=!4m2!3m1!1s0x34e50dbe0d82d217:0xf30bdfc3963e3f16" },
+      { name: "奥武島海産物食堂", cat: "美食", note: "南城貓島平價海鮮定食與鮮魚湯", url: "https://www.google.com/maps/place/%E5%A5%A5%E6%AD%A6%E5%B3%B6%E6%B5%B7%E7%94%A3%E7%89%A9%E9%A3%9F%E5%A0%82/data=!4m2!3m1!1s0x34fa9b9e97fe8659:0x8d6658489261682e" },
+      { name: "Gangala之谷", cat: "景點", note: "巨型古鐘乳石洞穴與百年榕樹咖啡", url: "https://www.google.com/maps/place/Gangala%E4%B9%8B%E8%B0%B7/data=!4m2!3m1!1s0x34e56f694e9fa999:0xad0c7c6998743d6" },
+      { name: "Buchi Kumojiten", cat: "美食", note: "久茂地和牛燒肉名店", url: "https://www.google.com/maps/place/Buchi+Kumojiten/data=!4m2!3m1!1s0x34e56977dac0c9cd:0xa9b836cde5e24546" },
+      { name: "LUCKY MAXIMUM", cat: "美食", note: "有人推薦看起來不錯先存", url: "https://www.google.com/maps/place/LUCKY+MAXIMUM/data=!4m2!3m1!1s0x34e569002b2928bf:0x7c6c40039de2d0dc" },
+      { name: "暖暮拉麵 那霸牧志店", cat: "美食", note: "國際通人氣排隊拉麵", url: "https://www.google.com/maps/place/%E6%9A%96%E6%9A%AE%E6%8B%89%E9%BA%B5+%E9%82%A3%E9%9C%B8%E7%89%A7%E5%BF%97%E5%BA%97/data=!4m2!3m1!1s0x34e5697bcfbeaaab:0x860befe404def6ef" },
+      { name: "ラーメン暖暮 首里店", cat: "美食", note: "首里分店排隊人潮較少", url: "https://www.google.com/maps/place/%E3%83%A9%E3%83%BC%E3%83%A1%E3%83%B3%E6%9A%96%E6%9A%AE+%E9%A6%96%E9%87%8C%E5%BA%97/data=!4m2!3m1!1s0x34e56d00310093d9:0x9486bf8dbe9264fb" },
+      { name: "Shima ShabuShabu NAKAMA", cat: "美食", note: "阿古豬與石垣牛涮涮鍋", url: "https://www.google.com/maps/place/Shima+ShabuShabu+NAKAMA/data=!4m2!3m1!1s0x34e56976328c507b:0x2532b8d46bada01" },
+      { name: "Henry's PIZZA", cat: "美食", note: "街頭美式紐約切片披薩", url: "https://www.google.com/maps/place/Henry's+PIZZA/data=!4m2!3m1!1s0x6000e734818d5af9:0xf626c9df135ab987" },
+      { name: "JUNKUDO Naha", cat: "購物", note: "B1超多扭蛋機與日本書籍雜誌", url: "https://www.google.com/maps/place/JUNKUDO+Naha/data=!4m2!3m1!1s0x34e5697977242e01:0x5fc247c2eb40fe16" },
+      { name: "Okinawa Sanchoku Ichiba", cat: "購物", note: "可試吃各種伴手禮食物再買", url: "https://www.google.com/maps/place/Okinawa+Sanchoku+Ichiba/data=!4m2!3m1!1s0x34e5698050092917:0xcc0cb11239c66009" },
+      { name: "Umichurara", cat: "購物", note: "美麗海水族館市區概念店", url: "https://www.google.com/maps/place/Umichurara/data=!4m2!3m1!1s0x34e5697628500001:0xb3c64c132922fe95" },
+      { name: "ミレメーレ", cat: "美食", note: "香濃世界第一酥脆蘋果派", url: "https://www.google.com/maps/place/%E3%83%9F%E3%83%AC%E3%83%A1%E3%83%BC%E3%83%AC/data=!4m2!3m1!1s0x34e5697905a63c47:0xb3adbef7169d38e5" },
+      { name: "珊瑚田", cat: "美食", note: "讀谷村特色家常菜與海鮮", url: "https://www.google.com/maps/place/%E7%8F%8A%E7%91%9A%E7%94%B0/data=!4m2!3m1!1s0x34e516d034353737:0x97f836f00564d37" },
+      { name: "海人食堂", cat: "美食", note: "讀谷村都屋漁港海人丼", url: "https://www.google.com/maps/place/%E6%B5%B7%E4%BA%BA%E9%A3%9F%E5%A0%82/data=!4m2!3m1!1s0x34e516b4aa651d97:0x1431c220c0d52c32" },
+      { name: "Okinawa City Payao Market", cat: "美食", note: "泡瀨漁港焗烤半隻龍蝦定食", url: "https://www.google.com/maps/place/Okinawa+City+Fishing+Association+Payao+Market/data=!4m2!3m1!1s0x34e50dc1252fb713:0x49f85d7c13a12272" },
+      { name: "Panza Okinawa Zipline", cat: "景點", note: "喜來登海上空中滑索", url: "https://www.google.com/maps/place/Panza+Okinawa+Zipline/data=!4m2!3m1!1s0x34e505417cfeee85:0xe8fc20a98b8f0e02" },
+      { name: "かどや製麺所 星降森啤酒屋", cat: "美食", note: "名護特色手作麵與精釀啤酒", url: "https://www.google.com/maps/place/%E3%81%8B%E3%81%A9%E3%82%84%E8%A3%BD%E9%BA%BA%E6%89%80+KADOYA%E8%A3%BD%E9%BA%B5%E6%89%80+%E6%98%9F%E9%99%8D%E6%A3%AE%E5%95%A4%E9%85%92%E5%B1%8B/data=!4m2!3m1!1s0x34e4fd71ce97f729:0x502b09d5fef9d3d3" },
+      { name: "COSTCO好市多 沖繩店", cat: "購物", note: "沖繩南部巨型好市多量販店", url: "https://www.google.com/maps/place/COSTCO%E5%A5%BD%E5%B8%82%E5%A4%9A+%E6%B2%96%E7%B9%A9%E5%BA%97/data=!4m2!3m1!1s0x34e56f002d5171dd:0x6f86b1ebb56a155c" },
+      { name: "Ryoshi Shokudo 魚大統領", cat: "美食", note: "YouTuber推薦當地人海鮮定食", url: "https://www.google.com/maps/place/Ryoshi+Shokudo+Obanburumai+Sakana+Daitoryo/data=!4m2!3m1!1s0x34e56b047c4b65c9:0x3e70d1280ee22c7a" },
+      { name: "イツクマの浜", cat: "景點", note: "秘境純白自然沙灘", url: "https://www.google.com/maps/place/%E3%82%A4%E3%83%84%E3%82%AF%E3%83%9E%E3%81%AE%E6%B5%9C/data=!4m2!3m1!1s0x34e5a933a30aaa83:0x100e8098a5a47513" }
+    ];
 
-    function getCategoryColorClass(cat) {
-      switch (cat) {
-        case "美食": return "bg-amber-100 text-amber-800 border-amber-200";
-        case "景點": return "bg-teal-100 text-teal-800 border-teal-200";
-        case "購物": return "bg-emerald-100 text-emerald-800 border-emerald-200";
-        case "住宿":
-        case "交通":
-        case "租車": return "bg-sky-100 text-sky-800 border-sky-200";
-        default: return "bg-slate-100 text-slate-700 border-slate-200";
+    /* ==========================================================================
+       4. TAB & CAROUSEL SLIDING LOGIC
+       ========================================================================== */
+    const TABS_ORDER = ['d1', 'd2', 'd3', 'd4', 'd5', 'unscheduled', 'all'];
+    let currentTabIndex = 0;
+    let isAdminLoggedIn = false;
+
+    function switchTab(tabId) {
+      const idx = TABS_ORDER.indexOf(tabId);
+      if (idx === -1) return;
+      currentTabIndex = idx;
+
+      // Update Carousel Slide Track
+      const wrapper = document.getElementById("views-wrapper");
+      if (wrapper) {
+        wrapper.style.transform = `translateX(-${(idx * 100) / 7}%)`;
       }
+
+      // Update Tab Navigation Button Styling
+      TABS_ORDER.forEach(id => {
+        const btn = document.getElementById(`tab-btn-${id}`);
+        if (!btn) return;
+        if (id === tabId) {
+          btn.className = "tab-btn whitespace-nowrap px-3.5 py-1.5 rounded-full font-bold transition bg-white text-sky-700 shadow-sm shrink-0 inline-flex items-center gap-1.5";
+          btn.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
+        } else {
+          btn.className = "tab-btn whitespace-nowrap px-3.5 py-1.5 rounded-full font-medium transition text-white/80 hover:bg-white/10 shrink-0 inline-flex items-center gap-1.5";
+        }
+      });
+      window.scrollTo({ top: 0, behavior: 'smooth' });
     }
 
+    function setupSwipeGestures() {
+      const main = document.getElementById("main-content");
+      if (!main) return;
+      let startX = 0;
+      let startY = 0;
+
+      main.addEventListener("touchstart", (e) => {
+        startX = e.touches[0].clientX;
+        startY = e.touches[0].clientY;
+      }, { passive: true });
+
+      main.addEventListener("touchend", (e) => {
+        const diffX = e.changedTouches[0].clientX - startX;
+        const diffY = e.changedTouches[0].clientY - startY;
+
+        // Ensure horizontal swipe is dominant and > 50px
+        if (Math.abs(diffX) > 50 && Math.abs(diffX) > Math.abs(diffY) * 1.5) {
+          if (diffX < 0 && currentTabIndex < TABS_ORDER.length - 1) {
+            switchTab(TABS_ORDER[currentTabIndex + 1]);
+          } else if (diffX > 0 && currentTabIndex > 0) {
+            switchTab(TABS_ORDER[currentTabIndex - 1]);
+          }
+        }
+      }, { passive: true });
+    }
+
+    /* ==========================================================================
+       5. RENDER ITINERARY CARDS (渲染每天景點卡片)
+       ========================================================================== */
     function renderDays() {
       ['d1', 'd2', 'd3', 'd4', 'd5'].forEach(dayKey => {
         const container = document.getElementById(`${dayKey}-cards`);
         if (!container) return;
-        const items = DAYS_DATA[dayKey] || [];
-        
-        container.innerHTML = items.map((item, idx) => {
+
+        const spots = DAYS_DATA[dayKey] || [];
+        container.innerHTML = spots.map((spot, i) => {
           return `
-            <div id="card-${item.id}" class="bg-white rounded-2xl p-4 shadow-sm border border-slate-200/90 transition hover:shadow-md">
+            <div class="bg-white rounded-2xl p-4 shadow-sm border border-slate-200/90 relative hover:shadow transition" id="card-${spot.id}">
               <div class="flex items-start justify-between gap-2">
                 <div class="flex items-start gap-2.5">
-                  <button onclick="toggleSpotCheck('${item.id}')" class="mt-0.5 text-slate-300 hover:text-emerald-500 transition active:scale-90" title="標記完成">
-                    <i data-lucide="check-circle" id="check-icon-${item.id}" class="w-5 h-5"></i>
-                  </button>
+                  <input type="checkbox" id="check-${spot.id}" onchange="toggleCheck('${spot.id}')"
+                         class="mt-1 w-4 h-4 rounded border-slate-300 text-sky-600 focus:ring-sky-500 cursor-pointer" />
                   <div>
                     <div class="flex items-center gap-1.5 flex-wrap">
-                      <span class="text-xs font-bold text-sky-600 bg-sky-50 px-2 py-0.5 rounded-md border border-sky-100">${item.time}</span>
-                      <span class="text-[11px] font-semibold px-2 py-0.5 rounded-md border ${getCategoryColorClass(item.category)}">${item.category}</span>
-                      <span class="text-[10px] text-slate-400 font-medium">${item.tag || ''}</span>
+                      <span class="text-xs font-bold text-sky-700 bg-sky-50 px-2 py-0.5 rounded-md border border-sky-100">${spot.time}</span>
+                      <span class="text-[11px] font-semibold px-2 py-0.5 rounded-full ${spot.tagColor || 'bg-slate-100 text-slate-700'}">${spot.tag}</span>
                     </div>
-                    <h3 id="title-${item.id}" class="font-bold text-slate-800 text-base mt-1 tracking-tight">${item.name}</h3>
+                    <h3 class="font-bold text-base text-slate-800 mt-1 leading-snug">${spot.name}</h3>
                   </div>
                 </div>
+
+                ${isAdminLoggedIn ? `
+                  <div class="flex items-center gap-1 shrink-0">
+                    <button onclick="openEditSpotModal('${dayKey}', '${spot.id}')" class="p-1.5 text-slate-400 hover:text-amber-600 rounded-lg hover:bg-slate-100" title="編輯此行程">
+                      <i data-lucide="pencil" class="w-4 h-4"></i>
+                    </button>
+                    <button onclick="deleteSpot('${dayKey}', '${spot.id}')" class="p-1.5 text-slate-400 hover:text-rose-600 rounded-lg hover:bg-slate-100" title="刪除此行程">
+                      <i data-lucide="trash-2" class="w-4 h-4"></i>
+                    </button>
+                  </div>
+                ` : ''}
               </div>
 
-              <p class="text-xs text-slate-600 mt-2 leading-relaxed pl-7">${item.note}</p>
+              <p class="text-xs text-slate-600 mt-2 leading-relaxed">${spot.desc}</p>
+              ${spot.tips ? `
+                <div class="mt-2 text-[11px] text-amber-800 bg-amber-50/80 p-2 rounded-xl border border-amber-100 flex items-start gap-1.5">
+                  <i data-lucide="lightbulb" class="w-3.5 h-3.5 text-amber-600 shrink-0 mt-0.5"></i>
+                  <span>${spot.tips}</span>
+                </div>
+              ` : ''}
 
-              <div class="mt-3.5 pt-2.5 border-t border-slate-100 flex items-center justify-between pl-7">
-                <span class="text-[11px] text-slate-400">點擊右側開地圖</span>
-                <a href="${item.mapUrl}" target="_blank" rel="noopener noreferrer"
-                   class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-sky-600 hover:bg-sky-700 text-white text-xs font-semibold shadow-sm active:scale-95 transition">
-                  <i data-lucide="map-pin" class="w-3.5 h-3.5 text-white"></i>
+              <div class="mt-3 pt-2.5 border-t border-slate-100 flex items-center justify-between">
+                <a href="${spot.mapsUrl}" target="_blank" rel="noopener noreferrer"
+                   class="inline-flex items-center gap-1.5 text-xs font-bold text-sky-600 hover:text-sky-700 active:scale-95 transition bg-sky-50/80 hover:bg-sky-100 px-3 py-1.5 rounded-xl border border-sky-100">
+                  <i data-lucide="map-pin" class="w-3.5 h-3.5"></i>
                   <span>在 Google 地圖開啟</span>
                 </a>
+                <span class="text-[10px] text-slate-400 font-medium">第 ${i + 1} 站</span>
               </div>
             </div>
           `;
         }).join("");
       });
+
+      if (window.lucide) lucide.createIcons();
     }
+
+    /* ==========================================================================
+       6. RENDER UNSCHEDULED LIST (未排入景點渲染)
+       ========================================================================== */
+    let currentUnscheduledRegion = "全部";
 
     function renderUnscheduledList(list) {
       const container = document.getElementById("unscheduled-cards");
       if (!container) return;
 
-      if (!list || list.length === 0) {
-        container.innerHTML = `
-          <div class="bg-white rounded-2xl p-8 text-center text-slate-400 text-sm">
-            該地區目前沒有未排入的備用景點
-          </div>
-        `;
-        return;
-      }
+      const filtered = list.filter(item => {
+        return currentUnscheduledRegion === "全部" || item.region === currentUnscheduledRegion;
+      });
 
-      container.innerHTML = list.map((item) => {
+      const countTag = document.getElementById("unscheduled-count-tag");
+      if (countTag) countTag.innerText = `共 ${filtered.length} 處`;
+
+      container.innerHTML = filtered.map(item => {
         return `
-          <div class="bg-white rounded-2xl p-4 shadow-sm border border-slate-200/90 transition hover:shadow-md">
-            <div class="flex items-start justify-between gap-2">
-              <div>
-                <!-- Single-Line Badges Strip (Strictly No Wrap on Mobile) -->
-                <div class="flex items-center gap-1.5 overflow-x-auto hide-scrollbar whitespace-nowrap text-xs pb-0.5">
-                  <span class="text-[11px] font-bold px-2 py-0.5 rounded-md bg-amber-50 text-amber-700 border border-amber-200 shrink-0">${item.region}</span>
-                  <span class="text-[11px] font-semibold px-2 py-0.5 rounded-md border shrink-0 ${getCategoryColorClass(item.category)}">${item.category}</span>
-                  <span class="text-[11px] font-medium text-slate-500 shrink-0">${item.highlight}</span>
-                </div>
-                <h3 class="font-bold text-slate-800 text-base mt-1 tracking-tight">${item.name}</h3>
-              </div>
+          <div class="bg-white rounded-2xl p-4 shadow-sm border border-slate-200/90 relative hover:shadow transition">
+            <div class="flex items-center gap-1.5 text-[11px] font-semibold text-slate-500 overflow-x-auto hide-scrollbar whitespace-nowrap">
+              <span class="text-amber-800 bg-amber-50 px-2 py-0.5 rounded-md border border-amber-200/60 font-bold shrink-0">${item.region}</span>
+              <span class="text-slate-600 bg-slate-100 px-2 py-0.5 rounded-md shrink-0">${item.category}</span>
+              <span class="text-amber-700 shrink-0 font-medium truncate">${item.highlight}</span>
             </div>
 
-            <p class="text-xs text-slate-600 mt-2 leading-relaxed">${item.note}</p>
+            <h3 class="font-bold text-base text-slate-800 mt-1.5 leading-snug">${item.name}</h3>
+            <p class="text-xs text-slate-600 mt-1.5 leading-relaxed">${item.note}</p>
 
-            <div class="mt-3.5 pt-2.5 border-t border-slate-100 flex items-center justify-between">
-              <span class="text-[11px] text-slate-400">備用行程隨時替換</span>
-              <a href="${item.url}" target="_blank" rel="noopener noreferrer"
-                 class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-amber-600 hover:bg-amber-700 text-white text-xs font-semibold shadow-sm active:scale-95 transition">
-                <i data-lucide="map-pin" class="w-3.5 h-3.5 text-white"></i>
-                <span>在 Google 地圖開啟</span>
+            <div class="mt-3 pt-2.5 border-t border-slate-100 flex items-center justify-between gap-2">
+              <a href="${item.mapsUrl}" target="_blank" rel="noopener noreferrer"
+                 class="inline-flex items-center gap-1.5 text-xs font-bold text-sky-600 hover:text-sky-700 px-2.5 py-1.5 rounded-xl bg-sky-50 border border-sky-100">
+                <i data-lucide="map-pin" class="w-3.5 h-3.5"></i>
+                <span>Google 地圖</span>
               </a>
+              <button onclick="openScheduleModal('${item.name.replace(/'/g, "\\'")}', '${item.mapsUrl.replace(/'/g, "\\'")}', '${item.note.replace(/'/g, "\\'")}')"
+                      class="inline-flex items-center gap-1.5 text-xs font-bold text-white bg-amber-600 hover:bg-amber-700 px-3 py-1.5 rounded-xl shadow-sm active:scale-95 transition">
+                <i data-lucide="calendar-plus" class="w-3.5 h-3.5"></i>
+                <span>排入行程</span>
+              </button>
             </div>
           </div>
         `;
       }).join("");
 
-      if (window.lucide) {
-        lucide.createIcons();
-      }
+      if (window.lucide) lucide.createIcons();
     }
 
     function filterUnscheduledRegion(region) {
       currentUnscheduledRegion = region;
-      document.querySelectorAll(".unscheduled-pill").forEach(el => {
-        el.className = "unscheduled-pill shrink-0 px-3 py-1 rounded-full bg-slate-100 text-slate-600";
+      document.querySelectorAll(".unscheduled-pill").forEach(btn => {
+        if (btn.innerText.includes(region)) {
+          btn.className = "unscheduled-pill shrink-0 px-3 py-1 rounded-full font-bold bg-amber-600 text-white shadow-sm";
+        } else {
+          btn.className = "unscheduled-pill shrink-0 px-3 py-1 rounded-full bg-slate-100 text-slate-600";
+        }
       });
-      event.target.className = "unscheduled-pill shrink-0 px-3 py-1 rounded-full font-bold bg-amber-600 text-white shadow-sm";
-
-      if (region === "全部") {
-        renderUnscheduledList(UNSCHEDULED_PLACES);
-      } else {
-        renderUnscheduledList(UNSCHEDULED_PLACES.filter(p => p.region === region));
-      }
+      renderUnscheduledList(UNSCHEDULED_PLACES);
     }
+
+    /* ==========================================================================
+       7. RENDER MASTER LIST (全部清單渲染)
+       ========================================================================== */
+    let currentMasterCategory = "全部";
 
     function renderMasterList(list) {
       const container = document.getElementById("master-cards");
       if (!container) return;
 
-      if (!list || list.length === 0) {
-        container.innerHTML = `
-          <div class="bg-white rounded-2xl p-8 text-center text-slate-400 text-sm">
-            找不到符合的景點或美食
-          </div>
-        `;
-        return;
-      }
-
-      container.innerHTML = list.map((item) => {
+      container.innerHTML = list.map(item => {
+        const badgeColor = item.cat === "美食" ? "bg-amber-100 text-amber-800" :
+                           item.cat === "景點" ? "bg-blue-100 text-blue-800" :
+                           item.cat === "購物" ? "bg-emerald-100 text-emerald-800" : "bg-purple-100 text-purple-800";
         return `
-          <div class="bg-white rounded-2xl p-3.5 shadow-sm border border-slate-200">
-            <div class="flex items-center justify-between gap-2">
-              <div>
-                <div class="flex items-center gap-2">
-                  <span class="text-[10px] font-bold px-1.5 py-0.5 rounded border ${getCategoryColorClass(item.category)}">${item.category}</span>
-                  <h4 class="font-bold text-sm text-slate-800">${item.name}</h4>
-                </div>
-                <p class="text-xs text-slate-500 mt-1">${item.note || '清單儲存地點'}</p>
+          <div class="bg-white rounded-2xl p-3.5 shadow-sm border border-slate-200/90 flex items-center justify-between gap-3">
+            <div class="min-w-0">
+              <div class="flex items-center gap-2">
+                <span class="text-[10px] font-bold px-2 py-0.5 rounded-full ${badgeColor}">${item.cat}</span>
+                <h4 class="font-bold text-sm text-slate-800 truncate">${item.name}</h4>
               </div>
-              <a href="${item.url}" target="_blank" rel="noopener noreferrer"
-                 class="shrink-0 p-2 rounded-xl bg-slate-100 hover:bg-sky-50 text-sky-600 hover:text-sky-700 active:scale-95 transition"
-                 title="在 Google Maps 開啟">
-                <i data-lucide="external-link" class="w-4 h-4"></i>
-              </a>
+              <p class="text-xs text-slate-500 mt-1 truncate">${item.note || '沖繩清單推薦地點'}</p>
             </div>
+            <a href="${item.url}" target="_blank" rel="noopener noreferrer"
+               class="shrink-0 p-2 text-sky-600 hover:text-sky-700 bg-sky-50 hover:bg-sky-100 rounded-xl border border-sky-100">
+              <i data-lucide="navigation-2" class="w-4 h-4"></i>
+            </a>
           </div>
         `;
       }).join("");
 
-      if (window.lucide) {
-        lucide.createIcons();
-      }
-    }
-
-    function switchTab(tabId) {
-      // Update Tab Buttons
-      document.querySelectorAll(".tab-btn").forEach(btn => {
-        btn.className = "tab-btn whitespace-nowrap px-3.5 py-1.5 rounded-full font-medium transition text-white/80 hover:bg-white/10";
-      });
-      const activeBtn = document.getElementById(`tab-btn-${tabId}`);
-      if (activeBtn) {
-        activeBtn.className = "tab-btn whitespace-nowrap px-3.5 py-1.5 rounded-full font-bold transition bg-white text-sky-700 shadow-sm";
-      }
-
-      // Update Views
-      document.querySelectorAll(".tab-view").forEach(view => view.classList.add("hidden"));
-      const activeView = document.getElementById(`view-${tabId}`);
-      if (activeView) activeView.classList.remove("hidden");
-
-      if (window.lucide) {
-        lucide.createIcons();
-      }
-    }
-
-    function filterMasterList() {
-      const keyword = (document.getElementById("all-search-input").value || "").trim().toLowerCase();
-      let filtered = MASTER_PLACES;
-
-      if (currentFilterCat !== "全部") {
-        filtered = filtered.filter(p => {
-          if (currentFilterCat === "住宿") {
-            return p.category === "住宿" || p.category === "交通";
-          }
-          return p.category === currentFilterCat;
-        });
-      }
-
-      if (keyword) {
-        filtered = filtered.filter(p => 
-          p.name.toLowerCase().includes(keyword) || (p.note && p.note.toLowerCase().includes(keyword))
-        );
-      }
-
-      renderMasterList(filtered);
+      if (window.lucide) lucide.createIcons();
     }
 
     function setFilterCategory(cat) {
-      currentFilterCat = cat;
-      document.querySelectorAll(".cat-pill").forEach(el => {
-        el.className = "cat-pill shrink-0 px-3 py-1 rounded-full bg-slate-100 text-slate-600";
+      currentMasterCategory = cat;
+      document.querySelectorAll(".cat-pill").forEach(btn => {
+        if (btn.innerText === cat) {
+          btn.className = "cat-pill shrink-0 px-3 py-1 rounded-full font-bold bg-sky-600 text-white";
+        } else {
+          btn.className = "cat-pill shrink-0 px-3 py-1 rounded-full bg-slate-100 text-slate-600";
+        }
       });
-      event.target.className = "cat-pill shrink-0 px-3 py-1 rounded-full font-bold bg-sky-600 text-white";
       filterMasterList();
     }
 
+    function filterMasterList() {
+      const q = (document.getElementById("all-search-input")?.value || "").toLowerCase().trim();
+      const filtered = MASTER_PLACES.filter(item => {
+        const matchCat = currentMasterCategory === "全部" || item.cat === currentMasterCategory;
+        const matchText = item.name.toLowerCase().includes(q) || (item.note && item.note.toLowerCase().includes(q));
+        return matchCat && matchText;
+      });
+      renderMasterList(filtered);
+    }
+
     /* ==========================================================================
-       CHECKBOX PROGRESS SYNC (localStorage)
+       8. INTERACTIVE SCHEDULE MODAL (排入行程邏輯)
        ========================================================================== */
-    function getCheckedSpots() {
-      try {
-        return JSON.parse(localStorage.getItem("okinawa_checked_spots") || "[]");
-      } catch (e) {
-        return [];
-      }
+    let pendingSpot = null;
+    let selectedDay = "d1";
+    let scheduleMode = "insert";
+
+    function openScheduleModal(name, url, note) {
+      pendingSpot = { name, url, note };
+      const nameEl = document.getElementById("schedule-modal-spot-name");
+      if (nameEl) nameEl.innerText = name;
+
+      selectScheduleDay("d1");
+      setScheduleMode("insert");
+
+      document.getElementById("schedule-modal").classList.remove("hidden");
+      document.getElementById("schedule-modal").classList.add("flex");
     }
 
-    function toggleSpotCheck(id) {
-      let list = getCheckedSpots();
-      if (list.includes(id)) {
-        list = list.filter(item => item !== id);
-      } else {
-        list.push(id);
-      }
-      localStorage.setItem("okinawa_checked_spots", JSON.stringify(list));
-      updateCheckedUi();
-      updateProgress();
+    function closeScheduleModal() {
+      document.getElementById("schedule-modal").classList.add("hidden");
+      document.getElementById("schedule-modal").classList.remove("flex");
+      pendingSpot = null;
     }
 
-    function updateCheckedUi() {
-      const checked = getCheckedSpots();
-      const allSpotIds = Object.values(DAYS_DATA).flat().map(i => i.id);
-
-      allSpotIds.forEach(id => {
-        const icon = document.getElementById(`check-icon-${id}`);
-        const card = document.getElementById(`card-${id}`);
-        const title = document.getElementById(`title-${id}`);
-        const isDone = checked.includes(id);
-
-        if (icon) {
-          if (isDone) {
-            icon.classList.remove("text-slate-300");
-            icon.classList.add("text-emerald-500", "fill-emerald-100");
-          } else {
-            icon.classList.add("text-slate-300");
-            icon.classList.remove("text-emerald-500", "fill-emerald-100");
-          }
-        }
-        if (title) {
-          if (isDone) {
-            title.classList.add("line-through", "text-slate-400");
-          } else {
-            title.classList.remove("line-through", "text-slate-400");
-          }
-        }
-        if (card) {
-          if (isDone) {
-            card.classList.add("bg-slate-50/70", "opacity-80");
-          } else {
-            card.classList.remove("bg-slate-50/70", "opacity-80");
-          }
+    function selectScheduleDay(dayKey) {
+      selectedDay = dayKey;
+      ['d1', 'd2', 'd3', 'd4', 'd5'].forEach(k => {
+        const btn = document.getElementById(`sch-day-${k}`);
+        if (!btn) return;
+        if (k === dayKey) {
+          btn.className = "sch-day-btn py-2 rounded-xl font-bold border border-sky-600 bg-sky-600 text-white shadow-sm";
+        } else {
+          btn.className = "sch-day-btn py-2 rounded-xl font-bold border border-slate-200 bg-slate-100 text-slate-700";
         }
       });
+      populateTargetSpots();
     }
 
-    function updateProgress() {
-      const checked = getCheckedSpots();
-      const total = Object.values(DAYS_DATA).flat().length;
-      const el = document.getElementById("progress-text");
-      if (el) {
-        el.innerText = `進度：${checked.length} / ${total} 點位已探訪`;
+    function setScheduleMode(mode) {
+      scheduleMode = mode;
+      const insertBtn = document.getElementById("sch-mode-insert");
+      const replaceBtn = document.getElementById("sch-mode-replace");
+      const label = document.getElementById("sch-target-label");
+
+      if (mode === "insert") {
+        insertBtn.className = "p-2.5 rounded-xl border border-sky-500 bg-sky-50 text-sky-800 font-bold text-left transition";
+        replaceBtn.className = "p-2.5 rounded-xl border border-slate-200 bg-slate-50 text-slate-600 font-bold text-left transition";
+        if (label) label.innerText = "3. 插入位置（原行程順序）";
+      } else {
+        replaceBtn.className = "p-2.5 rounded-xl border border-amber-500 bg-amber-50 text-amber-800 font-bold text-left transition";
+        insertBtn.className = "p-2.5 rounded-xl border border-slate-200 bg-slate-50 text-slate-600 font-bold text-left transition";
+        if (label) label.innerText = "3. 選擇要替換掉的原景點";
+      }
+      populateTargetSpots();
+    }
+
+    function populateTargetSpots() {
+      const select = document.getElementById("sch-target-select");
+      if (!select) return;
+
+      const daySpots = DAYS_DATA[selectedDay] || [];
+      if (scheduleMode === "insert") {
+        select.innerHTML = daySpots.map((s, idx) => `
+          <option value="${idx}">排在第 ${idx + 1} 站之前：${s.name} (${s.time})</option>
+        `).join("") + `<option value="${daySpots.length}">排在當天最後一站</option>`;
+      } else {
+        select.innerHTML = daySpots.map((s, idx) => `
+          <option value="${idx}">替換第 ${idx + 1} 站：${s.name} (${s.time})</option>
+        `).join("");
+      }
+      quickFillTime('current');
+    }
+
+    function quickFillTime(mode) {
+      const select = document.getElementById("sch-target-select");
+      const timeInput = document.getElementById("sch-time-input");
+      if (!select || !timeInput) return;
+
+      const daySpots = DAYS_DATA[selectedDay] || [];
+      const idx = parseInt(select.value, 10);
+
+      if (daySpots[idx]) {
+        timeInput.value = daySpots[idx].time;
+      } else {
+        timeInput.value = "14:00 - 15:30";
       }
     }
 
-    function resetChecks() {
-      localStorage.removeItem("okinawa_checked_spots");
+    function confirmAddToSchedule() {
+      if (!pendingSpot) return;
+      const targetIdx = parseInt(document.getElementById("sch-target-select")?.value || "0", 10);
+      const plannedTime = document.getElementById("sch-time-input")?.value.trim() || "14:00 - 15:30";
+
+      const newSpot = {
+        id: `custom-${Date.now()}`,
+        time: plannedTime,
+        name: pendingSpot.name,
+        tag: "自訂新增",
+        tagColor: "bg-amber-100 text-amber-800 font-bold",
+        desc: pendingSpot.note || "從備選清單加入的推薦行程。",
+        mapsUrl: pendingSpot.url,
+        tips: "手動排入景點，可隨時在管理員模式調整。"
+      };
+
+      if (!DAYS_DATA[selectedDay]) DAYS_DATA[selectedDay] = [];
+
+      if (scheduleMode === "replace") {
+        DAYS_DATA[selectedDay][targetIdx] = newSpot;
+      } else {
+        DAYS_DATA[selectedDay].splice(targetIdx, 0, newSpot);
+      }
+
+      saveDaysData();
+      renderDays();
       updateCheckedUi();
       updateProgress();
+      pushScheduleToCloud();
+
+      closeScheduleModal();
+      alertModalNotice(`✅ 已成功將【${newSpot.name}】排入 ${selectedDay.toUpperCase()} 行程！`);
+      switchTab(selectedDay);
+    }
+
+    function resetCustomSchedule() {
+      if (confirm("確定要將所有行程重設為最初的官方 5 天預設版本嗎？")) {
+        localStorage.removeItem("okinawa_schedule_v2");
+        DAYS_DATA = JSON.parse(JSON.stringify(INITIAL_DAYS_DATA));
+        renderDays();
+        updateCheckedUi();
+        updateProgress();
+        pushScheduleToCloud();
+        alertModalNotice("行程已還原為官方預設版本！");
+      }
     }
 
     /* ==========================================================================
-       CURRENCY CONVERTER & REAL-TIME BOT RATE AUTO-FETCH
+       9. ADMIN EDIT & PIN CODE (密碼 0000)
        ========================================================================== */
-    let isTaxFree = false;
-    let liveRate = 0.2150;
-    let lastFetchedTime = null;
-
-    // Fetch real-time rate with fallback strategy
-    async function fetchLiveExchangeRate(isManual = false) {
-      const refreshIcon = document.getElementById("rate-refresh-icon");
-      if (refreshIcon) refreshIcon.classList.add("animate-spin");
-
-      const statusText = document.getElementById("rate-status-text");
-      const statusDot = document.getElementById("rate-status-dot");
-      const timeTag = document.getElementById("rate-time-tag");
-      const sourceTag = document.getElementById("rate-source-tag");
-
-      try {
-        let detectedRate = null;
-        let sourceName = "台銀參考即時匯率";
-
-        // Strategy 1: Open Exchange Rates API (open.er-api.com) for JPY -> TWD real-time conversion
-        try {
-          const res = await fetch("https://open.er-api.com/v6/latest/JPY", { cache: "no-store" });
-          if (res.ok) {
-            const data = await res.json();
-            if (data && data.rates && data.rates.TWD) {
-              detectedRate = parseFloat(data.rates.TWD);
-              sourceName = "即時市場匯率 (同步台銀水位)";
-            }
-          }
-        } catch (e1) {
-          console.warn("Primary API failed, trying backup API...", e1);
-        }
-
-        // Strategy 2: Backup Exchange API
-        if (!detectedRate) {
-          try {
-            const res2 = await fetch("https://api.exchangerate-api.com/v4/latest/JPY", { cache: "no-store" });
-            if (res2.ok) {
-              const data2 = await res2.json();
-              if (data2 && data2.rates && data2.rates.TWD) {
-                detectedRate = parseFloat(data2.rates.TWD);
-                sourceName = "備用即時匯率";
-              }
-            }
-          } catch (e2) {
-            console.warn("Backup API failed", e2);
-          }
-        }
-
-        if (detectedRate && !isNaN(detectedRate)) {
-          liveRate = Number(detectedRate.toFixed(4));
-          lastFetchedTime = new Date();
-          const timeStr = lastFetchedTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-
-          // Save to local cache
-          try {
-            localStorage.setItem("okinawa_last_rate", JSON.stringify({ rate: liveRate, time: timeStr }));
-          } catch (err) {}
-
-          // Update UI
-          document.getElementById("calc-rate").value = liveRate.toFixed(4);
-          if (statusText) statusText.innerText = `已自動套用：1 JPY ≈ NT$ ${liveRate.toFixed(4)}`;
-          if (statusDot) statusDot.className = "w-2 h-2 rounded-full bg-emerald-500";
-          if (timeTag) timeTag.innerText = `更新時間 ${timeStr} (${sourceName})`;
-          if (sourceTag) {
-            sourceTag.innerText = "● 已自動同步";
-            sourceTag.className = "text-[10px] px-1.5 py-0.5 rounded-full bg-emerald-100 text-emerald-800 font-bold";
-          }
-          document.getElementById("rate-auto-label").innerText = "已自動套用";
-          document.getElementById("rate-auto-label").className = "text-[10px] text-emerald-600 font-bold";
-        } else {
-          throw new Error("No rate returned");
-        }
-      } catch (err) {
-        // Fallback: Check local storage or default
-        const cached = localStorage.getItem("okinawa_last_rate");
-        if (cached) {
-          try {
-            const parsed = JSON.parse(cached);
-            liveRate = parsed.rate;
-            document.getElementById("calc-rate").value = liveRate.toFixed(4);
-            if (statusText) statusText.innerText = `使用上次快取：1 JPY ≈ NT$ ${liveRate.toFixed(4)}`;
-            if (timeTag) timeTag.innerText = `上次更新 ${parsed.time} (離線模式)`;
-          } catch (e) {}
-        } else {
-          if (statusText) statusText.innerText = `離線預設：1 JPY ≈ NT$ ${liveRate.toFixed(4)}`;
-          if (timeTag) timeTag.innerText = `未連線 (可直接手動修改或選下方檔位)`;
-        }
-        if (statusDot) statusDot.className = "w-2 h-2 rounded-full bg-amber-400";
-        if (sourceTag) {
-          sourceTag.innerText = "離線/手動檔位";
-          sourceTag.className = "text-[10px] px-1.5 py-0.5 rounded-full bg-slate-100 text-slate-600 font-bold";
-        }
-      } finally {
-        if (refreshIcon) {
-          setTimeout(() => refreshIcon.classList.remove("animate-spin"), 400);
-        }
-        calculateExchange();
+    function toggleAdminPrompt() {
+      if (isAdminLoggedIn) {
+        exitAdminMode();
+      } else {
+        document.getElementById("admin-pin-modal").classList.remove("hidden");
+        document.getElementById("admin-pin-modal").classList.add("flex");
+        document.getElementById("admin-pin-input").value = "";
+        document.getElementById("admin-pin-input").focus();
       }
     }
 
-    function onCustomRateInput() {
-      document.getElementById("rate-auto-label").innerText = "手動自訂";
-      document.getElementById("rate-auto-label").className = "text-[10px] text-amber-600 font-bold";
-      calculateExchange();
+    function closeAdminPinModal() {
+      document.getElementById("admin-pin-modal").classList.add("hidden");
+      document.getElementById("admin-pin-modal").classList.remove("flex");
     }
 
-    function applyPresetRate(preset) {
-      document.getElementById("calc-rate").value = preset.toFixed(4);
-      document.getElementById("rate-auto-label").innerText = `固定 ${preset}`;
-      document.getElementById("rate-auto-label").className = "text-[10px] text-sky-600 font-bold";
-      calculateExchange();
+    function verifyAdminPin() {
+      const input = document.getElementById("admin-pin-input")?.value;
+      if (input === "0000") {
+        isAdminLoggedIn = true;
+        closeAdminPinModal();
+        document.getElementById("admin-active-bar")?.classList.remove("hidden");
+        document.getElementById("admin-lock-icon")?.setAttribute("data-lucide", "unlock");
+        alertModalNotice("🔓 管理員模式解鎖成功！");
+        renderDays();
+      } else {
+        alertModalNotice("❌ 密碼錯誤，請輸入 0000");
+      }
     }
+
+    function exitAdminMode() {
+      isAdminLoggedIn = false;
+      document.getElementById("admin-active-bar")?.classList.add("hidden");
+      document.getElementById("admin-lock-icon")?.setAttribute("data-lucide", "lock");
+      alertModalNotice("管理員已登出");
+      renderDays();
+    }
+
+    function openEditSpotModal(dayKey, spotId) {
+      const spot = (DAYS_DATA[dayKey] || []).find(s => s.id === spotId);
+      if (!spot) return;
+
+      document.getElementById("edit-spot-day").value = dayKey;
+      document.getElementById("edit-spot-id").value = spotId;
+      document.getElementById("edit-spot-name").value = spot.name;
+      document.getElementById("edit-spot-time").value = spot.time;
+      document.getElementById("edit-spot-tag").value = spot.tag;
+      document.getElementById("edit-spot-desc").value = spot.desc;
+      document.getElementById("edit-spot-url").value = spot.mapsUrl;
+
+      document.getElementById("edit-spot-modal").classList.remove("hidden");
+      document.getElementById("edit-spot-modal").classList.add("flex");
+    }
+
+    function closeEditSpotModal() {
+      document.getElementById("edit-spot-modal").classList.add("hidden");
+      document.getElementById("edit-spot-modal").classList.remove("flex");
+    }
+
+    function saveSpotEdit() {
+      const dayKey = document.getElementById("edit-spot-day").value;
+      const spotId = document.getElementById("edit-spot-id").value;
+
+      const spot = (DAYS_DATA[dayKey] || []).find(s => s.id === spotId);
+      if (spot) {
+        spot.name = document.getElementById("edit-spot-name").value.trim();
+        spot.time = document.getElementById("edit-spot-time").value.trim();
+        spot.tag = document.getElementById("edit-spot-tag").value.trim();
+        spot.desc = document.getElementById("edit-spot-desc").value.trim();
+        spot.mapsUrl = document.getElementById("edit-spot-url").value.trim();
+
+        saveDaysData();
+        renderDays();
+        pushScheduleToCloud();
+        closeEditSpotModal();
+        alertModalNotice("點位修改已儲存！");
+      }
+    }
+
+    function deleteSpot(dayKey, spotId) {
+      if (confirm("確定要刪除這個景點嗎？")) {
+        DAYS_DATA[dayKey] = (DAYS_DATA[dayKey] || []).filter(s => s.id !== spotId);
+        saveDaysData();
+        renderDays();
+        updateProgress();
+        pushScheduleToCloud();
+        alertModalNotice("景點已刪除");
+      }
+    }
+
+    /* ==========================================================================
+       10. REAL-TIME TAIWAN BANK CURRENCY CALCULATOR
+       ========================================================================== */
+    let currentRate = 0.2150;
+    let isTaxFree = false;
 
     function openCalcModal() {
       document.getElementById("calc-modal").classList.remove("hidden");
       document.getElementById("calc-modal").classList.add("flex");
-      document.getElementById("calc-jpy").focus();
-      
-      // Auto-fetch if not fetched in the last 15 minutes
-      if (!lastFetchedTime || (Date.now() - lastFetchedTime.getTime() > 15 * 60 * 1000)) {
-        fetchLiveExchangeRate();
-      }
+      calculateExchange();
     }
 
     function closeCalcModal() {
@@ -1240,42 +1597,191 @@
       document.getElementById("calc-modal").classList.remove("flex");
     }
 
+    async function fetchLiveExchangeRate(isManual = false) {
+      const refreshIcon = document.getElementById("rate-refresh-icon");
+      if (refreshIcon) refreshIcon.classList.add("animate-spin");
+
+      try {
+        const res = await fetch("https://open.er-api.com/v6/latest/JPY");
+        const data = await res.json();
+        if (data && data.rates && data.rates.TWD) {
+          currentRate = parseFloat(data.rates.TWD.toFixed(4));
+          const rateInput = document.getElementById("calc-rate");
+          if (rateInput) rateInput.value = currentRate;
+
+          const now = new Date();
+          const timeStr = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
+          
+          const timeTag = document.getElementById("rate-time-tag");
+          if (timeTag) timeTag.innerText = `更新時間 ${timeStr}・台銀即時水位`;
+
+          const statusText = document.getElementById("rate-status-text");
+          if (statusText) statusText.innerText = `即時匯率：1 JPY ≈ ${currentRate} TWD`;
+
+          calculateExchange();
+          if (isManual) alertModalNotice(`匯率已更新至最新盤價：${currentRate}`);
+        }
+      } catch (e) {
+        console.warn("Live rate sync fallback:", e);
+      } finally {
+        if (refreshIcon) refreshIcon.classList.remove("animate-spin");
+      }
+    }
+
+    function calculateExchange() {
+      const jpy = parseFloat(document.getElementById("calc-jpy")?.value) || 0;
+      const rate = parseFloat(document.getElementById("calc-rate")?.value) || currentRate;
+      
+      const effectiveJpy = isTaxFree ? (jpy / 1.1) : jpy;
+      const twd = Math.round(effectiveJpy * rate);
+
+      const twdEl = document.getElementById("calc-twd");
+      if (twdEl) twdEl.innerText = `NT$ ${twd.toLocaleString()}`;
+
+      const breakdownEl = document.getElementById("calc-breakdown");
+      if (breakdownEl) {
+        breakdownEl.innerText = isTaxFree
+          ? `(¥ ${Math.round(jpy).toLocaleString()} ÷ 1.1 免稅) × ${rate}`
+          : `¥ ${Math.round(jpy).toLocaleString()} × ${rate}`;
+      }
+    }
+
     function toggleTaxFree() {
       isTaxFree = !isTaxFree;
       const btn = document.getElementById("calc-tax-btn");
-      if (isTaxFree) {
-        btn.innerText = "已扣除 10% (免稅價)";
-        btn.className = "w-full py-2 rounded-xl text-xs font-bold border border-emerald-300 bg-emerald-50 text-emerald-700";
-      } else {
-        btn.innerText = "含稅 (點我免稅 10%)";
-        btn.className = "w-full py-2 rounded-xl text-xs font-bold border border-slate-200 bg-slate-100 text-slate-700";
+      if (btn) {
+        if (isTaxFree) {
+          btn.className = "w-full py-2 rounded-xl text-xs font-bold border border-emerald-500 bg-emerald-50 text-emerald-800 transition";
+          btn.innerText = "已免稅 10% (點我切換)";
+        } else {
+          btn.className = "w-full py-2 rounded-xl text-xs font-bold border border-slate-200 bg-slate-100 text-slate-700 hover:bg-slate-200 transition";
+          btn.innerText = "含稅 (點我免稅 10%)";
+        }
       }
       calculateExchange();
     }
 
     function setQuickJpy(val) {
-      document.getElementById("calc-jpy").value = val;
+      const input = document.getElementById("calc-jpy");
+      if (input) {
+        input.value = val;
+        calculateExchange();
+      }
+    }
+
+    function onCustomRateInput() {
       calculateExchange();
     }
 
-    function calculateExchange() {
-      const jpyInput = parseFloat(document.getElementById("calc-jpy").value) || 0;
-      const rate = parseFloat(document.getElementById("calc-rate").value) || liveRate;
-      
-      let finalJpy = jpyInput;
-      if (isTaxFree) {
-        finalJpy = jpyInput / 1.10; // Tax-free calculation
-      }
-
-      const twd = Math.round(finalJpy * rate);
-      document.getElementById("calc-twd").innerText = `NT$ ${twd.toLocaleString()}`;
-      document.getElementById("calc-breakdown").innerText = 
-        `¥ ${Math.round(finalJpy).toLocaleString()} × ${rate.toFixed(4)} ${isTaxFree ? ' (已折抵 10% 消費稅)' : ''}`;
+    /* ==========================================================================
+       11. CHECKBOXES, PROGRESS, AND TOASTS
+       ========================================================================== */
+    function toggleCheck(id) {
+      const checks = JSON.parse(localStorage.getItem("okinawa_checked") || "{}");
+      checks[id] = !checks[id];
+      localStorage.setItem("okinawa_checked", JSON.stringify(checks));
+      updateCheckedUi();
+      updateProgress();
     }
 
-    /* ==========================================================================
-       EMERGENCY MODAL LOGIC
-       ========================================================================== */
+    function updateCheckedUi() {
+      const checks = JSON.parse(localStorage.getItem("okinawa_checked") || "{}");
+      Object.keys(checks).forEach(id => {
+        const checkbox = document.getElementById(`check-${id}`);
+        const card = document.getElementById(`card-${id}`);
+        if (checkbox) checkbox.checked = !!checks[id];
+        if (card) {
+          if (checks[id]) {
+            card.classList.add("opacity-60", "bg-slate-50");
+          } else {
+            card.classList.remove("opacity-60", "bg-slate-50");
+          }
+        }
+      });
+    }
+
+    function updateProgress() {
+      let total = 0;
+      let checkedCount = 0;
+      const checks = JSON.parse(localStorage.getItem("okinawa_checked") || "{}");
+
+      ['d1', 'd2', 'd3', 'd4', 'd5'].forEach(d => {
+        const spots = DAYS_DATA[d] || [];
+        total += spots.length;
+        spots.forEach(s => {
+          if (checks[s.id]) checkedCount++;
+        });
+      });
+
+      const pText = document.getElementById("progress-text");
+      if (pText) pText.innerText = `進度：${checkedCount} / ${total} 點位`;
+    }
+
+    function resetChecks() {
+      if (confirm("要清空所有已打勾的進度嗎？")) {
+        localStorage.removeItem("okinawa_checked");
+        updateCheckedUi();
+        updateProgress();
+        alertModalNotice("打勾進度已重設");
+      }
+    }
+
+    function alertModalNotice(msg) {
+      const toast = document.getElementById("notice-toast");
+      const text = document.getElementById("notice-toast-text");
+      if (!toast || !text) return;
+
+      text.innerText = msg;
+      toast.classList.remove("opacity-0", "-translate-y-2");
+      toast.classList.add("opacity-100", "translate-y-0");
+
+      setTimeout(() => {
+        toast.classList.remove("opacity-100", "translate-y-0");
+        toast.classList.add("opacity-0", "-translate-y-2");
+      }, 2500);
+    }
+
+    function copyShareLink() {
+      const url = window.location.href;
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(url).then(() => {
+          alertModalNotice("📋 專屬網址已複製！直接貼至 LINE 即可分享");
+        }).catch(() => {
+          fallbackCopyText(url);
+        });
+      } else {
+        fallbackCopyText(url);
+      }
+    }
+
+    function fallbackCopyText(text) {
+      const textArea = document.createElement("textarea");
+      textArea.value = text;
+      document.body.appendChild(textArea);
+      textArea.select();
+      try {
+        document.execCommand('copy');
+        alertModalNotice("📋 專屬網址已複製！直接貼至 LINE 即可分享");
+      } catch (err) {
+        alertModalNotice("網址：" + text);
+      }
+      document.body.removeChild(textArea);
+    }
+
+    function downloadSelfHtml() {
+      const htmlContent = "<!DOCTYPE html>\n" + document.documentElement.outerHTML;
+      const blob = new Blob([htmlContent], { type: "text/html;charset=utf-8" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = "沖繩跨年5天4夜手冊.html";
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+      alertModalNotice("📥 已下載離線網頁檔案！");
+    }
+
     function openEmergencyModal() {
       document.getElementById("emergency-modal").classList.remove("hidden");
       document.getElementById("emergency-modal").classList.add("flex");
@@ -1287,104 +1793,165 @@
     }
 
     /* ==========================================================================
-       ONE-TAP SHARE LINK COPY
+       12. FIREBASE / BROADCAST CLOUD SYNC
        ========================================================================== */
-    function copyShareLink() {
-      const shareText = document.getElementById("share-btn-text");
-      const currentUrl = window.location.href.split('?')[0];
-      
-      const tempInput = document.createElement("input");
-      tempInput.value = currentUrl;
-      document.body.appendChild(tempInput);
-      tempInput.select();
-      try {
-        document.execCommand("copy");
-        if (shareText) shareText.innerText = "已複製!";
-        setTimeout(() => { if (shareText) shareText.innerText = "分享"; }, 2000);
-      } catch (err) {
-        console.error("Copy failed", err);
-      }
-      document.body.removeChild(tempInput);
-    }
+    let fbApp = null;
+    let fbDb = null;
+    let fbAuth = null;
+    let fbUnsubscribe = null;
+    let currentRoomId = localStorage.getItem("okinawa_fb_room") || "okinawa2027";
 
-    /* ==========================================================================
-       ONE-TAP OFFLINE FILE DOWNLOAD FOR MOBILE
-       ========================================================================== */
-    function downloadSelfHtml() {
+    function initFirebaseClient() {
+      const storedConfig = localStorage.getItem("okinawa_fb_config");
+      if (!storedConfig || !window.FirebaseModule) return;
+
       try {
-        const fullHtml = "<!DOCTYPE html>\n" + document.documentElement.outerHTML;
-        const blob = new Blob([fullHtml], { type: "text/html;charset=utf-8" });
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement("a");
-        a.href = url;
-        a.download = "沖繩跨年5天4夜手冊.html";
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
-        setTimeout(() => URL.revokeObjectURL(url), 1500);
+        const config = JSON.parse(storedConfig);
+        const { initializeApp, getFirestore, getAuth, signInAnonymously } = window.FirebaseModule;
+
+        fbApp = initializeApp(config, "okinawaApp_" + Date.now());
+        fbDb = getFirestore(fbApp);
+        fbAuth = getAuth(fbApp);
+
+        signInAnonymously(fbAuth).then(() => {
+          updateFirebaseStatusUi(true);
+          listenToFirestoreChanges();
+        }).catch(err => {
+          console.warn("Firebase Auth error:", err);
+          updateFirebaseStatusUi(false, "驗證失敗，請檢查金鑰");
+        });
       } catch (err) {
-        console.error("Download error:", err);
+        console.error("Firebase init error:", err);
+        updateFirebaseStatusUi(false, "設定格式錯誤");
       }
     }
 
-    /* ==========================================================================
-       OFFLINE / SERVICE WORKER REGISTRATION (Cache for Airplane / Spotty Mode)
-       ========================================================================== */
-    function setupOfflineSupport() {
-      // Monitor online/offline events
-      function updateOnlineStatus() {
-        const badge = document.getElementById("network-badge");
-        if (!badge) return;
-        if (navigator.onLine) {
-          badge.className = "inline-flex items-center gap-1.5 font-medium text-sky-100";
-          badge.innerHTML = `<span class="w-1.5 h-1.5 rounded-full bg-emerald-300"></span> 離線就緒`;
-        } else {
-          badge.className = "inline-flex items-center gap-1.5 font-medium text-amber-200";
-          badge.innerHTML = `<span class="w-1.5 h-1.5 rounded-full bg-amber-300 animate-pulse"></span> 離線模式`;
+    function listenToFirestoreChanges() {
+      if (!fbDb || !window.FirebaseModule) return;
+      const { doc, onSnapshot } = window.FirebaseModule;
+
+      if (fbUnsubscribe) fbUnsubscribe();
+
+      const docRef = doc(fbDb, "artifacts", "okinawa-guide", "public", "data", currentRoomId);
+      fbUnsubscribe = onSnapshot(docRef, (docSnap) => {
+        if (docSnap.exists()) {
+          const data = docSnap.data();
+          if (data && data.daysData) {
+            DAYS_DATA = data.daysData;
+            saveDaysData();
+            renderDays();
+            updateCheckedUi();
+            updateProgress();
+            alertModalNotice("⚡ 收到最新行程更新！已即時同步");
+          }
         }
-      }
+      }, (err) => {
+        console.warn("Firestore snapshot error:", err);
+      });
+    }
 
-      window.addEventListener("online", updateOnlineStatus);
-      window.addEventListener("offline", updateOnlineStatus);
-      updateOnlineStatus();
-
-      // Register an inline blob Service Worker for caching app shell
-      if ("serviceWorker" in navigator) {
+    async function pushScheduleToCloud() {
+      if (fbDb && window.FirebaseModule) {
         try {
-          const swCode = `
-            const CACHE_NAME = 'okinawa-guide-v1';
-            self.addEventListener('install', (event) => {
-              self.skipWaiting();
-            });
-            self.addEventListener('activate', (event) => {
-              event.waitUntil(clients.claim());
-            });
-            self.addEventListener('fetch', (event) => {
-              // Cache first strategy for documents
-              event.respondWith(
-                caches.match(event.request).then((cachedResponse) => {
-                  if (cachedResponse) return cachedResponse;
-                  return fetch(event.request).catch(() => {
-                    // Fallback to offline cache
-                    return caches.match('/');
-                  });
-                })
-              );
-            });
-          `;
-          const blob = new Blob([swCode], { type: "application/javascript" });
-          const swUrl = URL.createObjectURL(blob);
-          navigator.serviceWorker.register(swUrl).catch(() => {
-            // Service worker fallback
-          });
+          const { doc, setDoc } = window.FirebaseModule;
+          const docRef = doc(fbDb, "artifacts", "okinawa-guide", "public", "data", currentRoomId);
+          await setDoc(docRef, {
+            daysData: DAYS_DATA,
+            updatedAt: new Date().toISOString()
+          }, { merge: true });
+          alertModalNotice("🔥 行程已自動同步至全員雲端！");
+          return;
         } catch (e) {
-          console.log("Service Worker registered fallback");
+          console.warn("Firebase save error:", e);
         }
+      }
+
+      if (window.BroadcastChannel) {
+        try {
+          const bc = new BroadcastChannel(`okinawa_channel_${currentRoomId}`);
+          bc.postMessage({ type: 'SCHEDULE_UPDATE', data: DAYS_DATA });
+        } catch (e) {}
       }
     }
 
+    function openCloudConfigModal() {
+      document.getElementById("firebase-room-id").value = currentRoomId;
+      document.getElementById("firebase-config-input").value = localStorage.getItem("okinawa_fb_config") || "";
+      document.getElementById("cloud-config-modal").classList.remove("hidden");
+      document.getElementById("cloud-config-modal").classList.add("flex");
+    }
+
+    function closeCloudConfigModal() {
+      document.getElementById("cloud-config-modal").classList.add("hidden");
+      document.getElementById("cloud-config-modal").classList.remove("flex");
+    }
+
+    function updateFirebaseStatusUi(connected, customMsg) {
+      const pill = document.getElementById("firebase-status-pill");
+      const desc = document.getElementById("firebase-status-desc");
+      if (!pill || !desc) return;
+
+      if (connected) {
+        pill.innerText = "已連線 (即時監聽中)";
+        pill.className = "text-[10px] px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 font-bold";
+        desc.innerText = `● 目前同步房間：${currentRoomId}。改動將秒級同步全員。`;
+      } else {
+        pill.innerText = "未連線";
+        pill.className = "text-[10px] px-2 py-0.5 rounded-full bg-rose-100 text-rose-800 font-bold";
+        desc.innerText = customMsg || "尚未連線至 Firebase。";
+      }
+    }
+
+    function saveAndConnectFirebase() {
+      const rawConfig = (document.getElementById("firebase-config-input").value || "").trim();
+      currentRoomId = (document.getElementById("firebase-room-id").value || "okinawa2027").trim();
+
+      if (!rawConfig) {
+        alertModalNotice("請先貼上 Firebase Config！");
+        return;
+      }
+
+      try {
+        let cleanedJson = rawConfig;
+        if (rawConfig.includes("const firebaseConfig =")) {
+          cleanedJson = rawConfig.replace(/const firebaseConfig =\s*/, "").replace(/;?\s*$/, "");
+        }
+        JSON.parse(cleanedJson);
+        localStorage.setItem("okinawa_fb_config", cleanedJson);
+        localStorage.setItem("okinawa_fb_room", currentRoomId);
+
+        initFirebaseClient();
+        pushScheduleToCloud();
+        closeCloudConfigModal();
+        alertModalNotice("✅ Firebase 雲端資料庫已成功綁定！");
+      } catch (err) {
+        alertModalNotice("❌ Config 格式無效，請確認為正確 JSON 物件！");
+      }
+    }
+
+    function exportUpdatedCodeForGithub() {
+      document.getElementById("publish-modal").classList.remove("hidden");
+      document.getElementById("publish-modal").classList.add("flex");
+    }
+
+    function closePublishModal() {
+      document.getElementById("publish-modal").classList.add("hidden");
+      document.getElementById("publish-modal").classList.remove("flex");
+    }
+
+    function downloadUpdatedHtmlFile() {
+      downloadSelfHtml();
+      closePublishModal();
+    }
+
+    function copyUpdatedHtmlCode() {
+      const htmlContent = "<!DOCTYPE html>\n" + document.documentElement.outerHTML;
+      fallbackCopyText(htmlContent);
+      closePublishModal();
+    }
+
     /* ==========================================================================
-       INIT ON DOM READY
+       13. INIT ON DOM READY
        ========================================================================== */
     window.addEventListener("DOMContentLoaded", () => {
       renderDays();
@@ -1392,10 +1959,12 @@
       renderMasterList(MASTER_PLACES);
       updateCheckedUi();
       updateProgress();
-      setupOfflineSupport();
-
-      // Background preload live rate
+      setupSwipeGestures();
       fetchLiveExchangeRate();
+
+      setTimeout(() => {
+        initFirebaseClient();
+      }, 500);
 
       if (window.lucide) {
         lucide.createIcons();
