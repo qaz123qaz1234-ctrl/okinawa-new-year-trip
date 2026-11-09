@@ -137,6 +137,16 @@
         </div>
       </div>
 
+      <!-- Temporary Local Preview Notice (Only shown when a non-admin resets locally) -->
+      <div id="temp-preview-bar" class="hidden mt-2 pt-1.5 pb-1 border-t border-rose-300/40 flex items-center justify-between text-[11px] text-rose-100 bg-rose-950/40 px-2 rounded-lg">
+        <span class="inline-flex items-center gap-1 font-semibold text-rose-200">
+          <i data-lucide="eye" class="w-3.5 h-3.5 text-rose-300"></i> 本機暫存預覽中 (非正式雲端版本)
+        </span>
+        <button onclick="restoreCloudSchedule()" class="text-[10px] font-bold bg-white text-rose-800 px-2 py-0.5 rounded shadow hover:bg-rose-50 active:scale-95 transition">
+          回復雲端行程
+        </button>
+      </div>
+
       <!-- Compact Single-Line Offline & Download Bar -->
       <div class="mt-2 pt-1.5 border-t border-white/15 flex items-center justify-between text-[11px] text-sky-100">
         <span id="network-badge" class="inline-flex items-center gap-1.5 font-medium">
@@ -255,7 +265,7 @@
               <i data-lucide="plus" class="w-3 h-3"></i> 新增地點
             </button>
             <span id="unscheduled-count-tag" class="text-[11px] font-semibold text-amber-700 bg-amber-100/80 px-2 py-0.5 rounded-full border border-amber-200">共 16 處</span>
-            <button type="button" onclick="resetCustomSchedule()" class="text-[11px] font-bold text-rose-600 hover:text-rose-700 bg-white px-2 py-0.5 rounded-lg border border-rose-200 shadow-sm active:scale-95 transition" title="重設為原定行程">
+            <button type="button" onclick="triggerResetScheduleModal()" class="text-[11px] font-bold text-rose-600 hover:text-rose-700 bg-white px-2 py-0.5 rounded-lg border border-rose-200 shadow-sm active:scale-95 transition" title="重設行程">
               重設行程
             </button>
           </div>
@@ -649,6 +659,34 @@
       <div class="flex items-center gap-2 pt-1">
         <button type="button" onclick="closeAdminPinModal()" class="w-1/2 py-2 rounded-xl bg-slate-100 text-slate-600 font-bold text-xs">取消</button>
         <button type="button" onclick="verifyAdminPin()" class="w-1/2 py-2 rounded-xl bg-amber-500 hover:bg-amber-600 text-white font-bold text-xs shadow-sm active:scale-95 transition">解鎖管理員</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Reset Schedule Confirmation Modal (徹底取代不可靠的原生 confirm) -->
+  <div id="reset-confirm-modal" class="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm hidden items-center justify-center p-4">
+    <div class="bg-white rounded-3xl p-5 w-full max-w-xs shadow-2xl space-y-3.5 text-xs">
+      <div class="flex items-center gap-2.5">
+        <div class="p-2.5 rounded-2xl bg-rose-100 text-rose-600">
+          <i data-lucide="rotate-ccw" class="w-5 h-5"></i>
+        </div>
+        <div>
+          <h3 class="font-bold text-base text-slate-800" id="reset-modal-title">確定重設行程？</h3>
+          <span id="reset-modal-badge" class="inline-block text-[10px] font-bold px-2 py-0.2 rounded-full bg-slate-100 text-slate-600">訪客模式</span>
+        </div>
+      </div>
+
+      <p id="reset-modal-desc" class="text-slate-600 leading-relaxed">
+        重設將把當前行程還原為官方初始版本。
+      </p>
+
+      <div class="pt-2 flex items-center gap-2">
+        <button type="button" onclick="closeResetModal()" class="w-1/2 py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold transition">
+          取消
+        </button>
+        <button type="button" onclick="executeResetSchedule()" class="w-1/2 py-2.5 rounded-xl bg-rose-600 hover:bg-rose-700 text-white font-bold shadow-md active:scale-95 transition">
+          確認重設
+        </button>
       </div>
     </div>
   </div>
@@ -1062,12 +1100,21 @@
     // Load custom schedule from localStorage or fallback
     let DAYS_DATA = JSON.parse(localStorage.getItem("okinawa_schedule_v2") || "null") || JSON.parse(JSON.stringify(INITIAL_DAYS_DATA));
 
+    // Cache of the official cloud snapshot (so non-admins can discard preview and revert)
+    let CLOUD_SNAPSHOT_DAYS = null;
+    let CLOUD_SNAPSHOT_UNSCHEDULED = null;
+    let CLOUD_SNAPSHOT_MASTER = null;
+    let isTemporaryLocalPreview = false;
+
     function saveDaysData() {
-      localStorage.setItem("okinawa_schedule_v2", JSON.stringify(DAYS_DATA));
+      // Only persist to localStorage if not currently in a temporary non-admin preview
+      if (!isTemporaryLocalPreview || isAdminLoggedIn) {
+        localStorage.setItem("okinawa_schedule_v2", JSON.stringify(DAYS_DATA));
+      }
     }
 
     /* ==========================================================================
-       2. UNSCHEDULED PLACES (未排入景點清單・支援動態擴充與存儲)
+       2. UNSCHEDULED PLACES (未排入景點清單)
        ========================================================================== */
     const INITIAL_UNSCHEDULED_PLACES = [
       {
@@ -1203,11 +1250,13 @@
     let UNSCHEDULED_PLACES = JSON.parse(localStorage.getItem("okinawa_unscheduled_v2") || "null") || JSON.parse(JSON.stringify(INITIAL_UNSCHEDULED_PLACES));
 
     function saveUnscheduledPlaces() {
-      localStorage.setItem("okinawa_unscheduled_v2", JSON.stringify(UNSCHEDULED_PLACES));
+      if (!isTemporaryLocalPreview || isAdminLoggedIn) {
+        localStorage.setItem("okinawa_unscheduled_v2", JSON.stringify(UNSCHEDULED_PLACES));
+      }
     }
 
     /* ==========================================================================
-       3. MASTER DIRECTORY (清單全部地點・支援動態擴充)
+       3. MASTER DIRECTORY (清單全部地點)
        ========================================================================== */
     const INITIAL_MASTER_PLACES = [
       { name: "琉球新麵 通堂 小祿本店", cat: "美食", note: "每次去都要吃一下的男人麵/女人麵", url: "https://www.google.com/maps/place/%E7%90%89%E7%90%83%E6%96%B0%E9%BA%B5+%E9%80%9A%E5%A0%82+%E5%B0%8F%E7%A5%BF%E6%9C%AC%E5%BA%97/data=!4m2!3m1!1s0x34e569b140b3a219:0xdaaf5d41d37c6862" },
@@ -1251,7 +1300,9 @@
     let MASTER_PLACES = JSON.parse(localStorage.getItem("okinawa_master_v2") || "null") || JSON.parse(JSON.stringify(INITIAL_MASTER_PLACES));
 
     function saveMasterPlaces() {
-      localStorage.setItem("okinawa_master_v2", JSON.stringify(MASTER_PLACES));
+      if (!isTemporaryLocalPreview || isAdminLoggedIn) {
+        localStorage.setItem("okinawa_master_v2", JSON.stringify(MASTER_PLACES));
+      }
     }
 
     /* ==========================================================================
@@ -1493,10 +1544,8 @@
     function moveSpotToUnscheduled(spot) {
       if (!spot) return;
 
-      // Check if spot is already in unscheduled places
       const exists = UNSCHEDULED_PLACES.some(u => u.name === spot.name);
       if (!exists) {
-        // Infer region from spot name or tag
         let region = "那霸市區";
         if (spot.name.includes("泡瀨") || spot.name.includes("具志川") || spot.name.includes("海中道路") || spot.name.includes("PARCO") || spot.name.includes("濱比嘉")) {
           region = "中部/恩納";
@@ -1635,7 +1684,6 @@
         replacedSpot = DAYS_DATA[selectedDay][targetIdx];
         DAYS_DATA[selectedDay][targetIdx] = newSpot;
 
-        // Automatically move the displaced spot to Unscheduled places!
         if (replacedSpot) {
           moveSpotToUnscheduled(replacedSpot);
         }
@@ -1659,8 +1707,46 @@
       switchTab(selectedDay);
     }
 
-    function resetCustomSchedule() {
-      if (confirm("確定要將所有行程與備選景點重設為最初的官方 5 天預設版本嗎？")) {
+    /* ==========================================================================
+       9.1 RESET SCHEDULE PERMISSIONS (管理員同步雲端 vs 一般使用者本機暫存)
+       ========================================================================== */
+    function triggerResetScheduleModal() {
+      const modal = document.getElementById("reset-confirm-modal");
+      const title = document.getElementById("reset-modal-title");
+      const badge = document.getElementById("reset-modal-badge");
+      const desc = document.getElementById("reset-modal-desc");
+      if (!modal) return;
+
+      if (isAdminLoggedIn) {
+        title.innerText = "【管理員】重設雲端行程";
+        badge.innerText = "管理員權限已認證";
+        badge.className = "inline-block text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-100 text-amber-800";
+        desc.innerHTML = "您已登入管理員。確認重設後，將把行程還原為官方初始預設，並<b>「同步寫入雲端資料庫」</b>，讓所有旅伴手機全面生效！";
+      } else {
+        title.innerText = "本機暫時重設預覽";
+        badge.innerText = "一般檢視模式";
+        badge.className = "inline-block text-[10px] font-bold px-2 py-0.5 rounded-full bg-slate-100 text-slate-600";
+        desc.innerHTML = "您目前為一般檢視模式。此重設<b>僅供您的本機暫時預覽</b>，絕不影響雲端資料庫；<b>重新整理網頁後將自動跳回雲端儲存的最新版本</b>。";
+      }
+
+      modal.classList.remove("hidden");
+      modal.classList.add("flex");
+      if (window.lucide) lucide.createIcons();
+    }
+
+    function closeResetModal() {
+      const modal = document.getElementById("reset-confirm-modal");
+      if (modal) {
+        modal.classList.add("hidden");
+        modal.classList.remove("flex");
+      }
+    }
+
+    function executeResetSchedule() {
+      closeResetModal();
+
+      if (isAdminLoggedIn) {
+        // ADMIN MODE: Permanent reset that syncs directly to Firebase database
         localStorage.removeItem("okinawa_schedule_v2");
         localStorage.removeItem("okinawa_unscheduled_v2");
         localStorage.removeItem("okinawa_master_v2");
@@ -1669,13 +1755,72 @@
         UNSCHEDULED_PLACES = JSON.parse(JSON.stringify(INITIAL_UNSCHEDULED_PLACES));
         MASTER_PLACES = JSON.parse(JSON.stringify(INITIAL_MASTER_PLACES));
 
+        isTemporaryLocalPreview = false;
+        hideTempPreviewNotice();
+
         renderDays();
         renderUnscheduledList(UNSCHEDULED_PLACES);
         renderMasterList(MASTER_PLACES);
         updateCheckedUi();
         updateProgress();
+
         pushScheduleToCloud();
-        alertModalNotice("行程與地點庫已還原為官方預設版本！");
+        alertModalNotice("✅ 管理員已重設預設行程，並已成功同步至全體雲端！");
+      } else {
+        // NON-ADMIN USER MODE: Temporary local preview only!
+        DAYS_DATA = JSON.parse(JSON.stringify(INITIAL_DAYS_DATA));
+        UNSCHEDULED_PLACES = JSON.parse(JSON.stringify(INITIAL_UNSCHEDULED_PLACES));
+        MASTER_PLACES = JSON.parse(JSON.stringify(INITIAL_MASTER_PLACES));
+
+        isTemporaryLocalPreview = true;
+        showTempPreviewNotice();
+
+        renderDays();
+        renderUnscheduledList(UNSCHEDULED_PLACES);
+        renderMasterList(MASTER_PLACES);
+        updateCheckedUi();
+        updateProgress();
+
+        alertModalNotice("👀 已切換為預設預覽（僅限本機），重新整理即跳回雲端儲存版本！");
+      }
+    }
+
+    // 保留相容性包裝
+    function resetCustomSchedule() {
+      triggerResetScheduleModal();
+    }
+
+    function showTempPreviewNotice() {
+      const bar = document.getElementById("temp-preview-bar");
+      if (bar) bar.classList.remove("hidden");
+    }
+
+    function hideTempPreviewNotice() {
+      const bar = document.getElementById("temp-preview-bar");
+      if (bar) bar.classList.add("hidden");
+    }
+
+    function restoreCloudSchedule() {
+      if (CLOUD_SNAPSHOT_DAYS) {
+        DAYS_DATA = JSON.parse(JSON.stringify(CLOUD_SNAPSHOT_DAYS));
+        if (CLOUD_SNAPSHOT_UNSCHEDULED) UNSCHEDULED_PLACES = JSON.parse(JSON.stringify(CLOUD_SNAPSHOT_UNSCHEDULED));
+        if (CLOUD_SNAPSHOT_MASTER) MASTER_PLACES = JSON.parse(JSON.stringify(CLOUD_SNAPSHOT_MASTER));
+
+        isTemporaryLocalPreview = false;
+        hideTempPreviewNotice();
+
+        saveDaysData();
+        saveUnscheduledPlaces();
+        saveMasterPlaces();
+
+        renderDays();
+        renderUnscheduledList(UNSCHEDULED_PLACES);
+        renderMasterList(MASTER_PLACES);
+        updateCheckedUi();
+        updateProgress();
+        alertModalNotice("🔄 已回復為雲端資料庫的最新行程版本！");
+      } else {
+        window.location.reload();
       }
     }
 
@@ -2097,7 +2242,6 @@
     /* ==========================================================================
        14. FIREBASE / BROADCAST CLOUD SYNC
        ========================================================================== */
-    // Default built-in project config provided by user
     const DEFAULT_FIREBASE_CONFIG = {
       apiKey: "AIzaSyCRgoBOwtGRQyvCj3huinnhwB4Pzv6Nv_o",
       authDomain: "okinawa-new-year-trip.firebaseapp.com",
@@ -2156,6 +2300,18 @@
       fbUnsubscribe = onSnapshot(docRef, (docSnap) => {
         if (docSnap.exists()) {
           const data = docSnap.data();
+
+          // Keep a reference of the latest official cloud state
+          if (data && data.daysData) CLOUD_SNAPSHOT_DAYS = data.daysData;
+          if (data && data.unscheduledPlaces) CLOUD_SNAPSHOT_UNSCHEDULED = data.unscheduledPlaces;
+          if (data && data.masterPlaces) CLOUD_SNAPSHOT_MASTER = data.masterPlaces;
+
+          // If current user is currently in a temporary preview mode, do not immediately overwrite their preview
+          // unless they refresh or click "回復雲端行程"
+          if (isTemporaryLocalPreview && !isAdminLoggedIn) {
+            return;
+          }
+
           let shouldReRender = false;
           if (data && data.daysData) {
             DAYS_DATA = data.daysData;
@@ -2174,6 +2330,7 @@
           }
 
           if (shouldReRender) {
+            hideTempPreviewNotice();
             renderDays();
             renderUnscheduledList(UNSCHEDULED_PLACES);
             renderMasterList(MASTER_PLACES);
@@ -2193,6 +2350,12 @@
     }
 
     async function pushScheduleToCloud() {
+      // Check admin authority before pushing to cloud
+      if (!isAdminLoggedIn) {
+        console.info("Non-admin edit: changes preserved locally only, skipping cloud push.");
+        return;
+      }
+
       if (fbDb && window.FirebaseModule) {
         try {
           const { doc, setDoc } = window.FirebaseModule;
@@ -2301,6 +2464,9 @@
        15. INIT ON DOM READY
        ========================================================================== */
     window.addEventListener("DOMContentLoaded", () => {
+      // Clear any temporary local preview state on fresh reload so it always loads the latest cloud state
+      sessionStorage.removeItem("is_temp_preview");
+
       renderDays();
       renderUnscheduledList(UNSCHEDULED_PLACES);
       renderMasterList(MASTER_PLACES);
