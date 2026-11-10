@@ -905,4 +905,1188 @@
       {
         id: "un-4",
         name: "暖暮拉麵 (那霸牧志店)",
-        region
+        region: "那霸市區",
+        cat: "美食",
+        highlight: "九州拉麵冠軍！細麵搭配濃香豚骨湯頭，消夜排隊首選",
+        mapUrl: "https://maps.google.com/?q=Danbo+Ramen+Makishi"
+      },
+      {
+        id: "un-5",
+        name: "萬座毛 (Manzamo)",
+        region: "中部/恩納",
+        cat: "景點",
+        highlight: "象鼻狀珊瑚礁懸崖，壯闊海浪拍打絕景，新設景觀遊客中心舒適好走",
+        mapUrl: "https://maps.google.com/?q=Cape+Manzamo+Okinawa"
+      },
+      {
+        id: "un-6",
+        name: "殘波岬燈塔",
+        region: "中部/恩納",
+        cat: "景點",
+        highlight: "沖繩第一高斷崖燈塔，夕陽餘暉灑落壯麗斷崖海岸，周邊有巨型石獅雕像",
+        mapUrl: "https://maps.google.com/?q=Cape+Zanpa+Lighthouse"
+      },
+      {
+        id: "un-7",
+        name: "永旺夢樂城沖繩來客夢 (AEON MALL)",
+        region: "中部/恩納",
+        cat: "購物",
+        highlight: "沖繩中部最大級商城，挑高中庭有巨大水族箱，品牌極齊全",
+        mapUrl: "https://maps.google.com/?q=AEON+MALL+Okinawa+Rycom"
+      },
+      {
+        id: "un-8",
+        name: "國際通屋台村",
+        region: "那霸市區",
+        cat: "美食",
+        highlight: "聚集 20 間在地特色居酒屋，串燒、泡盛、海葡萄，下町熱絡氛圍十足",
+        mapUrl: "https://maps.google.com/?q=Kokusai+Dori+Yataimura"
+      },
+      {
+        id: "un-9",
+        name: "泊港魚市場 (Tomari Iyumachi)",
+        region: "那霸市區",
+        cat: "美食",
+        highlight: "當地漁港直營，現剖海膽、生蠔、特厚鮪魚大腹刺身，晨間海鮮天堂",
+        mapUrl: "https://maps.google.com/?q=Tomari+Iyumachi+Fish+Market"
+      },
+      {
+        id: "un-10",
+        name: "知念岬公園",
+        region: "南部",
+        cat: "景點",
+        highlight: "三面環海的高台綠草如茵，270 度無死角俯瞰太平洋，觀看日出首選秘境",
+        mapUrl: "https://maps.google.com/?q=Chinen+Cape+Park"
+      },
+      {
+        id: "un-11",
+        name: "玉泉洞 & 沖繩世界文化王國",
+        region: "南部",
+        cat: "景點",
+        highlight: "歷經 30 萬年歲月、全長 5 公里的東洋第一鐘乳石地下奇景，琉球太鼓舞精彩絕倫",
+        mapUrl: "https://maps.google.com/?q=Okinawa+World+Gyokusendo"
+      },
+      {
+        id: "un-12",
+        name: "港川外人住宅甜點 - oHacorté",
+        region: "中部/恩納",
+        cat: "美食",
+        highlight: "超人氣當季新鮮水果塔專賣店，塔皮酥香酸甜平衡，打卡必吃",
+        mapUrl: "https://maps.google.com/?q=oHacorte+Minatogawa"
+      },
+      {
+        id: "un-13",
+        name: "傑克牛排 (Jack's Steak House)",
+        region: "那霸市區",
+        cat: "美食",
+        highlight: "昭和 28 年創立的傳奇老牌牛排館，特選沙朗肉質軟嫩，附經典白濃湯",
+        mapUrl: "https://maps.google.com/?q=Jack's+Steak+House+Okinawa"
+      },
+      {
+        id: "un-14",
+        name: "ASHIBINAA Outlet 奧特萊斯購物城",
+        region: "南部",
+        cat: "購物",
+        highlight: "靠近那霸機場的歐式渡假風 Outlet，Coach、Gucci、Agnes b、運動品牌齊全",
+        mapUrl: "https://maps.google.com/?q=Okinawa+Outlet+Mall+Ashibinaa"
+      },
+      {
+        id: "un-15",
+        name: "浜邊之茶屋 (濱邊茶屋)",
+        region: "南部",
+        cat: "美食",
+        highlight: "開窗即是沙灘海潮的傳奇木造海景咖啡館，喝沖繩香檬汁聽浪濤放空",
+        mapUrl: "https://maps.google.com/?q=Hamabe+no+Chaya+Okinawa"
+      },
+      {
+        id: "un-16",
+        name: "古宇利海洋塔 (Ocean Tower)",
+        region: "北部",
+        cat: "景點",
+        highlight: "搭乘全自動無人駕駛高爾夫球車登山，頂樓敲響幸福鐘俯瞰整座古宇利跨海大橋",
+        mapUrl: "https://maps.google.com/?q=Kouri+Ocean+Tower"
+      }
+    ];
+
+    /* ==========================================================================
+       2. RUNTIME STATE & LOCALSTORAGE CACHING
+       ========================================================================== */
+    let CURRENT_DAYS_DATA = JSON.parse(localStorage.getItem("okinawa_schedule_v2") || "null") || JSON.parse(JSON.stringify(DEFAULT_DAYS_DATA));
+    let CURRENT_UNSCHEDULED_PLACES = JSON.parse(localStorage.getItem("okinawa_unscheduled_v2") || "null") || JSON.parse(JSON.stringify(DEFAULT_UNSCHEDULED_PLACES));
+    let COMPLETED_SPOTS = JSON.parse(localStorage.getItem("okinawa_completed_v2") || "[]");
+
+    let currentTabIndex = 0;
+    let isAdminLoggedIn = localStorage.getItem("okinawa_is_admin") === "true";
+    let isTemporaryLocalPreview = false;
+
+    let pendingScheduleSpot = null;
+    let scheduleTargetDay = 0;
+    let scheduleMode = "insert"; // "insert" or "replace"
+
+    let currentExchangeRate = 0.2150; // default 1 JPY = 0.215 TWD
+
+    /* Touch Gesture Swipe Coordinates */
+    let touchStartX = 0;
+    let touchStartY = 0;
+
+    /* ==========================================================================
+       3. STORAGE & RESET FUNCTIONS
+       ========================================================================== */
+    function saveCurrentState(pushToCloudSync = true) {
+      if (!isTemporaryLocalPreview) {
+        localStorage.setItem("okinawa_schedule_v2", JSON.stringify(CURRENT_DAYS_DATA));
+        localStorage.setItem("okinawa_unscheduled_v2", JSON.stringify(CURRENT_UNSCHEDULED_PLACES));
+        localStorage.setItem("okinawa_completed_v2", JSON.stringify(COMPLETED_SPOTS));
+
+        if (pushToCloudSync) {
+          pushScheduleToCloud();
+        }
+      }
+    }
+
+    function openResetModal() {
+      const modal = document.getElementById("reset-confirm-modal");
+      const title = document.getElementById("reset-modal-title");
+      const desc = document.getElementById("reset-modal-desc");
+
+      if (isAdminLoggedIn) {
+        title.innerText = "【管理員權限】重設雲端行程？";
+        desc.innerText = "您已具備管理員權限，確認後將清除所有修改，還原官方預設排程，並【同步覆寫至雲端資料庫】，全員手機將立即生效！";
+      } else {
+        title.innerText = "暫存重設為預設預覽？";
+        desc.innerText = "您目前為一般檢視模式。此重設【僅供本機暫時預覽】，不會影響 Firebase 雲端資料庫。重新整理網頁後將自動跳回雲端儲存的最新版本。";
+      }
+
+      modal.classList.remove("hidden");
+      modal.classList.add("flex");
+    }
+
+    function closeResetModal() {
+      const modal = document.getElementById("reset-confirm-modal");
+      modal.classList.add("hidden");
+      modal.classList.remove("flex");
+    }
+
+    function executeResetConfirmed() {
+      closeResetModal();
+
+      if (isAdminLoggedIn) {
+        // Admin: reset both local & cloud
+        CURRENT_DAYS_DATA = JSON.parse(JSON.stringify(DEFAULT_DAYS_DATA));
+        CURRENT_UNSCHEDULED_PLACES = JSON.parse(JSON.stringify(DEFAULT_UNSCHEDULED_PLACES));
+        COMPLETED_SPOTS = [];
+        isTemporaryLocalPreview = false;
+        saveCurrentState(true);
+        hideLocalPreviewNotice();
+        renderDays();
+        renderUnscheduled();
+        renderMasterList();
+        alertToast("✅ 【管理員】行程已全面重設並同步至雲端資料庫！");
+      } else {
+        // Normal user: temporary local preview only
+        CURRENT_DAYS_DATA = JSON.parse(JSON.stringify(DEFAULT_DAYS_DATA));
+        CURRENT_UNSCHEDULED_PLACES = JSON.parse(JSON.stringify(DEFAULT_UNSCHEDULED_PLACES));
+        isTemporaryLocalPreview = true;
+        showLocalPreviewNotice();
+        renderDays();
+        renderUnscheduled();
+        renderMasterList();
+        alertToast("ℹ️ 已臨時重設為預設預覽（僅限本機），重新整理即還原雲端版本！");
+      }
+    }
+
+    function showLocalPreviewNotice() {
+      const el = document.getElementById("local-preview-notice");
+      if (el) el.classList.remove("hidden");
+    }
+
+    function hideLocalPreviewNotice() {
+      const el = document.getElementById("local-preview-notice");
+      if (el) el.classList.add("hidden");
+    }
+
+    function revertToCloudVersion() {
+      isTemporaryLocalPreview = false;
+      hideLocalPreviewNotice();
+      // pull from localStorage or cloud
+      CURRENT_DAYS_DATA = JSON.parse(localStorage.getItem("okinawa_schedule_v2") || "null") || JSON.parse(JSON.stringify(DEFAULT_DAYS_DATA));
+      CURRENT_UNSCHEDULED_PLACES = JSON.parse(localStorage.getItem("okinawa_unscheduled_v2") || "null") || JSON.parse(JSON.stringify(DEFAULT_UNSCHEDULED_PLACES));
+      renderDays();
+      renderUnscheduled();
+      renderMasterList();
+      alertToast("🔄 已成功回復至雲端最新版本！");
+    }
+
+    /* ==========================================================================
+       4. TAB SWITCHING & SMOOTH SLIDING CAROUSEL
+       ========================================================================== */
+    function switchTab(index) {
+      if (index < 0) index = 0;
+      if (index > 6) index = 6;
+      currentTabIndex = index;
+
+      const wrapper = document.getElementById("views-wrapper");
+      if (wrapper) {
+        wrapper.style.transform = `translateX(-${index * 100}%)`;
+      }
+
+      // Update Nav Buttons appearance
+      const btns = document.querySelectorAll(".tab-btn");
+      btns.forEach((btn, idx) => {
+        if (idx === index) {
+          btn.className = "tab-btn px-3 py-1.5 rounded-xl font-bold transition inline-flex items-center gap-1.5 shrink-0 whitespace-nowrap bg-white text-sky-800 shadow-sm";
+          btn.scrollIntoView({ behavior: "smooth", inline: "center", block: "nearest" });
+        } else {
+          btn.className = "tab-btn px-3 py-1.5 rounded-xl transition inline-flex items-center gap-1.5 shrink-0 whitespace-nowrap text-sky-100 hover:bg-white/10";
+        }
+      });
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    }
+
+    /* Swipe Gesture Listener */
+    function initTouchGestures() {
+      const container = document.getElementById("views-wrapper");
+      if (!container) return;
+
+      container.addEventListener("touchstart", (e) => {
+        touchStartX = e.changedTouches[0].screenX;
+        touchStartY = e.changedTouches[0].screenY;
+      }, { passive: true });
+
+      container.addEventListener("touchend", (e) => {
+        const touchEndX = e.changedTouches[0].screenX;
+        const touchEndY = e.changedTouches[0].screenY;
+        handleSwipeGesture(touchStartX, touchStartY, touchEndX, touchEndY);
+      }, { passive: true });
+    }
+
+    function handleSwipeGesture(startX, startY, endX, endY) {
+      const diffX = endX - startX;
+      const diffY = endY - startY;
+
+      // Prevent triggering if vertical scrolling was dominant
+      if (Math.abs(diffX) > 55 && Math.abs(diffX) > Math.abs(diffY) * 1.5) {
+        if (diffX < 0) {
+          // Swipe Left -> Next Tab
+          if (currentTabIndex < 6) switchTab(currentTabIndex + 1);
+        } else {
+          // Swipe Right -> Prev Tab
+          if (currentTabIndex > 0) switchTab(currentTabIndex - 1);
+        }
+      }
+    }
+
+    /* ==========================================================================
+       5. RENDERING SCHEDULE DAYS (D1 - D5)
+       ========================================================================== */
+    function renderDays() {
+      CURRENT_DAYS_DATA.forEach((dayData, dayIndex) => {
+        const container = document.getElementById(`view-day-${dayIndex}`);
+        if (!container) return;
+
+        let totalSpots = dayData.spots.length;
+        let doneSpots = dayData.spots.filter(s => COMPLETED_SPOTS.includes(`d${dayIndex}-${s.name}`)).length;
+        let progressPct = totalSpots > 0 ? Math.round((doneSpots / totalSpots) * 100) : 0;
+
+        let html = `
+          <!-- Header Banner (Cleaned up, no sub-pills) -->
+          <div class="bg-gradient-to-r from-sky-600 to-teal-600 text-white rounded-3xl p-4 shadow-sm space-y-2">
+            <div class="flex items-center justify-between">
+              <div>
+                <span class="text-xs font-semibold text-sky-200">DAY ${dayData.day}</span>
+                <h2 class="text-base font-black tracking-tight">${dayData.date}</h2>
+              </div>
+              <div class="text-right">
+                <span class="text-[11px] text-sky-100 block">打卡進度</span>
+                <span class="text-xs font-bold text-amber-300" id="progress-text-${dayIndex}">${doneSpots}/${totalSpots} 景點 (${progressPct}%)</span>
+              </div>
+            </div>
+            <p class="text-xs text-sky-100 font-medium">${dayData.summary}</p>
+
+            <!-- Progress bar -->
+            <div class="w-full bg-white/20 h-1.5 rounded-full overflow-hidden">
+              <div id="progress-bar-${dayIndex}" class="bg-amber-400 h-full rounded-full transition-all duration-300" style="width: ${progressPct}%"></div>
+            </div>
+          </div>
+
+          <!-- Timeline Spots List -->
+          <div class="space-y-3">
+        `;
+
+        dayData.spots.forEach((spot, spotIndex) => {
+          const spotKey = `d${dayIndex}-${spot.name}`;
+          const isDone = COMPLETED_SPOTS.includes(spotKey);
+
+          let badgeColor = "bg-sky-50 text-sky-700 border-sky-100";
+          if (spot.cat === "美食") badgeColor = "bg-amber-50 text-amber-700 border-amber-100";
+          if (spot.cat === "景點") badgeColor = "bg-emerald-50 text-emerald-700 border-emerald-100";
+          if (spot.cat === "購物") badgeColor = "bg-rose-50 text-rose-700 border-rose-100";
+
+          html += `
+            <div class="bg-white rounded-3xl p-4 shadow-sm border border-slate-200/90 transition hover:shadow-md relative ${isDone ? 'opacity-60 bg-slate-50' : ''}">
+              <div class="flex items-start justify-between gap-2">
+                <div class="flex items-start gap-2.5 min-w-0">
+                  <!-- Checkbox -->
+                  <button onclick="toggleSpotDone('${spotKey}', ${dayIndex})" class="mt-0.5 w-5 h-5 rounded-lg border-2 flex items-center justify-center transition shrink-0 ${isDone ? 'bg-emerald-500 border-emerald-500 text-white' : 'border-slate-300 hover:border-sky-500'}">
+                    ${isDone ? '<i data-lucide="check" class="w-3.5 h-3.5"></i>' : ''}
+                  </button>
+
+                  <div class="space-y-1 min-w-0">
+                    <div class="flex items-center gap-1.5 flex-wrap">
+                      <span class="text-[11px] font-bold px-2 py-0.5 rounded-md bg-slate-100 text-slate-700">${spot.time}</span>
+                      <span class="text-[10px] font-bold px-1.5 py-0.2 rounded-md border ${badgeColor}">${spot.cat}</span>
+                    </div>
+                    <h3 class="font-bold text-sm text-slate-800 tracking-tight leading-snug ${isDone ? 'line-through text-slate-400' : ''}">${spot.name}</h3>
+                  </div>
+                </div>
+
+                <!-- Admin Action Tools or Navigation -->
+                <div class="flex items-center gap-1 shrink-0">
+                  ${isAdminLoggedIn ? `
+                    <button onclick="openEditSpotModal(${dayIndex}, ${spotIndex})" class="p-1.5 text-slate-400 hover:text-amber-600 rounded-lg" title="編輯此行程">
+                      <i data-lucide="pencil" class="w-3.5 h-3.5"></i>
+                    </button>
+                    <button onclick="deleteSpotPrompt(${dayIndex}, ${spotIndex})" class="p-1.5 text-slate-400 hover:text-rose-600 rounded-lg" title="刪除此行程">
+                      <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
+                    </button>
+                  ` : ''}
+                  <a href="${spot.mapUrl}" target="_blank" rel="noopener" class="p-2 bg-sky-50 hover:bg-sky-100 text-sky-700 rounded-2xl active:scale-95 transition flex items-center gap-1 font-bold text-xs" title="打開 Google 地圖導航">
+                    <i data-lucide="navigation" class="w-3.5 h-3.5"></i>
+                    <span>導航</span>
+                  </a>
+                </div>
+              </div>
+
+              <!-- Note -->
+              <p class="mt-2 text-xs text-slate-600 leading-relaxed pl-7 border-l-2 border-slate-100">${spot.note}</p>
+            </div>
+          `;
+        });
+
+        html += `</div>`;
+        container.innerHTML = html;
+      });
+
+      if (window.lucide) lucide.createIcons();
+    }
+
+    function toggleSpotDone(spotKey, dayIndex) {
+      if (COMPLETED_SPOTS.includes(spotKey)) {
+        COMPLETED_SPOTS = COMPLETED_SPOTS.filter(k => k !== spotKey);
+      } else {
+        COMPLETED_SPOTS.push(spotKey);
+      }
+      saveCurrentState(false);
+      renderDays();
+    }
+
+    /* ==========================================================================
+       6. RENDERING UNSCHEDULED SPOTS (未排入景點)
+       ========================================================================== */
+    let currentUnscheduledFilter = "all";
+
+    function renderUnscheduled() {
+      const container = document.getElementById("unscheduled-cards-container");
+      const badge = document.getElementById("unscheduled-count-badge");
+      if (badge) badge.innerText = `${CURRENT_UNSCHEDULED_PLACES.length} 處`;
+      if (!container) return;
+
+      const filtered = CURRENT_UNSCHEDULED_PLACES.filter(place => {
+        if (currentUnscheduledFilter === "all") return true;
+        return place.region === currentUnscheduledFilter;
+      });
+
+      if (filtered.length === 0) {
+        container.innerHTML = `
+          <div class="bg-white rounded-3xl p-6 text-center text-slate-400 border border-slate-200">
+            <i data-lucide="map-pin-off" class="w-8 h-8 mx-auto mb-2 text-slate-300"></i>
+            <p class="text-xs">該地區目前無景點</p>
+          </div>
+        `;
+        if (window.lucide) lucide.createIcons();
+        return;
+      }
+
+      container.innerHTML = filtered.map((place, idx) => {
+        let badgeColor = "bg-sky-50 text-sky-700 border-sky-100";
+        if (place.cat === "美食") badgeColor = "bg-amber-50 text-amber-700 border-amber-100";
+        if (place.cat === "景點") badgeColor = "bg-emerald-50 text-emerald-700 border-emerald-100";
+        if (place.cat === "購物") badgeColor = "bg-rose-50 text-rose-700 border-rose-100";
+
+        return `
+          <div class="bg-white rounded-3xl p-4 shadow-sm border border-slate-200/90 space-y-2">
+            <!-- Region, category and highlight single-row -->
+            <div class="flex items-center gap-1.5 text-[11px] text-slate-500 overflow-x-auto hide-scrollbar whitespace-nowrap">
+              <span class="font-bold text-slate-700 shrink-0">${place.region}</span>
+              <span class="text-slate-300 shrink-0">・</span>
+              <span class="font-bold px-1.5 py-0.2 rounded-md border ${badgeColor} shrink-0">${place.cat}</span>
+              <span class="text-slate-300 shrink-0">・</span>
+              <span class="text-slate-500 font-medium truncate">${place.highlight}</span>
+            </div>
+
+            <div class="flex items-center justify-between gap-2 pt-0.5">
+              <h3 class="font-bold text-sm text-slate-800 tracking-tight truncate">${place.name}</h3>
+
+              <div class="flex items-center gap-1.5 shrink-0">
+                <!-- Action: Insert / Schedule Spot -->
+                <button onclick="promptScheduleSpot('${place.id || place.name}')"
+                        class="px-2.5 py-1.5 rounded-xl bg-amber-500 hover:bg-amber-600 text-white font-bold text-xs shadow-sm active:scale-95 transition flex items-center gap-1">
+                  <i data-lucide="calendar-plus" class="w-3.5 h-3.5"></i>
+                  <span>排入行程</span>
+                </button>
+
+                <!-- Navigation link -->
+                <a href="${place.mapUrl}" target="_blank" rel="noopener"
+                   class="p-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-600 active:scale-95 transition" title="打開地圖">
+                  <i data-lucide="navigation" class="w-3.5 h-3.5"></i>
+                </a>
+              </div>
+            </div>
+          </div>
+        `;
+      }).join("");
+
+      if (window.lucide) lucide.createIcons();
+    }
+
+    function filterUnscheduled(region) {
+      currentUnscheduledFilter = region;
+      const btns = document.querySelectorAll(".un-filter-btn");
+      btns.forEach(b => {
+        if (b.dataset.region === region) {
+          b.className = "un-filter-btn px-3 py-1.5 rounded-xl text-xs font-bold bg-amber-500 text-white shrink-0 shadow-sm";
+        } else {
+          b.className = "un-filter-btn px-3 py-1.5 rounded-xl text-xs font-semibold bg-white text-slate-600 hover:bg-slate-100 border border-slate-200 shrink-0";
+        }
+      });
+      renderUnscheduled();
+    }
+
+    /* ==========================================================================
+       7. SCHEDULING SPOT MODAL (INSERT & SHIFT OR REPLACE)
+       ========================================================================== */
+    function promptScheduleSpot(placeIdOrName) {
+      pendingScheduleSpot = CURRENT_UNSCHEDULED_PLACES.find(p => (p.id === placeIdOrName || p.name === placeIdOrName));
+      if (!pendingScheduleSpot) return;
+
+      document.getElementById("schedule-modal-spot-name").innerText = pendingScheduleSpot.name;
+      document.getElementById("schedule-time-input").value = "14:00 - 15:30";
+
+      // Select D1 as default
+      scheduleTargetDay = 0;
+      setScheduleTargetDay(0);
+      setScheduleMode("insert");
+
+      document.getElementById("schedule-spot-modal").classList.remove("hidden");
+      document.getElementById("schedule-spot-modal").classList.add("flex");
+    }
+
+    function closeScheduleModal() {
+      document.getElementById("schedule-spot-modal").classList.add("hidden");
+      document.getElementById("schedule-spot-modal").classList.remove("flex");
+      pendingScheduleSpot = null;
+    }
+
+    function setScheduleTargetDay(dayIndex) {
+      scheduleTargetDay = dayIndex;
+      const radios = document.querySelectorAll('input[name="target-day"]');
+      radios.forEach((r, idx) => {
+        r.checked = (idx === dayIndex);
+        const parent = r.parentElement;
+        if (idx === dayIndex) {
+          parent.className = "flex flex-col items-center justify-center p-2 rounded-xl border-2 border-sky-600 bg-sky-50 text-sky-800 font-bold text-xs";
+        } else {
+          parent.className = "flex flex-col items-center justify-center p-2 rounded-xl border border-slate-200 cursor-pointer text-center font-bold text-xs hover:border-sky-500";
+        }
+      });
+      updateScheduleSpotOptions();
+    }
+
+    function onTargetDayChange(idx) {
+      setScheduleTargetDay(idx);
+    }
+
+    function setScheduleMode(mode) {
+      scheduleMode = mode;
+      const insertBtn = document.getElementById("mode-insert-btn");
+      const replaceBtn = document.getElementById("mode-replace-btn");
+      const label = document.getElementById("schedule-spot-select-label");
+
+      if (mode === "insert") {
+        insertBtn.className = "p-2.5 rounded-xl border-2 border-sky-600 bg-sky-50 text-sky-800 font-bold text-left transition flex items-center justify-between";
+        replaceBtn.className = "p-2.5 rounded-xl border border-slate-200 bg-white text-slate-600 font-bold text-left transition flex items-center justify-between";
+        label.innerText = "插入在哪個景點之前？";
+      } else {
+        replaceBtn.className = "p-2.5 rounded-xl border-2 border-amber-500 bg-amber-50 text-amber-800 font-bold text-left transition flex items-center justify-between";
+        insertBtn.className = "p-2.5 rounded-xl border border-slate-200 bg-white text-slate-600 font-bold text-left transition flex items-center justify-between";
+        label.innerText = "選擇要被替換刪除的現有景點：";
+      }
+      updateScheduleSpotOptions();
+    }
+
+    function updateScheduleSpotOptions() {
+      const select = document.getElementById("schedule-spot-select");
+      if (!select) return;
+
+      const targetSpots = CURRENT_DAYS_DATA[scheduleTargetDay].spots;
+
+      if (scheduleMode === "insert") {
+        let opts = targetSpots.map((s, idx) => `<option value="${idx}">第 ${idx + 1} 順位：插在【${s.name}】之前</option>`).join("");
+        opts += `<option value="${targetSpots.length}">排在當天最後一個行程</option>`;
+        select.innerHTML = opts;
+      } else {
+        // Replace
+        if (targetSpots.length === 0) {
+          select.innerHTML = `<option value="-1">當天尚無行程可替換</option>`;
+        } else {
+          select.innerHTML = targetSpots.map((s, idx) => `<option value="${idx}">替換掉【${s.time} ${s.name}】</option>`).join("");
+        }
+      }
+    }
+
+    function confirmSchedulePlacement() {
+      if (!pendingScheduleSpot) return;
+
+      const plannedTime = document.getElementById("schedule-time-input").value.trim() || "14:00 - 15:30";
+      const selectIndex = parseInt(document.getElementById("schedule-spot-select").value);
+
+      const targetDayObj = CURRENT_DAYS_DATA[scheduleTargetDay];
+
+      const newSpotObj = {
+        time: plannedTime,
+        name: pendingScheduleSpot.name,
+        cat: pendingScheduleSpot.cat,
+        note: pendingScheduleSpot.highlight || "自訂排入景點",
+        mapUrl: pendingScheduleSpot.mapUrl
+      };
+
+      if (scheduleMode === "replace") {
+        if (selectIndex >= 0 && selectIndex < targetDayObj.spots.length) {
+          const replacedSpot = targetDayObj.spots[selectIndex];
+
+          // Auto-move displaced spot into Unscheduled List so it is NEVER lost!
+          const alreadyInUnscheduled = CURRENT_UNSCHEDULED_PLACES.some(p => p.name === replacedSpot.name);
+          if (!alreadyInUnscheduled) {
+            CURRENT_UNSCHEDULED_PLACES.unshift({
+              id: `un-auto-${Date.now()}`,
+              name: replacedSpot.name,
+              region: getRegionFromDay(scheduleTargetDay),
+              cat: replacedSpot.cat || "景點",
+              highlight: `從 D${scheduleTargetDay + 1} 替換退出的點位（原時間：${replacedSpot.time}）`,
+              mapUrl: replacedSpot.mapUrl
+            });
+          }
+
+          targetDayObj.spots[selectIndex] = newSpotObj;
+        }
+      } else {
+        // Insert & shift
+        if (selectIndex >= targetDayObj.spots.length) {
+          targetDayObj.spots.push(newSpotObj);
+        } else {
+          targetDayObj.spots.splice(selectIndex, 0, newSpotObj);
+        }
+      }
+
+      // Remove from unscheduled list
+      CURRENT_UNSCHEDULED_PLACES = CURRENT_UNSCHEDULED_PLACES.filter(p => p.name !== pendingScheduleSpot.name);
+
+      saveCurrentState(true);
+      renderDays();
+      renderUnscheduled();
+      renderMasterList();
+
+      closeScheduleModal();
+      switchTab(scheduleTargetDay);
+
+      alertToast(`🎉 已成功排入 D${scheduleTargetDay + 1} 行程中！`);
+    }
+
+    function getRegionFromDay(dayIdx) {
+      if (dayIdx === 0 || dayIdx === 3) return "那霸市區";
+      if (dayIdx === 1) return "中部/恩納";
+      if (dayIdx === 2) return "北部";
+      if (dayIdx === 4) return "南部";
+      return "那霸市區";
+    }
+
+    /* ==========================================================================
+       8. ADD NEW CUSTOM PLACE (全新地點新增)
+       ========================================================================== */
+    function promptAddNewPlaceModal() {
+      document.getElementById("new-place-name").value = "";
+      document.getElementById("new-place-note").value = "";
+      document.getElementById("new-place-map-url").value = "";
+      document.getElementById("new-place-destination").value = "unscheduled";
+      toggleNewPlaceTargetDay("unscheduled");
+
+      document.getElementById("add-new-place-modal").classList.remove("hidden");
+      document.getElementById("add-new-place-modal").classList.add("flex");
+      document.getElementById("new-place-name").focus();
+    }
+
+    function closeAddNewPlaceModal() {
+      document.getElementById("add-new-place-modal").classList.add("hidden");
+      document.getElementById("add-new-place-modal").classList.remove("flex");
+    }
+
+    function toggleNewPlaceTargetDay(dest) {
+      const box = document.getElementById("new-place-day-select-box");
+      if (dest === "day") {
+        box.classList.remove("hidden");
+      } else {
+        box.classList.add("hidden");
+      }
+    }
+
+    function confirmAddNewPlace() {
+      const name = document.getElementById("new-place-name").value.trim();
+      const region = document.getElementById("new-place-region").value;
+      const cat = document.getElementById("new-place-category").value;
+      const note = document.getElementById("new-place-note").value.trim() || "自訂私房推薦";
+      let mapUrl = document.getElementById("new-place-map-url").value.trim();
+      const dest = document.getElementById("new-place-destination").value;
+
+      if (!name) {
+        alertToast("請填寫地點名稱！");
+        return;
+      }
+
+      if (!mapUrl) {
+        mapUrl = `https://maps.google.com/?q=${encodeURIComponent(name + ' Okinawa')}`;
+      }
+
+      if (dest === "unscheduled") {
+        CURRENT_UNSCHEDULED_PLACES.unshift({
+          id: `custom-${Date.now()}`,
+          name,
+          region,
+          cat,
+          highlight: note,
+          mapUrl
+        });
+        saveCurrentState(true);
+        renderUnscheduled();
+        renderMasterList();
+        closeAddNewPlaceModal();
+        switchTab(5); // Switch to unscheduled tab
+        alertToast(`✅ 已新增【${name}】至未排入景點備選庫！`);
+      } else {
+        const dayIdx = parseInt(document.getElementById("new-place-day-index").value);
+        const timeVal = document.getElementById("new-place-time").value.trim() || "15:00";
+
+        CURRENT_DAYS_DATA[dayIdx].spots.push({
+          time: timeVal,
+          name,
+          cat,
+          note,
+          mapUrl
+        });
+        saveCurrentState(true);
+        renderDays();
+        renderMasterList();
+        closeAddNewPlaceModal();
+        switchTab(dayIdx);
+        alertToast(`✅ 已直接排入 D${dayIdx + 1} 行程中！`);
+      }
+    }
+
+    /* ==========================================================================
+       9. MASTER DIRECTORY LIST (全部清單)
+       ========================================================================== */
+    let currentMasterSearch = "";
+    let currentMasterCategory = "all";
+
+    function getAllPlacesFlattened() {
+      const list = [];
+      CURRENT_DAYS_DATA.forEach(d => {
+        d.spots.forEach(s => {
+          list.push({
+            name: s.name,
+            cat: s.cat,
+            note: s.note,
+            mapUrl: s.mapUrl,
+            status: `D${d.day} 行程內`
+          });
+        });
+      });
+      CURRENT_UNSCHEDULED_PLACES.forEach(u => {
+        list.push({
+          name: u.name,
+          cat: u.cat,
+          note: u.highlight,
+          mapUrl: u.mapUrl,
+          status: `${u.region} (備選庫)`
+        });
+      });
+      return list;
+    }
+
+    function renderMasterList() {
+      const container = document.getElementById("master-cards-container");
+      const badge = document.getElementById("master-count-badge");
+      if (!container) return;
+
+      const all = getAllPlacesFlattened();
+      if (badge) badge.innerText = `共 ${all.length} 處`;
+
+      const filtered = all.filter(p => {
+        if (currentMasterCategory !== "all" && p.cat !== currentMasterCategory) return false;
+        if (currentMasterSearch) {
+          const q = currentMasterSearch.toLowerCase();
+          return p.name.toLowerCase().includes(q) || p.note.toLowerCase().includes(q);
+        }
+        return true;
+      });
+
+      if (filtered.length === 0) {
+        container.innerHTML = `
+          <div class="bg-white rounded-3xl p-6 text-center text-slate-400 border border-slate-200">
+            <i data-lucide="search-x" class="w-8 h-8 mx-auto mb-1 text-slate-300"></i>
+            <p class="text-xs">找不到符合的地點</p>
+          </div>
+        `;
+        if (window.lucide) lucide.createIcons();
+        return;
+      }
+
+      container.innerHTML = filtered.map(p => `
+        <div class="bg-white rounded-2xl p-3 shadow-sm border border-slate-200 flex items-center justify-between gap-2">
+          <div class="min-w-0 space-y-0.5">
+            <div class="flex items-center gap-1.5">
+              <span class="text-[10px] font-bold px-1.5 py-0.2 rounded-md bg-slate-100 text-slate-600">${p.status}</span>
+              <span class="text-[10px] font-bold px-1.5 py-0.2 rounded-md bg-sky-50 text-sky-700">${p.cat}</span>
+              <h4 class="font-bold text-xs text-slate-800 truncate">${p.name}</h4>
+            </div>
+            <p class="text-[11px] text-slate-500 truncate max-w-[240px]">${p.note}</p>
+          </div>
+          <a href="${p.mapUrl}" target="_blank" rel="noopener" class="p-2 rounded-xl bg-sky-50 hover:bg-sky-100 text-sky-700 shrink-0" title="導航">
+            <i data-lucide="navigation" class="w-3.5 h-3.5"></i>
+          </a>
+        </div>
+      `).join("");
+
+      if (window.lucide) lucide.createIcons();
+    }
+
+    function handleMasterSearch(val) {
+      currentMasterSearch = val.trim();
+      renderMasterList();
+    }
+
+    function filterMasterCategory(cat) {
+      currentMasterCategory = cat;
+      const btns = document.querySelectorAll(".master-cat-btn");
+      btns.forEach(b => {
+        if (b.dataset.cat === cat) {
+          b.className = "master-cat-btn px-3 py-1.5 rounded-xl text-xs font-bold bg-sky-600 text-white shrink-0 shadow-sm";
+        } else {
+          b.className = "master-cat-btn px-3 py-1.5 rounded-xl text-xs font-semibold bg-slate-100 text-slate-600 hover:bg-slate-200 shrink-0";
+        }
+      });
+      renderMasterList();
+    }
+
+    /* ==========================================================================
+       10. ADMIN SYSTEM (PIN: 0000)
+       ========================================================================== */
+    let editingSpotCoords = null; // { dayIndex, spotIndex }
+
+    function handleAdminButtonClick() {
+      if (isAdminLoggedIn) {
+        openCloudConfigModal();
+      } else {
+        openAdminPinModal();
+      }
+    }
+
+    function openAdminPinModal() {
+      document.getElementById("admin-pin-input").value = "";
+      document.getElementById("admin-pin-modal").classList.remove("hidden");
+      document.getElementById("admin-pin-modal").classList.add("flex");
+      document.getElementById("admin-pin-input").focus();
+    }
+
+    function closeAdminPinModal() {
+      document.getElementById("admin-pin-modal").classList.add("hidden");
+      document.getElementById("admin-pin-modal").classList.remove("flex");
+    }
+
+    function verifyAdminPin() {
+      const pin = document.getElementById("admin-pin-input").value.trim();
+      if (pin === "0000") {
+        isAdminLoggedIn = true;
+        localStorage.setItem("okinawa_is_admin", "true");
+        closeAdminPinModal();
+        updateAdminUIState();
+        renderDays();
+        alertToast("🔓 管理員已成功解鎖！可直接編輯並推播至全員");
+      } else {
+        alertToast("❌ 密碼錯誤！請輸入 0000");
+      }
+    }
+
+    function logoutAdmin() {
+      isAdminLoggedIn = false;
+      localStorage.removeItem("okinawa_is_admin");
+      updateAdminUIState();
+      renderDays();
+      alertToast("🔒 已退出管理員模式");
+    }
+
+    function updateAdminUIState() {
+      const bar = document.getElementById("admin-active-bar");
+      const icon = document.getElementById("admin-lock-icon");
+      const lockBtn = document.getElementById("admin-lock-btn");
+
+      if (isAdminLoggedIn) {
+        bar.classList.remove("hidden");
+        if (lockBtn) lockBtn.className = "p-1.5 rounded-xl bg-emerald-400 text-slate-900 active:scale-95 transition";
+        if (icon) icon.setAttribute("data-lucide", "unlock");
+      } else {
+        bar.classList.add("hidden");
+        if (lockBtn) lockBtn.className = "p-1.5 rounded-xl bg-amber-400/90 text-slate-900 active:scale-95 transition";
+        if (icon) icon.setAttribute("data-lucide", "lock");
+      }
+      if (window.lucide) lucide.createIcons();
+    }
+
+    function openEditSpotModal(dayIndex, spotIndex) {
+      editingSpotCoords = { dayIndex, spotIndex };
+      const spot = CURRENT_DAYS_DATA[dayIndex].spots[spotIndex];
+
+      document.getElementById("edit-spot-time").value = spot.time;
+      document.getElementById("edit-spot-name").value = spot.name;
+      document.getElementById("edit-spot-category").value = spot.cat;
+      document.getElementById("edit-spot-note").value = spot.note;
+
+      document.getElementById("edit-spot-modal").classList.remove("hidden");
+      document.getElementById("edit-spot-modal").classList.add("flex");
+    }
+
+    function closeEditSpotModal() {
+      document.getElementById("edit-spot-modal").classList.add("hidden");
+      document.getElementById("edit-spot-modal").classList.remove("flex");
+      editingSpotCoords = null;
+    }
+
+    function saveEditedSpot() {
+      if (!editingSpotCoords) return;
+      const { dayIndex, spotIndex } = editingSpotCoords;
+
+      const time = document.getElementById("edit-spot-time").value.trim();
+      const name = document.getElementById("edit-spot-name").value.trim();
+      const cat = document.getElementById("edit-spot-category").value.trim();
+      const note = document.getElementById("edit-spot-note").value.trim();
+
+      if (!name) {
+        alertToast("景點名稱不能為空！");
+        return;
+      }
+
+      CURRENT_DAYS_DATA[dayIndex].spots[spotIndex] = {
+        ...CURRENT_DAYS_DATA[dayIndex].spots[spotIndex],
+        time,
+        name,
+        cat,
+        note
+      };
+
+      saveCurrentState(true);
+      renderDays();
+      renderMasterList();
+      closeEditSpotModal();
+      alertToast("✅ 變更已儲存並推播！");
+    }
+
+    function deleteSpotPrompt(dayIndex, spotIndex) {
+      const spot = CURRENT_DAYS_DATA[dayIndex].spots[spotIndex];
+      if (confirm(`確定要刪除「${spot.name}」嗎？\n(它將被自動移回未排入景點備存)`)) {
+        CURRENT_DAYS_DATA[dayIndex].spots.splice(spotIndex, 1);
+
+        // Move to unscheduled so it is never lost
+        CURRENT_UNSCHEDULED_PLACES.unshift({
+          id: `del-recov-${Date.now()}`,
+          name: spot.name,
+          region: getRegionFromDay(dayIndex),
+          cat: spot.cat || "景點",
+          highlight: `從 D${dayIndex + 1} 刪除退出的點位：${spot.note}`,
+          mapUrl: spot.mapUrl
+        });
+
+        saveCurrentState(true);
+        renderDays();
+        renderUnscheduled();
+        renderMasterList();
+        alertToast(`已刪除並移至未排入景點備存`);
+      }
+    }
+
+    /* ==========================================================================
+       11. FIREBASE REAL-TIME CLOUD SYNCHRONIZATION
+       ========================================================================== */
+    const DEFAULT_FIREBASE_CONFIG = {
+      apiKey: "AIzaSyCRgoBOwtGRQyvCj3huinnhwB4Pzv6Nv_o",
+      authDomain: "okinawa-new-year-trip.firebaseapp.com",
+      projectId: "okinawa-new-year-trip",
+      storageBucket: "okinawa-new-year-trip.firebasestorage.app",
+      messagingSenderId: "263791427961",
+      appId: "1:263791427961:web:52f7d410b02e1fa194afa8",
+      measurementId: "G-ZM6TJKBZ9T"
+    };
+
+    let fbApp = null;
+    let fbDb = null;
+    let fbAuth = null;
+    let fbUnsubscribe = null;
+    const currentRoomId = localStorage.getItem("okinawa_fb_room") || "okinawa2027";
+
+    function initFirebaseClient() {
+      const storedConfig = localStorage.getItem("okinawa_fb_config");
+      const config = storedConfig ? JSON.parse(storedConfig) : DEFAULT_FIREBASE_CONFIG;
+
+      if (!window.FirebaseModule) return;
+
+      try {
+        const { initializeApp, getFirestore, getAuth, signInAnonymously } = window.FirebaseModule;
+        if (!fbApp) fbApp = initializeApp(config);
+        fbDb = getFirestore(fbApp);
+        fbAuth = getAuth(fbApp);
+
+        // Try anonymous auth or fallback
+        signInAnonymously(fbAuth).then(() => {
+          listenToFirestoreChanges();
+        }).catch((e) => {
+          console.warn("Firebase anon auth fallback:", e);
+          listenToFirestoreChanges();
+        });
+      } catch (err) {
+        console.error("Firebase init error:", err);
+      }
+    }
+
+    function listenToFirestoreChanges() {
+      if (!fbDb || !window.FirebaseModule) return;
+      const { doc, onSnapshot } = window.FirebaseModule;
+
+      if (fbUnsubscribe) fbUnsubscribe();
+
+      // Listen on public sync room document
+      const docRef = doc(fbDb, "artifacts", "okinawa-new-year", "public", "data", currentRoomId);
+      fbUnsubscribe = onSnapshot(docRef, (docSnap) => {
+        if (docSnap.exists()) {
+          const data = docSnap.data();
+          if (data && data.schedule && !isTemporaryLocalPreview) {
+            CURRENT_DAYS_DATA = data.schedule;
+            if (data.unscheduled) CURRENT_UNSCHEDULED_PLACES = data.unscheduled;
+
+            localStorage.setItem("okinawa_schedule_v2", JSON.stringify(CURRENT_DAYS_DATA));
+            localStorage.setItem("okinawa_unscheduled_v2", JSON.stringify(CURRENT_UNSCHEDULED_PLACES));
+
+            renderDays();
+            renderUnscheduled();
+            renderMasterList();
+
+            const dot = document.getElementById("cloud-indicator-dot");
+            if (dot) dot.classList.replace("bg-emerald-400", "bg-emerald-300");
+          }
+        }
+      }, (err) => {
+        console.warn("Firestore snapshot listener:", err);
+      });
+    }
+
+    async function pushScheduleToCloud() {
+      if (fbDb && window.FirebaseModule) {
+        try {
+          const { doc, setDoc } = window.FirebaseModule;
+          const docRef = doc(fbDb, "artifacts", "okinawa-new-year", "public", "data", currentRoomId);
+          await setDoc(docRef, {
+            schedule: CURRENT_DAYS_DATA,
+            unscheduled: CURRENT_UNSCHEDULED_PLACES,
+            updatedAt: new Date().toISOString()
+          }, { merge: true });
+        } catch (e) {
+          console.warn("Firestore push error:", e);
+        }
+      }
+
+      // Also trigger local BroadcastChannel for same-device/browser sync
+      if (window.BroadcastChannel) {
+        try {
+          const bc = new BroadcastChannel(`okinawa_channel_${currentRoomId}`);
+          bc.postMessage({ type: 'SCHEDULE_UPDATE', data: CURRENT_DAYS_DATA });
+        } catch (e) {}
+      }
+    }
+
+    function forcePushCurrentScheduleToCloud() {
+      pushScheduleToCloud().then(() => {
+        alertToast("🚀 已將目前排程強制作為全體最新版本！");
+        closeCloudConfigModal();
+      });
+    }
+
+    function openCloudConfigModal() {
+      document.getElementById("cloud-config-modal").classList.remove("hidden");
+      document.getElementById("cloud-config-modal").classList.add("flex");
+    }
+
+    function closeCloudConfigModal() {
+      document.getElementById("cloud-config-modal").classList.add("hidden");
+      document.getElementById("cloud-config-modal").classList.remove("flex");
+    }
+
+    /* ==========================================================================
+       12. EXCHANGE RATE CALCULATOR & UTILITIES
+       ========================================================================== */
+    async function fetchLiveExchangeRate(isManual = false) {
+      try {
+        const res = await fetch("https://open.er-api.com/v6/latest/JPY");
+        const data = await res.json();
+        if (data && data.rates && data.rates.TWD) {
+          currentExchangeRate = parseFloat(data.rates.TWD.toFixed(4));
+          const disp = document.getElementById("rate-modal-current");
+          if (disp) disp.innerText = currentExchangeRate;
+          if (isManual) alertToast(`即時匯率更新成功：${currentExchangeRate}`);
+        }
+      } catch (e) {
+        console.warn("Live rate sync fallback:", e);
+      }
+    }
+
+    function openRateModal() {
+      document.getElementById("rate-modal-current").innerText = currentExchangeRate;
+      document.getElementById("calc-jpy-input").value = "2500";
+      calculateExchange("JPY");
+      document.getElementById("rate-modal").classList.remove("hidden");
+      document.getElementById("rate-modal").classList.add("flex");
+    }
+
+    function closeRateModal() {
+      document.getElementById("rate-modal").classList.add("hidden");
+      document.getElementById("rate-modal").classList.remove("flex");
+    }
+
+    function calculateExchange(source) {
+      const jpyEl = document.getElementById("calc-jpy-input");
+      const twdEl = document.getElementById("calc-twd-input");
+
+      if (source === "JPY") {
+        const val = parseFloat(jpyEl.value) || 0;
+        twdEl.value = Math.round(val * currentExchangeRate);
+      } else {
+        const val = parseFloat(twdEl.value) || 0;
+        jpyEl.value = Math.round(val / currentExchangeRate);
+      }
+    }
+
+    function shareItineraryUrl() {
+      const url = window.location.href;
+      if (navigator.clipboard) {
+        navigator.clipboard.writeText(url).then(() => {
+          alertToast("📋 網址已複製到剪貼簿，可直接貼到 LINE！");
+        }).catch(() => {
+          copyFallback(url);
+        });
+      } else {
+        copyFallback(url);
+      }
+    }
+
+    function copyFallback(text) {
+      const temp = document.createElement("input");
+      temp.value = text;
+      document.body.appendChild(temp);
+      temp.select();
+      document.execCommand("copy");
+      document.body.removeChild(temp);
+      alertToast("📋 網址已複製到剪貼簿！");
+    }
+
+    function downloadSelfHtml() {
+      const htmlContent = "<!DOCTYPE html>\n" + document.documentElement.outerHTML;
+      const blob = new Blob([htmlContent], { type: "text/html;charset=utf-8" });
+      const a = document.createElement("a");
+      a.href = URL.createObjectURL(blob);
+      a.download = "沖繩跨年5天4夜行程手冊.html";
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      alertToast("📥 離線網頁檔案下載成功！");
+    }
+
+    function alertToast(msg) {
+      const toast = document.getElementById("notice-toast");
+      const text = document.getElementById("notice-toast-text");
+      if (!toast || !text) return;
+
+      text.innerText = msg;
+      toast.classList.remove("opacity-0", "-translate-y-2");
+      toast.classList.add("opacity-100", "translate-y-0");
+
+      setTimeout(() => {
+        toast.classList.remove("opacity-100", "translate-y-0");
+        toast.classList.add("opacity-0", "-translate-y-2");
+      }, 2600);
+    }
+
+    /* ==========================================================================
+       13. APP BOOTSTRAP
+       ========================================================================== */
+    function initApp() {
+      try {
+        renderDays();
+      } catch (e) {
+        console.error("renderDays error:", e);
+      }
+      try {
+        renderUnscheduled();
+      } catch (e) {
+        console.error("renderUnscheduled error:", e);
+      }
+      try {
+        renderMasterList();
+      } catch (e) {
+        console.error("renderMasterList error:", e);
+      }
+      try {
+        updateAdminUIState();
+      } catch (e) {
+        console.error("updateAdminUIState error:", e);
+      }
+      try {
+        initTouchGestures();
+      } catch (e) {
+        console.error("initTouchGestures error:", e);
+      }
+      try {
+        switchTab(0);
+      } catch (e) {}
+
+      fetchLiveExchangeRate();
+
+      // Initialize Firebase live connector safely after UI is rendered
+      setTimeout(() => {
+        try {
+          initFirebaseClient();
+        } catch (err) {
+          console.warn("Firebase deferred init warning:", err);
+        }
+      }, 300);
+
+      if (window.lucide) {
+        try {
+          lucide.createIcons();
+        } catch (e) {}
+      }
+    }
+
+    if (document.readyState === "loading") {
+      document.addEventListener("DOMContentLoaded", initApp);
+    } else {
+      initApp();
+    }
+  </script>
+</body>
+</html>
