@@ -8,7 +8,7 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
   <meta name="theme-color" content="#0284c7" />
 
-  <!-- Tailwind CSS -->
+  <!-- Tailwind CSS CDN -->
   <script src="https://cdn.tailwindcss.com"></script>
   <!-- Lucide Icons -->
   <script src="https://unpkg.com/lucide@latest"></script>
@@ -30,29 +30,7 @@
     };
   </script>
 
-  <script>
-    tailwind.config = {
-      theme: {
-        extend: {
-          colors: {
-            okinawa: {
-              50: '#f0f9ff',
-              100: '#e0f2fe',
-              500: '#0ea5e9',
-              600: '#0284c7',
-              700: '#0369a1',
-              800: '#075985',
-              coral: '#fb7185',
-              sand: '#fef3c7'
-            }
-          }
-        }
-      }
-    }
-  </script>
-
   <style>
-    /* iOS Momentum Scrolling & Safe Area */
     body {
       -webkit-tap-highlight-color: transparent;
       padding-top: env(safe-area-inset-top);
@@ -66,274 +44,435 @@
       -ms-overflow-style: none;
       scrollbar-width: none;
     }
-
-    /* Swipe Carousel & View Transition Animation */
-    #views-wrapper {
+    .views-wrapper {
       display: flex;
-      width: 700%;
-      transition: transform 0.28s cubic-bezier(0.25, 1, 0.5, 1);
+      width: 100%;
+      transition: transform 0.32s cubic-bezier(0.25, 1, 0.5, 1);
       will-change: transform;
     }
-    .tab-slide {
-      width: calc(100% / 7);
-      flex-shrink: 0;
-      box-sizing: border-box;
-      min-height: 50vh;
+    .view-slide {
+      flex: 0 0 100%;
+      width: 100%;
+      min-width: 100%;
     }
   </style>
 </head>
-<body class="bg-slate-100 text-slate-800 antialiased min-h-screen pb-24 overflow-x-hidden">
+<body class="bg-slate-100 text-slate-800 antialiased min-h-screen pb-20 select-none">
 
-  <!-- Top Sticky Header -->
-  <header class="sticky top-0 z-50 bg-gradient-to-r from-sky-700 via-sky-600 to-teal-600 text-white shadow-md">
-    <div class="max-w-md mx-auto px-4 pt-3 pb-2">
+  <!-- Sticky Top Header -->
+  <header class="sticky top-0 z-40 bg-gradient-to-r from-sky-700 via-sky-600 to-teal-600 text-white shadow-md">
+    <div class="max-w-md mx-auto px-4 pt-3 pb-2.5">
       <div class="flex items-center justify-between">
-        <div>
-          <h1 class="text-lg font-bold tracking-tight">沖繩跨年 5D4N</h1>
-          <p class="text-xs text-sky-100">12/30 抵達 - 1/3 返台・租車自駕指南</p>
-        </div>
-        
-        <!-- Utility Action Buttons -->
-        <div class="flex items-center gap-1.5">
-          <button onclick="copyShareLink()" class="flex items-center gap-1 px-2.5 py-1.5 rounded-xl bg-white/20 hover:bg-white/30 active:scale-95 transition text-xs font-semibold" title="分享行程連結給旅伴">
-            <i data-lucide="share-2" class="w-3.5 h-3.5 text-sky-200"></i>
-            <span id="share-btn-text">分享</span>
-          </button>
-          <a href="https://rate.bot.com.tw/xrt/quote/lreal/JPY" target="_blank" rel="noopener noreferrer" 
-             class="flex items-center gap-1 px-2.5 py-1.5 rounded-xl bg-amber-400 text-slate-900 font-bold text-xs shadow hover:bg-amber-300 active:scale-95 transition"
-             title="前往台灣銀行日圓匯率牌告">
-            <i data-lucide="badge-dollar-sign" class="w-4 h-4 text-amber-900"></i>
-            <span>台銀</span>
-          </a>
-          <button onclick="openCalcModal()" class="relative p-2 rounded-xl bg-white/15 hover:bg-white/25 active:scale-95 transition" title="日幣速算計算機">
-            <i data-lucide="calculator" class="w-4 h-4"></i>
-            <span id="header-rate-dot" class="absolute -top-0.5 -right-0.5 w-2 h-2 rounded-full bg-emerald-400 animate-ping"></span>
-          </button>
-          <button onclick="openEmergencyModal()" class="p-2 rounded-xl bg-white/15 hover:bg-white/25 active:scale-95 transition" title="應急資訊">
-            <i data-lucide="shield-alert" class="w-4 h-4 text-rose-300"></i>
-          </button>
-          <button onclick="toggleAdminPrompt()" id="admin-lock-btn" class="p-2 rounded-xl bg-white/15 hover:bg-white/25 active:scale-95 transition text-amber-300" title="管理員權限 (密碼 0000)">
-            <i data-lucide="lock" id="admin-lock-icon" class="w-4 h-4"></i>
-          </button>
-        </div>
-      </div>
-
-      <!-- Admin Status Bar (Hidden until unlocked) -->
-      <div id="admin-active-bar" class="hidden mt-2 pt-1.5 pb-1 border-t border-amber-300/30 flex items-center justify-between text-xs text-amber-200 bg-amber-950/30 px-2 rounded-lg">
-        <span class="inline-flex items-center gap-1 font-bold text-amber-300">
-          <i data-lucide="shield-check" class="w-3.5 h-3.5"></i> 管理員模式已啟用
-        </span>
         <div class="flex items-center gap-2">
-          <button onclick="openNewPlaceModal()" class="text-[11px] font-bold text-slate-900 bg-amber-300 hover:bg-amber-200 px-2 py-0.5 rounded shadow flex items-center gap-1">
-            <i data-lucide="plus-circle" class="w-3 h-3"></i> 新增地點
+          <div class="p-1.5 rounded-xl bg-white/20 backdrop-blur-sm">
+            <i data-lucide="compass" class="w-5 h-5 text-amber-300"></i>
+          </div>
+          <div>
+            <h1 class="text-base font-bold tracking-tight flex items-center gap-1.5">
+              <span>沖繩跨年 5 天 4 夜</span>
+              <span id="cloud-indicator-dot" class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" title="雲端同步中"></span>
+            </h1>
+            <p class="text-[11px] text-sky-100">2026/12/30 - 2027/01/03 自駕隨身手冊</p>
+          </div>
+        </div>
+
+        <!-- Action tools -->
+        <div class="flex items-center gap-1.5">
+          <!-- Split Expense Page Link -->
+          <a href="split.html" class="px-2.5 py-1.5 rounded-xl bg-emerald-500 hover:bg-emerald-600 text-white text-xs font-bold flex items-center gap-1 shadow-sm active:scale-95 transition" title="前往分帳本">
+            <i data-lucide="receipt" class="w-3.5 h-3.5"></i>
+            <span>分帳 ↗</span>
+          </a>
+
+          <!-- Exchange Rate Tool -->
+          <button onclick="openRateModal()" class="p-1.5 rounded-xl bg-white/20 hover:bg-white/30 text-white active:scale-95 transition" title="日幣即時匯率計算">
+            <i data-lucide="calculator" class="w-4 h-4"></i>
           </button>
-          <button onclick="openCloudConfigModal()" class="text-[11px] font-bold text-slate-900 bg-emerald-400 hover:bg-emerald-300 px-2 py-0.5 rounded shadow flex items-center gap-1">
-            <i data-lucide="cloud" class="w-3 h-3"></i> 雲端同步
+
+          <!-- Share Link -->
+          <button onclick="shareItineraryUrl()" class="p-1.5 rounded-xl bg-white/20 hover:bg-white/30 text-white active:scale-95 transition" title="分享行程連結">
+            <i data-lucide="share-2" class="w-4 h-4"></i>
           </button>
-          <button onclick="exportUpdatedCodeForGithub()" class="text-[11px] font-bold text-slate-900 bg-amber-400 hover:bg-amber-300 px-2 py-0.5 rounded shadow">
-            匯出代碼
+
+          <!-- Admin Lock / Unlock Button -->
+          <button id="admin-lock-btn" onclick="handleAdminButtonClick()" class="p-1.5 rounded-xl bg-amber-400/90 text-slate-900 active:scale-95 transition" title="管理員權限">
+            <i data-lucide="lock" class="w-4 h-4" id="admin-lock-icon"></i>
           </button>
-          <button onclick="exitAdminMode()" class="text-[10px] text-amber-200/80 hover:text-white underline">登出</button>
         </div>
       </div>
 
-      <!-- Temporary Local Preview Notice (Only shown when a non-admin resets locally) -->
-      <div id="temp-preview-bar" class="hidden mt-2 pt-1.5 pb-1 border-t border-rose-300/40 flex items-center justify-between text-[11px] text-rose-100 bg-rose-950/40 px-2 rounded-lg">
-        <span class="inline-flex items-center gap-1 font-semibold text-rose-200">
-          <i data-lucide="eye" class="w-3.5 h-3.5 text-rose-300"></i> 本機暫存預覽中 (非正式雲端版本)
-        </span>
-        <button onclick="restoreCloudSchedule()" class="text-[10px] font-bold bg-white text-rose-800 px-2 py-0.5 rounded shadow hover:bg-rose-50 active:scale-95 transition">
-          回復雲端行程
-        </button>
-      </div>
-
-      <!-- Compact Single-Line Offline & Download Bar -->
-      <div class="mt-2 pt-1.5 border-t border-white/15 flex items-center justify-between text-[11px] text-sky-100">
-        <span id="network-badge" class="inline-flex items-center gap-1.5 font-medium">
-          <span class="w-1.5 h-1.5 rounded-full bg-emerald-300"></span> 離線就緒
-        </span>
+      <!-- Single-line compact status bar -->
+      <div class="flex items-center justify-between text-[11px] text-sky-100/90 mt-2 pt-1.5 border-t border-white/15">
+        <div class="flex items-center gap-1.5">
+          <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 inline-block"></span>
+          <span id="offline-status-text">離線就緒・已快取地圖</span>
+        </div>
         <div class="flex items-center gap-3">
-          <button onclick="openNewPlaceModal()" class="inline-flex items-center gap-1 text-amber-200 hover:text-amber-100 font-bold active:opacity-75 transition">
-            <i data-lucide="plus-circle" class="w-3.5 h-3.5 text-amber-300"></i>
-            <span>新增地點</span>
-          </button>
-          <button onclick="downloadSelfHtml()" class="inline-flex items-center gap-1 text-sky-100 hover:text-white underline font-semibold active:opacity-75 transition">
-            <i data-lucide="download" class="w-3.5 h-3.5 text-emerald-300"></i>
+          <button onclick="downloadSelfHtml()" class="hover:text-white underline flex items-center gap-1 text-[11px]">
+            <i data-lucide="download" class="w-3 h-3"></i>
             <span>下載離線檔</span>
           </button>
+          <button onclick="openResetModal()" class="text-sky-200 hover:text-white text-[11px] underline">
+            重設行程
+          </button>
         </div>
       </div>
-
-      <!-- Day Navigation Bar -->
-      <nav class="flex items-center gap-2 overflow-x-auto hide-scrollbar mt-2.5 pt-1 pb-1 text-xs">
-        <button onclick="switchTab('d1')" id="tab-btn-d1" class="tab-btn whitespace-nowrap px-3.5 py-1.5 rounded-full font-bold transition bg-white text-sky-700 shadow-sm shrink-0">
-          D1 12/30
-        </button>
-        <button onclick="switchTab('d2')" id="tab-btn-d2" class="tab-btn whitespace-nowrap px-3.5 py-1.5 rounded-full font-medium transition text-white/80 hover:bg-white/10 shrink-0">
-          D2 12/31
-        </button>
-        <button onclick="switchTab('d3')" id="tab-btn-d3" class="tab-btn whitespace-nowrap px-3.5 py-1.5 rounded-full font-medium transition text-white/80 hover:bg-white/10 shrink-0">
-          D3 1/1
-        </button>
-        <button onclick="switchTab('d4')" id="tab-btn-d4" class="tab-btn whitespace-nowrap px-3.5 py-1.5 rounded-full font-medium transition text-white/80 hover:bg-white/10 shrink-0">
-          D4 1/2
-        </button>
-        <button onclick="switchTab('d5')" id="tab-btn-d5" class="tab-btn whitespace-nowrap px-3.5 py-1.5 rounded-full font-medium transition text-white/80 hover:bg-white/10 shrink-0">
-          D5 1/3
-        </button>
-        <button onclick="switchTab('unscheduled')" id="tab-btn-unscheduled" class="tab-btn whitespace-nowrap px-3.5 py-1.5 rounded-full font-medium transition text-white/80 hover:bg-white/10 inline-flex items-center gap-1.5 shrink-0">
-          <i data-lucide="compass" class="w-3.5 h-3.5 text-amber-300 shrink-0"></i>
-          <span class="whitespace-nowrap">未排入景點</span>
-        </button>
-        <button onclick="switchTab('all')" id="tab-btn-all" class="tab-btn whitespace-nowrap px-3.5 py-1.5 rounded-full font-medium transition text-white/80 hover:bg-white/10 inline-flex items-center gap-1.5 shrink-0">
-          <i data-lucide="bookmark" class="w-3.5 h-3.5 shrink-0"></i>
-          <span class="whitespace-nowrap">全部清單</span>
-        </button>
-      </nav>
     </div>
+
+    <!-- Admin Status Banner (Visible when admin is logged in) -->
+    <div id="admin-active-bar" class="hidden bg-amber-500 text-slate-900 px-4 py-1.5 text-xs font-bold flex items-center justify-between">
+      <div class="flex items-center gap-1.5">
+        <i data-lucide="shield-check" class="w-4 h-4"></i>
+        <span>管理員已登入 (即時編輯模式)</span>
+      </div>
+      <div class="flex items-center gap-2">
+        <button onclick="promptAddNewPlaceModal()" class="bg-slate-900 text-white px-2 py-0.5 rounded-lg text-[10px] flex items-center gap-1">
+          <i data-lucide="plus" class="w-3 h-3"></i> 新增地點
+        </button>
+        <button onclick="openCloudConfigModal()" class="bg-emerald-700 text-white px-2 py-0.5 rounded-lg text-[10px] flex items-center gap-1">
+          ☁️ 雲端狀態
+        </button>
+        <button onclick="logoutAdmin()" class="underline text-slate-900 hover:text-black text-[11px]">
+          登出
+        </button>
+      </div>
+    </div>
+
+    <!-- Temporary Local Preview Notice (Visible when non-admin resets locally) -->
+    <div id="local-preview-notice" class="hidden bg-amber-100 text-amber-900 border-b border-amber-300 px-4 py-1.5 text-xs flex items-center justify-between">
+      <div class="flex items-center gap-1.5">
+        <i data-lucide="info" class="w-3.5 h-3.5 text-amber-700"></i>
+        <span>本機暫存預覽中 (非正式雲端版本)</span>
+      </div>
+      <button onclick="revertToCloudVersion()" class="underline font-bold text-amber-800 hover:text-amber-950">
+        回復雲端行程
+      </button>
+    </div>
+
+    <!-- Navigation Tabs Bar -->
+    <nav class="max-w-md mx-auto px-2 pb-1.5 flex items-center gap-1.5 overflow-x-auto hide-scrollbar whitespace-nowrap text-xs font-medium">
+      <button onclick="switchTab(0)" class="tab-btn px-3 py-1.5 rounded-xl font-bold transition inline-flex items-center gap-1.5 shrink-0 whitespace-nowrap bg-white text-sky-800 shadow-sm" data-idx="0">D1 12/30</button>
+      <button onclick="switchTab(1)" class="tab-btn px-3 py-1.5 rounded-xl transition inline-flex items-center gap-1.5 shrink-0 whitespace-nowrap text-sky-100 hover:bg-white/10" data-idx="1">D2 12/31</button>
+      <button onclick="switchTab(2)" class="tab-btn px-3 py-1.5 rounded-xl transition inline-flex items-center gap-1.5 shrink-0 whitespace-nowrap text-sky-100 hover:bg-white/10" data-idx="2">D3 1/1</button>
+      <button onclick="switchTab(3)" class="tab-btn px-3 py-1.5 rounded-xl transition inline-flex items-center gap-1.5 shrink-0 whitespace-nowrap text-sky-100 hover:bg-white/10" data-idx="3">D4 1/2</button>
+      <button onclick="switchTab(4)" class="tab-btn px-3 py-1.5 rounded-xl transition inline-flex items-center gap-1.5 shrink-0 whitespace-nowrap text-sky-100 hover:bg-white/10" data-idx="4">D5 1/3</button>
+      <button onclick="switchTab(5)" class="tab-btn px-3 py-1.5 rounded-xl transition inline-flex items-center gap-1.5 shrink-0 whitespace-nowrap text-sky-100 hover:bg-white/10" data-idx="5">
+        <i data-lucide="sparkles" class="w-3.5 h-3.5"></i>
+        <span>未排入景點</span>
+      </button>
+      <button onclick="switchTab(6)" class="tab-btn px-3 py-1.5 rounded-xl transition inline-flex items-center gap-1.5 shrink-0 whitespace-nowrap text-sky-100 hover:bg-white/10" data-idx="6">
+        <i data-lucide="layers" class="w-3.5 h-3.5"></i>
+        <span>全部清單</span>
+      </button>
+    </nav>
   </header>
 
-  <!-- Main Container & Smooth Sliding Views Track -->
-  <main id="main-content" class="max-w-md mx-auto px-4 mt-4 overflow-hidden">
-    <div id="views-wrapper">
+  <!-- Carousel Slide Container for Smooth Touch Swiping -->
+  <main class="max-w-md mx-auto overflow-hidden relative">
+    <div id="views-wrapper" class="views-wrapper">
 
-      <!-- Day 1 View Slide -->
-      <section id="view-d1" class="tab-slide pr-2 space-y-3">
-        <div class="bg-gradient-to-r from-sky-50 to-indigo-50 border border-sky-100 rounded-2xl p-3.5 text-xs text-sky-900 shadow-sm">
-          <div class="font-bold flex items-center justify-between text-sky-800 text-sm mb-1">
-            <span class="flex items-center gap-1.5"><i data-lucide="navigation" class="w-4 h-4 text-sky-600"></i> Day 1：抵達那霸・必吃拉麵・市區採買</span>
-          </div>
-          <p class="text-slate-600 leading-relaxed">利用單軌電車移動（壺川住宿）。晚上直奔通堂小祿店，放完行李後享受屋台村與24H超市補貨。</p>
-        </div>
-        <div id="d1-cards" class="space-y-3"></div>
+      <!-- View 0: Day 1 -->
+      <section class="view-slide px-4 py-3 space-y-3" id="view-day-0">
+        <!-- populated dynamically -->
       </section>
 
-      <!-- Day 2 View Slide -->
-      <section id="view-d2" class="tab-slide pr-2 space-y-3">
-        <div class="bg-gradient-to-r from-amber-50 to-orange-50 border border-amber-100 rounded-2xl p-3.5 text-xs text-amber-900 shadow-sm">
-          <div class="font-bold flex items-center justify-between text-amber-800 text-sm mb-1">
-            <span class="flex items-center gap-1.5"><i data-lucide="car" class="w-4 h-4 text-amber-600"></i> Day 2：DFS取車・天久採買・初詣・泡瀨跨年</span>
-          </div>
-          <p class="text-slate-600 leading-relaxed">11:00 新都心取車，天久商圈補齊裝備，前往達摩寺為新年祈願，入住具志川迎跨年！</p>
-        </div>
-        <div id="d2-cards" class="space-y-3"></div>
+      <!-- View 1: Day 2 -->
+      <section class="view-slide px-4 py-3 space-y-3" id="view-day-1">
+        <!-- populated dynamically -->
       </section>
 
-      <!-- Day 3 View Slide -->
-      <section id="view-d3" class="tab-slide pr-2 space-y-3">
-        <div class="bg-gradient-to-r from-blue-50 to-cyan-50 border border-blue-100 rounded-2xl p-3.5 text-xs text-blue-900 shadow-sm">
-          <div class="font-bold flex items-center justify-between text-blue-800 text-sm mb-1">
-            <span class="flex items-center gap-1.5"><i data-lucide="waves" class="w-4 h-4 text-blue-600"></i> Day 3：元旦北部海景・美麗海水族館・古宇利</span>
-          </div>
-          <p class="text-slate-600 leading-relaxed">早晨外帶人氣三明治與果昔，參觀美麗海水族館，午後在古宇利大橋南端放空賞夕陽。</p>
-        </div>
-        <div id="d3-cards" class="space-y-3"></div>
+      <!-- View 2: Day 3 -->
+      <section class="view-slide px-4 py-3 space-y-3" id="view-day-2">
+        <!-- populated dynamically -->
       </section>
 
-      <!-- Day 4 View Slide -->
-      <section id="view-d4" class="tab-slide pr-2 space-y-3">
-        <div class="bg-gradient-to-r from-teal-50 to-emerald-50 border border-teal-100 rounded-2xl p-3.5 text-xs text-teal-900 shadow-sm">
-          <div class="font-bold flex items-center justify-between text-teal-800 text-sm mb-1">
-            <span class="flex items-center gap-1.5"><i data-lucide="shopping-bag" class="w-4 h-4 text-teal-600"></i> Day 4：海中道路・古民家午餐・PARCO CITY 採買</span>
-          </div>
-          <p class="text-slate-600 leading-relaxed">享受宇流麻跨海兜風，中午吃濱比嘉島家常料理，下午前往 PARCO CITY 採買，買完直接回民宿打包！</p>
-        </div>
-        <div id="d4-cards" class="space-y-3"></div>
+      <!-- View 3: Day 4 -->
+      <section class="view-slide px-4 py-3 space-y-3" id="view-day-3">
+        <!-- populated dynamically -->
       </section>
 
-      <!-- Day 5 View Slide -->
-      <section id="view-d5" class="tab-slide pr-2 space-y-3">
-        <div class="bg-gradient-to-r from-rose-50 to-orange-50 border border-rose-100 rounded-2xl p-3.5 text-xs text-rose-900 shadow-sm">
-          <div class="font-bold flex items-center justify-between text-rose-800 text-sm mb-1">
-            <span class="flex items-center gap-1.5"><i data-lucide="plane-takeoff" class="w-4 h-4 text-rose-600"></i> Day 5：奧武島海鮮・Gangala之谷・還車返台</span>
-          </div>
-          <p class="text-slate-600 leading-relaxed">南下至奧武島吃海產炸物，探訪 Gangala之谷鐘乳石洞穴咖啡，請注意於 16:00 前完成 DFS 還車手續！</p>
-        </div>
-        <div id="d5-cards" class="space-y-3"></div>
+      <!-- View 4: Day 5 -->
+      <section class="view-slide px-4 py-3 space-y-3" id="view-day-4">
+        <!-- populated dynamically -->
       </section>
 
-      <!-- Unscheduled / Backup View Slide -->
-      <section id="view-unscheduled" class="tab-slide pr-2 space-y-3">
-        <!-- Header Banner with working Reset & Add New buttons -->
-        <div class="bg-gradient-to-r from-amber-50 via-orange-50 to-yellow-50 border border-amber-200 rounded-2xl px-3.5 py-2.5 text-xs text-amber-900 shadow-sm flex items-center justify-between">
-          <div class="font-bold flex items-center gap-1.5 text-amber-800 text-sm truncate">
-            <i data-lucide="sparkles" class="w-4 h-4 text-amber-600 shrink-0"></i>
-            <span class="truncate">未排入景點（備選寶庫）</span>
-          </div>
-          <div class="flex items-center gap-1.5 shrink-0">
-            <button type="button" onclick="openNewPlaceModal()" class="text-[11px] font-bold text-amber-900 bg-amber-300 hover:bg-amber-400 px-2 py-0.5 rounded-lg border border-amber-400 shadow-sm active:scale-95 transition flex items-center gap-1">
-              <i data-lucide="plus" class="w-3 h-3"></i> 新增地點
-            </button>
-            <span id="unscheduled-count-tag" class="text-[11px] font-semibold text-amber-700 bg-amber-100/80 px-2 py-0.5 rounded-full border border-amber-200">共 16 處</span>
-            <button type="button" onclick="triggerResetScheduleModal()" class="text-[11px] font-bold text-rose-600 hover:text-rose-700 bg-white px-2 py-0.5 rounded-lg border border-rose-200 shadow-sm active:scale-95 transition" title="重設行程">
-              重設行程
-            </button>
-          </div>
-        </div>
-
-        <!-- Single-Line Region Filter Tabs -->
-        <div class="flex items-center gap-1.5 overflow-x-auto hide-scrollbar text-xs py-1 whitespace-nowrap">
-          <button onclick="filterUnscheduledRegion('全部')" class="unscheduled-pill shrink-0 px-3 py-1 rounded-full font-bold bg-amber-600 text-white shadow-sm">全部地區</button>
-          <button onclick="filterUnscheduledRegion('那霸市區')" class="unscheduled-pill shrink-0 px-3 py-1 rounded-full bg-slate-100 text-slate-600">那霸市區</button>
-          <button onclick="filterUnscheduledRegion('中部/恩納')" class="unscheduled-pill shrink-0 px-3 py-1 rounded-full bg-slate-100 text-slate-600">中部/恩納</button>
-          <button onclick="filterUnscheduledRegion('北部')" class="unscheduled-pill shrink-0 px-3 py-1 rounded-full bg-slate-100 text-slate-600">北部</button>
-          <button onclick="filterUnscheduledRegion('南部')" class="unscheduled-pill shrink-0 px-3 py-1 rounded-full bg-slate-100 text-slate-600">南部</button>
-        </div>
-
-        <div id="unscheduled-cards" class="space-y-3"></div>
-      </section>
-
-      <!-- Backup & Full List View Slide -->
-      <section id="view-all" class="tab-slide pr-2 space-y-3">
-        <div class="bg-white p-3.5 rounded-2xl shadow-sm border border-slate-200 space-y-2.5">
-          <div class="flex items-center gap-2">
-            <div class="relative flex-1">
-              <i data-lucide="search" class="w-4 h-4 absolute left-3 top-3 text-slate-400"></i>
-              <input
-                id="all-search-input"
-                type="text"
-                placeholder="搜尋清單景點、美食或備註..."
-                oninput="filterMasterList()"
-                class="w-full pl-9 pr-4 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-sky-500"
-              />
+      <!-- View 5: Unscheduled Spots (未排入景點) -->
+      <section class="view-slide px-4 py-3 space-y-3" id="view-unscheduled">
+        <div class="bg-gradient-to-r from-amber-500 to-rose-500 text-white rounded-3xl p-4 shadow-sm space-y-2">
+          <div class="flex items-center justify-between">
+            <h2 class="text-sm font-bold flex items-center gap-1.5">
+              <i data-lucide="sparkles" class="w-4 h-4 text-amber-200"></i>
+              <span>未排入景點與備用庫</span>
+            </h2>
+            <div class="flex items-center gap-1.5">
+              <button onclick="promptAddNewPlaceModal()" class="bg-white/20 hover:bg-white/30 text-white text-[11px] font-bold px-2 py-0.5 rounded-lg flex items-center gap-1 active:scale-95 transition">
+                <i data-lucide="plus" class="w-3 h-3"></i> 新增地點
+              </button>
+              <span id="unscheduled-count-badge" class="text-xs bg-white/20 px-2 py-0.5 rounded-full font-bold">16 處</span>
             </div>
-            <button onclick="openNewPlaceModal()" class="shrink-0 px-3 py-2 bg-amber-500 hover:bg-amber-600 text-white rounded-xl font-bold text-xs flex items-center gap-1 shadow-sm active:scale-95 transition">
-              <i data-lucide="plus" class="w-3.5 h-3.5"></i> 新增
-            </button>
           </div>
-          
-          <!-- Filter Category Badges -->
-          <div class="flex items-center gap-1.5 overflow-x-auto hide-scrollbar text-xs whitespace-nowrap py-0.5">
-            <button onclick="setFilterCategory('全部')" class="cat-pill shrink-0 px-3 py-1 rounded-full font-bold bg-sky-600 text-white">全部</button>
-            <button onclick="setFilterCategory('美食')" class="cat-pill shrink-0 px-3 py-1 rounded-full bg-slate-100 text-slate-600">美食</button>
-            <button onclick="setFilterCategory('景點')" class="cat-pill shrink-0 px-3 py-1 rounded-full bg-slate-100 text-slate-600">景點</button>
-            <button onclick="setFilterCategory('購物')" class="cat-pill shrink-0 px-3 py-1 rounded-full bg-slate-100 text-slate-600">購物</button>
-            <button onclick="setFilterCategory('住宿')" class="cat-pill shrink-0 px-3 py-1 rounded-full bg-slate-100 text-slate-600">住宿/交通</button>
+          <p class="text-xs text-amber-100">點擊卡片上的「排入行程」，即可隨時指定插入或替換至 D1～D5 行程中！</p>
+        </div>
+
+        <!-- Filter tag buttons -->
+        <div class="flex items-center gap-1.5 overflow-x-auto hide-scrollbar whitespace-nowrap py-1">
+          <button onclick="filterUnscheduled('all')" class="un-filter-btn px-3 py-1.5 rounded-xl text-xs font-bold bg-amber-500 text-white shrink-0 shadow-sm" data-region="all">全部地區</button>
+          <button onclick="filterUnscheduled('那霸市區')" class="un-filter-btn px-3 py-1.5 rounded-xl text-xs font-semibold bg-white text-slate-600 hover:bg-slate-100 border border-slate-200 shrink-0" data-region="那霸市區">那霸市區</button>
+          <button onclick="filterUnscheduled('中部/恩納')" class="un-filter-btn px-3 py-1.5 rounded-xl text-xs font-semibold bg-white text-slate-600 hover:bg-slate-100 border border-slate-200 shrink-0" data-region="中部/恩納">中部/恩納</button>
+          <button onclick="filterUnscheduled('北部')" class="un-filter-btn px-3 py-1.5 rounded-xl text-xs font-semibold bg-white text-slate-600 hover:bg-slate-100 border border-slate-200 shrink-0" data-region="北部">北部</button>
+          <button onclick="filterUnscheduled('南部')" class="un-filter-btn px-3 py-1.5 rounded-xl text-xs font-semibold bg-white text-slate-600 hover:bg-slate-100 border border-slate-200 shrink-0" data-region="南部">南部</button>
+        </div>
+
+        <!-- Cards container -->
+        <div id="unscheduled-cards-container" class="space-y-3">
+          <!-- Dynamically populated -->
+        </div>
+      </section>
+
+      <!-- View 6: Master List (全部清單) -->
+      <section class="view-slide px-4 py-3 space-y-3" id="view-master">
+        <div class="bg-white rounded-3xl p-4 shadow-sm border border-slate-200 space-y-2.5">
+          <div class="flex items-center justify-between">
+            <h2 class="text-sm font-bold text-slate-800 flex items-center gap-1.5">
+              <i data-lucide="layers" class="w-4 h-4 text-sky-600"></i>
+              <span>全部收錄地點名冊</span>
+            </h2>
+            <div class="flex items-center gap-2">
+              <button onclick="promptAddNewPlaceModal()" class="text-xs text-sky-600 font-bold hover:underline flex items-center gap-0.5">
+                <i data-lucide="plus" class="w-3.5 h-3.5"></i> 新增地點
+              </button>
+              <span id="master-count-badge" class="text-xs bg-sky-50 text-sky-700 font-bold px-2 py-0.5 rounded-full">共 38 處</span>
+            </div>
+          </div>
+          <!-- Search box -->
+          <div class="relative">
+            <i data-lucide="search" class="w-4 h-4 text-slate-400 absolute left-3 top-2.5"></i>
+            <input type="text" id="master-search-input" oninput="handleMasterSearch(this.value)" placeholder="搜尋景點、拉麵、牛排、住宿或電話..."
+                   class="w-full pl-9 pr-3 py-2 bg-slate-50 border border-slate-200 rounded-2xl text-xs focus:outline-none focus:ring-2 focus:ring-sky-500 font-medium" />
+          </div>
+          <!-- Category filters -->
+          <div class="flex items-center gap-1.5 overflow-x-auto hide-scrollbar whitespace-nowrap pt-1">
+            <button onclick="filterMasterCategory('all')" class="master-cat-btn px-3 py-1.5 rounded-xl text-xs font-bold bg-sky-600 text-white shrink-0 shadow-sm" data-cat="all">全部</button>
+            <button onclick="filterMasterCategory('美食')" class="master-cat-btn px-3 py-1.5 rounded-xl text-xs font-semibold bg-slate-100 text-slate-600 hover:bg-slate-200 shrink-0" data-cat="美食">美食</button>
+            <button onclick="filterMasterCategory('景點')" class="master-cat-btn px-3 py-1.5 rounded-xl text-xs font-semibold bg-slate-100 text-slate-600 hover:bg-slate-200 shrink-0" data-cat="景點">景點</button>
+            <button onclick="filterMasterCategory('購物')" class="master-cat-btn px-3 py-1.5 rounded-xl text-xs font-semibold bg-slate-100 text-slate-600 hover:bg-slate-200 shrink-0" data-cat="購物">購物</button>
+            <button onclick="filterMasterCategory('住宿/交通')" class="master-cat-btn px-3 py-1.5 rounded-xl text-xs font-semibold bg-slate-100 text-slate-600 hover:bg-slate-200 shrink-0" data-cat="住宿/交通">住宿/交通</button>
           </div>
         </div>
 
-        <div id="master-cards" class="space-y-3"></div>
+        <div id="master-cards-container" class="space-y-2.5">
+          <!-- Dynamically populated -->
+        </div>
       </section>
 
     </div>
   </main>
 
-  <!-- Modals -->
+  <!-- Modals & Dialogs -->
 
-  <!-- Add Brand-New Place Modal (新增全新地點彈窗) -->
-  <div id="new-place-modal" class="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm hidden items-center justify-center p-4">
-    <div class="bg-white rounded-3xl p-5 w-full max-w-sm shadow-2xl space-y-3 max-h-[90vh] overflow-y-auto text-xs">
+  <!-- Live Rate Calculator Modal -->
+  <div id="rate-modal" class="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm hidden items-center justify-center p-4">
+    <div class="bg-white rounded-3xl p-5 w-full max-w-xs shadow-2xl space-y-4 text-xs">
+      <div class="flex items-center justify-between">
+        <div class="flex items-center gap-2">
+          <div class="p-2 rounded-xl bg-sky-100 text-sky-700">
+            <i data-lucide="calculator" class="w-5 h-5"></i>
+          </div>
+          <div>
+            <h3 class="font-bold text-sm text-slate-800">日幣即時匯率換算</h3>
+            <p class="text-[11px] text-slate-400">目前匯率：1 JPY ≈ <span id="rate-modal-current">0.215</span> TWD</p>
+          </div>
+        </div>
+        <button onclick="closeRateModal()" class="text-slate-400 hover:text-slate-600 p-1">
+          <i data-lucide="x" class="w-5 h-5"></i>
+        </button>
+      </div>
+
+      <div class="space-y-3">
+        <div>
+          <label class="font-bold text-slate-600 block mb-1">日幣金額 (¥ JPY)</label>
+          <input type="number" id="calc-jpy-input" inputmode="decimal" placeholder="例如：2500" oninput="calculateExchange('JPY')"
+                 class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl font-bold text-slate-800 text-base focus:ring-2 focus:ring-sky-500" />
+        </div>
+        <div>
+          <label class="font-bold text-slate-600 block mb-1">折合台幣 (約 NT$ TWD)</label>
+          <input type="number" id="calc-twd-input" inputmode="decimal" placeholder="例如：538" oninput="calculateExchange('TWD')"
+                 class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl font-bold text-slate-800 text-base focus:ring-2 focus:ring-sky-500" />
+        </div>
+        <div class="pt-1 flex items-center justify-between text-[11px] text-slate-400">
+          <span>支援即時網路浮動匯率</span>
+          <button onclick="fetchLiveExchangeRate(true)" class="text-sky-600 font-bold hover:underline flex items-center gap-1">
+            <i data-lucide="refresh-cw" class="w-3 h-3"></i> 重新抓取
+          </button>
+        </div>
+      </div>
+
+      <button type="button" onclick="closeRateModal()" class="w-full py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-xl active:scale-95 transition">關閉計算機</button>
+    </div>
+  </div>
+
+  <!-- Schedule Spot Placement Modal (未排入景點排入行程彈窗) -->
+  <div id="schedule-spot-modal" class="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm hidden items-center justify-center p-4">
+    <div class="bg-white rounded-3xl p-5 w-full max-w-sm shadow-2xl space-y-4 text-xs max-h-[90vh] overflow-y-auto">
       <div class="flex items-center justify-between">
         <div class="flex items-center gap-2">
           <div class="p-2 rounded-xl bg-amber-100 text-amber-700">
+            <i data-lucide="calendar-plus" class="w-5 h-5"></i>
+          </div>
+          <div>
+            <h3 class="font-bold text-base text-slate-800">排入行程安排</h3>
+            <p id="schedule-modal-spot-name" class="text-xs font-bold text-amber-600 truncate max-w-[200px]">地點名稱</p>
+          </div>
+        </div>
+        <button onclick="closeScheduleModal()" class="text-slate-400 hover:text-slate-600 p-1">
+          <i data-lucide="x" class="w-5 h-5"></i>
+        </button>
+      </div>
+
+      <div class="space-y-3">
+        <!-- Target Day -->
+        <div>
+          <label class="font-bold text-slate-700 block mb-1">排入哪一天？</label>
+          <div class="grid grid-cols-5 gap-1.5" id="schedule-day-radios">
+            <label class="flex flex-col items-center justify-center p-2 rounded-xl border border-slate-200 cursor-pointer text-center font-bold text-xs hover:border-sky-500">
+              <input type="radio" name="target-day" value="0" class="sr-only" onchange="onTargetDayChange(0)" />
+              <span>D1</span>
+              <span class="text-[9px] text-slate-400 font-normal">12/30</span>
+            </label>
+            <label class="flex flex-col items-center justify-center p-2 rounded-xl border border-slate-200 cursor-pointer text-center font-bold text-xs hover:border-sky-500">
+              <input type="radio" name="target-day" value="1" class="sr-only" onchange="onTargetDayChange(1)" />
+              <span>D2</span>
+              <span class="text-[9px] text-slate-400 font-normal">12/31</span>
+            </label>
+            <label class="flex flex-col items-center justify-center p-2 rounded-xl border border-slate-200 cursor-pointer text-center font-bold text-xs hover:border-sky-500">
+              <input type="radio" name="target-day" value="2" class="sr-only" onchange="onTargetDayChange(2)" />
+              <span>D3</span>
+              <span class="text-[9px] text-slate-400 font-normal">1/1</span>
+            </label>
+            <label class="flex flex-col items-center justify-center p-2 rounded-xl border border-slate-200 cursor-pointer text-center font-bold text-xs hover:border-sky-500">
+              <input type="radio" name="target-day" value="3" class="sr-only" onchange="onTargetDayChange(3)" />
+              <span>D4</span>
+              <span class="text-[9px] text-slate-400 font-normal">1/2</span>
+            </label>
+            <label class="flex flex-col items-center justify-center p-2 rounded-xl border border-slate-200 cursor-pointer text-center font-bold text-xs hover:border-sky-500">
+              <input type="radio" name="target-day" value="4" class="sr-only" onchange="onTargetDayChange(4)" />
+              <span>D5</span>
+              <span class="text-[9px] text-slate-400 font-normal">1/3</span>
+            </label>
+          </div>
+        </div>
+
+        <!-- Mode selection -->
+        <div>
+          <label class="font-bold text-slate-700 block mb-1">排程模式</label>
+          <div class="grid grid-cols-2 gap-2">
+            <button type="button" id="mode-insert-btn" onclick="setScheduleMode('insert')"
+                    class="p-2.5 rounded-xl border-2 border-sky-600 bg-sky-50 text-sky-800 font-bold text-left transition flex items-center justify-between">
+              <span>➕ 插入並順延</span>
+              <i data-lucide="check" class="w-4 h-4 text-sky-600"></i>
+            </button>
+            <button type="button" id="mode-replace-btn" onclick="setScheduleMode('replace')"
+                    class="p-2.5 rounded-xl border border-slate-200 bg-white text-slate-600 font-bold text-left transition flex items-center justify-between">
+              <span>🔄 替換現有景點</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Position / Spot selector -->
+        <div id="schedule-target-spot-box">
+          <label class="font-bold text-slate-700 block mb-1" id="schedule-spot-select-label">排在哪個景點之前？</label>
+          <select id="schedule-spot-select" class="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl font-bold text-slate-800 focus:ring-2 focus:ring-sky-500">
+            <!-- populated dynamically -->
+          </select>
+        </div>
+
+        <!-- Planned Time Range -->
+        <div>
+          <label class="font-bold text-slate-700 block mb-1">指定預計時間區間</label>
+          <input type="text" id="schedule-time-input" placeholder="例如：14:00 - 15:30"
+                 class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl font-bold text-slate-800 focus:ring-2 focus:ring-sky-500" />
+        </div>
+
+        <!-- Action Buttons -->
+        <div class="pt-2 flex items-center gap-2">
+          <button type="button" onclick="closeScheduleModal()" class="w-1/3 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-600 font-bold rounded-xl">取消</button>
+          <button type="button" onclick="confirmSchedulePlacement()" class="w-2/3 py-2.5 bg-sky-600 hover:bg-sky-700 text-white font-bold rounded-xl shadow active:scale-95 transition flex items-center justify-center gap-1.5">
+            <i data-lucide="check-circle-2" class="w-4 h-4"></i>
+            <span>確認排入行程</span>
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Admin PIN Verification Modal (密碼 0000) -->
+  <div id="admin-pin-modal" class="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm hidden items-center justify-center p-4">
+    <div class="bg-white rounded-3xl p-5 w-full max-w-xs shadow-2xl space-y-4 text-xs">
+      <div class="flex items-center justify-between">
+        <div class="flex items-center gap-2">
+          <div class="p-2 rounded-xl bg-amber-100 text-amber-700">
+            <i data-lucide="shield-check" class="w-5 h-5"></i>
+          </div>
+          <div>
+            <h3 class="font-bold text-base text-slate-800">管理員驗證</h3>
+            <p class="text-[11px] text-slate-400">解鎖行程自由編輯與雲端更新</p>
+          </div>
+        </div>
+        <button onclick="closeAdminPinModal()" class="text-slate-400 hover:text-slate-600 p-1">
+          <i data-lucide="x" class="w-5 h-5"></i>
+        </button>
+      </div>
+
+      <div class="space-y-2">
+        <label class="font-bold text-slate-700 block">請輸入管理員密碼：</label>
+        <input type="password" id="admin-pin-input" inputmode="numeric" maxlength="6" placeholder="預設密碼：0000"
+               class="w-full text-center text-xl tracking-widest px-3 py-2.5 bg-slate-50 border border-slate-200 rounded-xl font-bold text-slate-800 focus:ring-2 focus:ring-amber-500" />
+        <p class="text-[10px] text-slate-400 text-center">解鎖後即可直接編輯任意卡片並同步全員</p>
+      </div>
+
+      <div class="flex items-center gap-2 pt-1">
+        <button type="button" onclick="closeAdminPinModal()" class="w-1/3 py-2.5 bg-slate-100 text-slate-600 font-bold rounded-xl">取消</button>
+        <button type="button" onclick="verifyAdminPin()" class="w-2/3 py-2.5 bg-amber-500 hover:bg-amber-600 text-slate-900 font-bold rounded-xl shadow active:scale-95 transition">解鎖管理員</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Custom Reset Confirmation Modal -->
+  <div id="reset-confirm-modal" class="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm hidden items-center justify-center p-4">
+    <div class="bg-white rounded-3xl p-5 w-full max-w-xs shadow-2xl space-y-3.5 text-xs">
+      <div class="flex items-center gap-2">
+        <div class="p-2 rounded-xl bg-rose-100 text-rose-600 shrink-0">
+          <i data-lucide="rotate-ccw" class="w-5 h-5"></i>
+        </div>
+        <div>
+          <h3 class="font-bold text-base text-slate-800" id="reset-modal-title">確定重設行程？</h3>
+          <p class="text-[11px] text-slate-400" id="reset-modal-subtitle">將清空所有自訂修改，回復為預設官方版本。</p>
+        </div>
+      </div>
+      <div class="p-3 bg-slate-50 rounded-2xl border border-slate-200 text-slate-600 space-y-1">
+        <p id="reset-modal-desc">此動作無法復原，請確認是否繼續。</p>
+      </div>
+      <div class="flex items-center gap-2 pt-1">
+        <button type="button" onclick="closeResetModal()" class="w-1/3 py-2.5 bg-slate-100 text-slate-600 font-bold rounded-xl">取消</button>
+        <button type="button" onclick="executeResetConfirmed()" class="w-2/3 py-2.5 bg-rose-600 hover:bg-rose-700 text-white font-bold rounded-xl shadow active:scale-95 transition">確認重設</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Add New Custom Place Modal (新增自訂地點彈窗) -->
+  <div id="add-new-place-modal" class="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm hidden items-center justify-center p-4">
+    <div class="bg-white rounded-3xl p-5 w-full max-w-sm shadow-2xl space-y-3.5 text-xs max-h-[90vh] overflow-y-auto">
+      <div class="flex items-center justify-between">
+        <div class="flex items-center gap-2">
+          <div class="p-2 rounded-xl bg-sky-100 text-sky-700">
             <i data-lucide="map-pin-plus" class="w-5 h-5"></i>
           </div>
           <div>
             <h3 class="font-bold text-base text-slate-800">新增全新地點</h3>
-            <p class="text-[11px] text-slate-500">自訂新餐廳、景點或商場，全員雲端同步</p>
+            <p class="text-[11px] text-slate-400">自訂地點並同步至備選庫或指定天數</p>
           </div>
         </div>
-        <button onclick="closeNewPlaceModal()" class="text-slate-400 hover:text-slate-600 p-1">
+        <button onclick="closeAddNewPlaceModal()" class="text-slate-400 hover:text-slate-600 p-1">
           <i data-lucide="x" class="w-5 h-5"></i>
         </button>
       </div>
@@ -341,14 +480,14 @@
       <div class="space-y-2.5">
         <div>
           <label class="font-bold text-slate-700 block mb-1">地點名稱 <span class="text-rose-500">*</span></label>
-          <input type="text" id="new-place-name" placeholder="例如：傑克牛排 (Jack's Steak House)"
+          <input type="text" id="new-place-name" placeholder="例如：傑克牛排、瀨長島、港川外人住宅"
                  class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl font-bold text-slate-800 focus:ring-2 focus:ring-sky-500" />
         </div>
 
         <div class="grid grid-cols-2 gap-2">
           <div>
             <label class="font-bold text-slate-700 block mb-1">所屬地區</label>
-            <select id="new-place-region" class="w-full p-2 bg-slate-50 border border-slate-200 rounded-xl font-semibold text-slate-800">
+            <select id="new-place-region" class="w-full p-2 bg-slate-50 border border-slate-200 rounded-xl font-bold text-slate-800">
               <option value="那霸市區">那霸市區</option>
               <option value="中部/恩納">中部/恩納</option>
               <option value="北部">北部</option>
@@ -357,462 +496,148 @@
           </div>
           <div>
             <label class="font-bold text-slate-700 block mb-1">分類類別</label>
-            <select id="new-place-cat" class="w-full p-2 bg-slate-50 border border-slate-200 rounded-xl font-semibold text-slate-800">
+            <select id="new-place-category" class="w-full p-2 bg-slate-50 border border-slate-200 rounded-xl font-bold text-slate-800">
               <option value="美食">美食</option>
               <option value="景點">景點</option>
               <option value="購物">購物</option>
-              <option value="住宿">住宿/交通</option>
+              <option value="住宿/交通">住宿/交通</option>
             </select>
           </div>
         </div>
 
         <div>
-          <label class="font-bold text-slate-700 block mb-1">特色短評或亮點</label>
-          <input type="text" id="new-place-highlight" placeholder="例如：超人氣昭和復古美式牛排館"
-                 class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-slate-800" />
+          <label class="font-bold text-slate-700 block mb-1">特色短評與備註</label>
+          <textarea id="new-place-note" rows="2" placeholder="必點菜色、停車提醒、營業時間或亮點攻略..."
+                    class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl font-medium text-slate-800 focus:ring-2 focus:ring-sky-500"></textarea>
         </div>
 
         <div>
-          <label class="font-bold text-slate-700 block mb-1">備註 / 必吃攻略 / 停車資訊</label>
-          <textarea id="new-place-note" rows="2" placeholder="例如：推薦特選里肌牛排，門口附停車位，建議提早抽號碼牌..."
-                    class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-slate-800"></textarea>
+          <label class="font-bold text-slate-700 block mb-1">Google Maps 網址 (選填)</label>
+          <input type="url" id="new-place-map-url" placeholder="https://maps.app.goo.gl/... (留空則自動以名稱搜尋)"
+                 class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl font-medium text-slate-800 focus:ring-2 focus:ring-sky-500" />
         </div>
 
         <div>
-          <label class="font-bold text-slate-700 block mb-1">Google Maps 網址或搜尋關鍵字</label>
-          <input type="text" id="new-place-url" placeholder="可貼上 Google Maps 分享連結或空白自動搜尋"
-                 class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-[11px] text-slate-800 font-mono" />
-        </div>
-
-        <!-- Destination Option -->
-        <div>
-          <label class="font-bold text-slate-700 block mb-1">儲存至何處？</label>
-          <div class="grid grid-cols-2 gap-2">
-            <label class="flex items-center gap-1.5 p-2 bg-slate-50 border border-slate-200 rounded-xl cursor-pointer">
-              <input type="radio" name="new-dest" value="unscheduled" checked class="text-amber-600 focus:ring-amber-500" onchange="toggleNewPlaceTarget(false)" />
-              <span class="font-bold text-slate-700">放進未排入景點</span>
-            </label>
-            <label class="flex items-center gap-1.5 p-2 bg-slate-50 border border-slate-200 rounded-xl cursor-pointer">
-              <input type="radio" name="new-dest" value="schedule" class="text-sky-600 focus:ring-sky-500" onchange="toggleNewPlaceTarget(true)" />
-              <span class="font-bold text-slate-700">直接排入行程</span>
-            </label>
-          </div>
-        </div>
-
-        <!-- Conditional Schedule Details -->
-        <div id="new-place-schedule-fields" class="hidden p-2.5 bg-sky-50/70 border border-sky-100 rounded-xl space-y-2">
-          <div class="grid grid-cols-2 gap-2">
-            <div>
-              <label class="font-bold text-sky-900 block mb-1">指定天數</label>
-              <select id="new-place-day" class="w-full p-1.5 bg-white border border-sky-200 rounded-lg font-bold text-sky-800">
-                <option value="d1">Day 1 (12/30)</option>
-                <option value="d2">Day 2 (12/31)</option>
-                <option value="d3">Day 3 (1/1)</option>
-                <option value="d4">Day 4 (1/2)</option>
-                <option value="d5">Day 5 (1/3)</option>
-              </select>
-            </div>
-            <div>
-              <label class="font-bold text-sky-900 block mb-1">預計時間</label>
-              <input type="text" id="new-place-time" value="14:00 - 15:30" class="w-full px-2 py-1.5 bg-white border border-sky-200 rounded-lg font-bold text-slate-800" />
-            </div>
-          </div>
-        </div>
-
-        <div class="pt-2 flex items-center gap-2">
-          <button type="button" onclick="closeNewPlaceModal()" class="w-1/3 py-2.5 bg-slate-100 text-slate-600 font-bold rounded-xl">取消</button>
-          <button type="button" onclick="saveNewPlace()" class="w-2/3 py-2.5 bg-amber-500 hover:bg-amber-600 text-white font-bold rounded-xl shadow-md active:scale-95 transition">確認新增地點</button>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <!-- Add to Schedule Modal (排入行程彈窗) -->
-  <div id="schedule-modal" class="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm hidden items-center justify-center p-4">
-    <div class="bg-white rounded-3xl p-5 w-full max-w-sm shadow-2xl space-y-4 max-h-[90vh] overflow-y-auto">
-      <div class="flex items-center justify-between">
-        <div class="flex items-center gap-2">
-          <div class="p-2 rounded-xl bg-amber-100 text-amber-700">
-            <i data-lucide="calendar-plus" class="w-5 h-5"></i>
-          </div>
-          <div>
-            <h3 class="font-bold text-base text-slate-800">排入行程安排</h3>
-            <p id="schedule-modal-spot-name" class="text-xs text-amber-700 font-semibold truncate max-w-[180px]">選擇景點</p>
-          </div>
-        </div>
-        <button onclick="closeScheduleModal()" class="text-slate-400 hover:text-slate-600 p-1">
-          <i data-lucide="x" class="w-5 h-5"></i>
-        </button>
-      </div>
-
-      <div class="space-y-3 text-xs">
-        <!-- Day Selection -->
-        <div>
-          <label class="font-bold text-slate-700 block mb-1">1. 選擇要排入的天數</label>
-          <div class="grid grid-cols-5 gap-1.5">
-            <button type="button" onclick="selectScheduleDay('d1')" id="sch-day-d1" class="sch-day-btn py-2 rounded-xl font-bold border border-slate-200 bg-sky-600 text-white shadow-sm">D1</button>
-            <button type="button" onclick="selectScheduleDay('d2')" id="sch-day-d2" class="sch-day-btn py-2 rounded-xl font-bold border border-slate-200 bg-slate-100 text-slate-700">D2</button>
-            <button type="button" onclick="selectScheduleDay('d3')" id="sch-day-d3" class="sch-day-btn py-2 rounded-xl font-bold border border-slate-200 bg-slate-100 text-slate-700">D3</button>
-            <button type="button" onclick="selectScheduleDay('d4')" id="sch-day-d4" class="sch-day-btn py-2 rounded-xl font-bold border border-slate-200 bg-slate-100 text-slate-700">D4</button>
-            <button type="button" onclick="selectScheduleDay('d5')" id="sch-day-d5" class="sch-day-btn py-2 rounded-xl font-bold border border-slate-200 bg-slate-100 text-slate-700">D5</button>
-          </div>
-        </div>
-
-        <!-- Mode Selection: Insert vs Replace -->
-        <div>
-          <label class="font-bold text-slate-700 block mb-1">2. 排入模式</label>
-          <div class="grid grid-cols-2 gap-2">
-            <button type="button" onclick="setScheduleMode('insert')" id="sch-mode-insert"
-                    class="p-2.5 rounded-xl border border-sky-500 bg-sky-50 text-sky-800 font-bold text-left transition">
-              <div class="flex items-center gap-1.5"><i data-lucide="plus-circle" class="w-4 h-4 text-sky-600"></i><span>插入並順延</span></div>
-              <p class="text-[10px] text-sky-700 font-normal mt-0.5">原有行程時間自動往後延</p>
-            </button>
-            <button type="button" onclick="setScheduleMode('replace')" id="sch-mode-replace"
-                    class="p-2.5 rounded-xl border border-slate-200 bg-slate-50 text-slate-600 font-bold text-left transition">
-              <div class="flex items-center gap-1.5"><i data-lucide="refresh-cw" class="w-4 h-4 text-slate-500"></i><span>替換現有景點</span></div>
-              <p class="text-[10px] text-amber-700 font-bold mt-0.5">被取代者自動移回未排入</p>
-            </button>
-          </div>
-        </div>
-
-        <!-- Target Existing Spot dropdown -->
-        <div id="sch-target-spot-box" class="space-y-1">
-          <label id="sch-target-label" class="font-bold text-slate-700 block">3. 插入位置（原行程順序）</label>
-          <select id="sch-target-select" class="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold text-slate-800 focus:ring-2 focus:ring-sky-500">
+          <label class="font-bold text-slate-700 block mb-1">直接存放位置</label>
+          <select id="new-place-destination" onchange="toggleNewPlaceTargetDay(this.value)" class="w-full p-2 bg-slate-50 border border-slate-200 rounded-xl font-bold text-slate-800">
+            <option value="unscheduled">放進「未排入景點（備用庫）」</option>
+            <option value="day">直接排入指定行程天數</option>
           </select>
         </div>
 
-        <!-- Custom Planned Time Input -->
-        <div>
-          <label class="font-bold text-slate-700 block mb-1">4. 指定預計停留時間</label>
-          <div class="flex items-center gap-2">
-            <input type="text" id="sch-time-input" placeholder="例如：14:00 - 15:30"
-                   class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-800 focus:ring-2 focus:ring-sky-500" />
-            <button type="button" onclick="quickFillTime('current')" class="shrink-0 px-2.5 py-2 rounded-xl bg-slate-200 hover:bg-slate-300 font-semibold text-[11px] text-slate-700">帶入位置時間</button>
+        <div id="new-place-day-select-box" class="hidden">
+          <label class="font-bold text-slate-700 block mb-1">選擇排入哪一天：</label>
+          <div class="grid grid-cols-2 gap-2">
+            <select id="new-place-day-index" class="p-2 bg-slate-50 border border-slate-200 rounded-xl font-bold text-slate-800">
+              <option value="0">D1 (12/30)</option>
+              <option value="1">D2 (12/31)</option>
+              <option value="2">D3 (1/1)</option>
+              <option value="3">D4 (1/2)</option>
+              <option value="4">D5 (1/3)</option>
+            </select>
+            <input type="text" id="new-place-time" placeholder="預計時間，如 14:00"
+                   class="px-2 py-1 bg-slate-50 border border-slate-200 rounded-xl font-bold text-slate-800" />
           </div>
         </div>
 
-        <!-- Action Buttons -->
         <div class="pt-2 flex items-center gap-2">
-          <button type="button" onclick="closeScheduleModal()" class="w-1/3 py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-600 font-bold transition">取消</button>
-          <button type="button" onclick="confirmAddToSchedule()" class="w-2/3 py-2.5 rounded-xl bg-amber-600 hover:bg-amber-700 text-white font-bold shadow-md active:scale-95 transition">確認排入行程</button>
+          <button type="button" onclick="closeAddNewPlaceModal()" class="w-1/3 py-2.5 bg-slate-100 text-slate-600 font-bold rounded-xl">取消</button>
+          <button type="button" onclick="confirmAddNewPlace()" class="w-2/3 py-2.5 bg-sky-600 hover:bg-sky-700 text-white font-bold rounded-xl shadow active:scale-95 transition">確認新增地點</button>
         </div>
       </div>
     </div>
   </div>
 
-  <!-- Currency Calculator Modal -->
-  <div id="calc-modal" class="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm hidden items-center justify-center p-4">
-    <div class="bg-white rounded-3xl p-5 w-full max-w-sm shadow-2xl space-y-4">
+  <!-- Admin Edit Spot Modal (管理員編輯景點彈窗) -->
+  <div id="edit-spot-modal" class="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm hidden items-center justify-center p-4">
+    <div class="bg-white rounded-3xl p-5 w-full max-w-sm shadow-2xl space-y-3.5 text-xs max-h-[90vh] overflow-y-auto">
       <div class="flex items-center justify-between">
-        <div class="flex items-center gap-2">
-          <div class="p-2 rounded-xl bg-sky-100 text-sky-700">
-            <i data-lucide="coins" class="w-5 h-5"></i>
-          </div>
-          <div>
-            <div class="flex items-center gap-1.5">
-              <h3 class="font-bold text-base text-slate-800">日幣即時速算</h3>
-              <span id="rate-source-tag" class="text-[10px] px-1.5 py-0.5 rounded-full bg-emerald-100 text-emerald-800 font-bold">自動抓取中</span>
-            </div>
-            <p id="rate-time-tag" class="text-[11px] text-slate-400">正在同步台銀/市場即時匯率...</p>
-          </div>
-        </div>
-        <button onclick="closeCalcModal()" class="text-slate-400 hover:text-slate-600 p-1">
-          <i data-lucide="x" class="w-5 h-5"></i>
-        </button>
-      </div>
-
-      <!-- Real-time Sync & Official Link Banner -->
-      <div class="bg-gradient-to-r from-amber-50 to-orange-50 border border-amber-200/90 rounded-2xl p-2.5 space-y-1.5">
-        <div class="flex items-center justify-between">
-          <div class="flex items-center gap-1.5 text-amber-900 text-xs font-bold">
-            <span id="rate-status-dot" class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
-            <span id="rate-status-text">台銀參考匯率：連線同步中</span>
-          </div>
-          <button onclick="fetchLiveExchangeRate(true)" class="flex items-center gap-1 text-[11px] font-bold text-amber-800 hover:text-amber-950 px-2 py-0.5 rounded-lg bg-amber-200/80 active:scale-95 transition" title="重新整理匯率">
-            <i data-lucide="refresh-cw" class="w-3 h-3" id="rate-refresh-icon"></i>
-            <span>更新匯率</span>
-          </button>
-        </div>
-        <div class="flex items-center justify-between pt-1 border-t border-amber-200/60 text-[11px]">
-          <span class="text-slate-500">官方牌告詳情：</span>
-          <a href="https://rate.bot.com.tw/xrt/quote/lreal/JPY" target="_blank" rel="noopener noreferrer" 
-             class="font-semibold text-amber-800 underline flex items-center gap-0.5">
-            查看台灣銀行官網牌告表 <i data-lucide="external-link" class="w-3 h-3"></i>
-          </a>
-        </div>
-      </div>
-
-      <div class="space-y-3">
-        <div>
-          <label class="text-xs font-semibold text-slate-500 block mb-1">日幣金額 (JPY ¥)</label>
-          <div class="relative">
-            <span class="absolute left-3.5 top-2.5 text-slate-400 font-bold text-lg">¥</span>
-            <input id="calc-jpy" type="number" inputmode="decimal" placeholder="輸入日幣金額" oninput="calculateExchange()"
-                   class="w-full pl-9 pr-3 py-2.5 bg-slate-50 border border-slate-200 rounded-xl font-bold text-lg text-slate-800 focus:outline-none focus:ring-2 focus:ring-sky-500" />
-          </div>
-        </div>
-
-        <div class="grid grid-cols-2 gap-2">
-          <div>
-            <div class="flex items-center justify-between mb-1">
-              <label class="text-[11px] font-semibold text-slate-500">匯率 (JPY→TWD)</label>
-              <span id="rate-auto-label" class="text-[10px] text-emerald-600 font-bold">自動套用</span>
-            </div>
-            <input id="calc-rate" type="number" step="0.0001" value="0.2150" oninput="onCustomRateInput()"
-                   class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-800 focus:outline-none focus:ring-2 focus:ring-sky-500" />
-          </div>
-          <div>
-            <label class="text-[11px] font-semibold text-slate-500 block mb-1">消費稅折抵</label>
-            <button id="calc-tax-btn" type="button" onclick="toggleTaxFree()"
-                    class="w-full py-2 rounded-xl text-xs font-bold border border-slate-200 bg-slate-100 text-slate-700 hover:bg-slate-200 transition">
-              含稅 (點我免稅 10%)
-            </button>
-          </div>
-        </div>
-
-        <!-- Quick Preset Amounts -->
-        <div class="flex items-center gap-1.5 overflow-x-auto hide-scrollbar text-xs">
-          <button onclick="setQuickJpy(1000)" class="px-2.5 py-1 rounded-lg bg-slate-100 hover:bg-slate-200 font-semibold text-slate-600">¥1,000</button>
-          <button onclick="setQuickJpy(3000)" class="px-2.5 py-1 rounded-lg bg-slate-100 hover:bg-slate-200 font-semibold text-slate-600">¥3,000</button>
-          <button onclick="setQuickJpy(5500)" class="px-2.5 py-1 rounded-lg bg-slate-100 hover:bg-slate-200 font-semibold text-slate-600">¥5,500 (免稅門檻)</button>
-          <button onclick="setQuickJpy(10000)" class="px-2.5 py-1 rounded-lg bg-slate-100 hover:bg-slate-200 font-semibold text-slate-600">¥10,000</button>
-        </div>
-
-        <!-- Calculation Result -->
-        <div class="bg-gradient-to-br from-sky-50 to-indigo-50 border border-sky-200 rounded-2xl p-4 text-center">
-          <span class="text-xs text-sky-700 font-semibold block">折合新台幣約</span>
-          <div id="calc-twd" class="text-3xl font-extrabold text-sky-800 tracking-tight my-0.5">NT$ 0</div>
-          <p id="calc-breakdown" class="text-[11px] text-sky-600">¥ 0 × 0.2150</p>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <!-- Emergency Modal -->
-  <div id="emergency-modal" class="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm hidden items-center justify-center p-4">
-    <div class="bg-white rounded-3xl p-5 w-full max-w-sm shadow-2xl space-y-4 max-h-[85vh] overflow-y-auto text-xs">
-      <div class="flex items-center justify-between">
-        <div class="flex items-center gap-2">
-          <div class="p-2 rounded-xl bg-rose-100 text-rose-700">
-            <i data-lucide="shield-alert" class="w-5 h-5"></i>
-          </div>
-          <h3 class="font-bold text-base text-slate-800">旅日急難聯絡資訊</h3>
-        </div>
-        <button onclick="closeEmergencyModal()" class="text-slate-400 hover:text-slate-600 p-1">
+        <h3 class="font-bold text-base text-slate-800 flex items-center gap-1.5">
+          <i data-lucide="edit-3" class="w-4 h-4 text-amber-500"></i>
+          <span>編輯景點卡片</span>
+        </h3>
+        <button onclick="closeEditSpotModal()" class="text-slate-400 hover:text-slate-600 p-1">
           <i data-lucide="x" class="w-5 h-5"></i>
         </button>
       </div>
 
       <div class="space-y-2.5">
-        <div class="p-3 rounded-2xl bg-rose-50 border border-rose-200 space-y-1">
-          <div class="font-bold text-rose-900 flex items-center justify-between">
-            <span>台灣駐日代表處那霸辦事處</span>
-            <span class="text-[10px] bg-rose-200 text-rose-900 px-1.5 py-0.5 rounded">24H 急難救助</span>
-          </div>
-          <p class="text-slate-600">電話：<a href="tel:+81988627008" class="font-bold text-rose-700 underline">098-862-7008</a></p>
-          <p class="text-[11px] text-rose-800 font-medium">緊急直撥專線：<a href="tel:+818015386016" class="font-bold underline">080-1538-6016</a></p>
-        </div>
-
-        <div class="grid grid-cols-2 gap-2">
-          <div class="p-3 rounded-2xl bg-slate-50 border border-slate-200">
-            <div class="font-bold text-slate-800">日本報警</div>
-            <p class="text-slate-500 mt-0.5">交通事故/緊急事態</p>
-            <a href="tel:110" class="mt-2 block text-center py-1.5 rounded-xl bg-slate-800 text-white font-bold text-sm">直撥 110</a>
-          </div>
-          <div class="p-3 rounded-2xl bg-slate-50 border border-slate-200">
-            <div class="font-bold text-slate-800">消防 / 救護車</div>
-            <p class="text-slate-500 mt-0.5">急病/受傷救助</p>
-            <a href="tel:119" class="mt-2 block text-center py-1.5 rounded-xl bg-rose-600 text-white font-bold text-sm">直撥 119</a>
-          </div>
-        </div>
-
-        <div class="p-3 rounded-2xl bg-sky-50 border border-sky-200 space-y-1">
-          <div class="font-bold text-sky-900">OTS 租車 DFS 營業所</div>
-          <p class="text-slate-600">營業時間：09:00 - 19:00</p>
-          <p class="text-slate-600">還車提醒：<span class="font-bold text-rose-600">1/3 請於 16:00 前完成還車</span></p>
-          <p class="text-slate-600">電話：<a href="tel:+81988607700" class="font-bold text-sky-700 underline">098-860-7700</a></p>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <!-- Admin PIN Modal (密碼 0000) -->
-  <div id="admin-pin-modal" class="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm hidden items-center justify-center p-4">
-    <div class="bg-white rounded-3xl p-5 w-full max-w-xs shadow-2xl space-y-4">
-      <div class="flex items-center justify-between">
-        <div class="flex items-center gap-2">
-          <div class="p-2 rounded-xl bg-amber-100 text-amber-700">
-            <i data-lucide="key-round" class="w-5 h-5"></i>
-          </div>
-          <h3 class="font-bold text-base text-slate-800">管理員身分驗證</h3>
-        </div>
-        <button onclick="closeAdminPinModal()" class="text-slate-400 hover:text-slate-600 p-1">
-          <i data-lucide="x" class="w-5 h-5"></i>
-        </button>
-      </div>
-      <p class="text-xs text-slate-500">輸入密碼以解鎖行程即時修改、增刪景點與全員自動同步權限。</p>
-      <div>
-        <input type="password" id="admin-pin-input" maxlength="8" placeholder="請輸入密碼 (預設 0000)"
-               class="w-full text-center tracking-widest text-lg font-bold py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-amber-500 focus:outline-none" />
-      </div>
-      <div class="flex items-center gap-2 pt-1">
-        <button type="button" onclick="closeAdminPinModal()" class="w-1/2 py-2 rounded-xl bg-slate-100 text-slate-600 font-bold text-xs">取消</button>
-        <button type="button" onclick="verifyAdminPin()" class="w-1/2 py-2 rounded-xl bg-amber-500 hover:bg-amber-600 text-white font-bold text-xs shadow-sm active:scale-95 transition">解鎖管理員</button>
-      </div>
-    </div>
-  </div>
-
-  <!-- Reset Schedule Confirmation Modal (徹底取代不可靠的原生 confirm) -->
-  <div id="reset-confirm-modal" class="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm hidden items-center justify-center p-4">
-    <div class="bg-white rounded-3xl p-5 w-full max-w-xs shadow-2xl space-y-3.5 text-xs">
-      <div class="flex items-center gap-2.5">
-        <div class="p-2.5 rounded-2xl bg-rose-100 text-rose-600">
-          <i data-lucide="rotate-ccw" class="w-5 h-5"></i>
+        <div>
+          <label class="font-bold text-slate-600 block mb-1">時間標籤</label>
+          <input type="text" id="edit-spot-time" class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl font-bold text-slate-800" />
         </div>
         <div>
-          <h3 class="font-bold text-base text-slate-800" id="reset-modal-title">確定重設行程？</h3>
-          <span id="reset-modal-badge" class="inline-block text-[10px] font-bold px-2 py-0.2 rounded-full bg-slate-100 text-slate-600">訪客模式</span>
+          <label class="font-bold text-slate-600 block mb-1">景點 / 餐廳名稱</label>
+          <input type="text" id="edit-spot-name" class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl font-bold text-slate-800" />
         </div>
-      </div>
+        <div>
+          <label class="font-bold text-slate-600 block mb-1">分類標籤</label>
+          <input type="text" id="edit-spot-category" class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl font-bold text-slate-800" />
+        </div>
+        <div>
+          <label class="font-bold text-slate-600 block mb-1">備註 / 亮點說明</label>
+          <textarea id="edit-spot-note" rows="3" class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl font-medium text-slate-800"></textarea>
+        </div>
 
-      <p id="reset-modal-desc" class="text-slate-600 leading-relaxed">
-        重設將把當前行程還原為官方初始版本。
-      </p>
-
-      <div class="pt-2 flex items-center gap-2">
-        <button type="button" onclick="closeResetModal()" class="w-1/2 py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold transition">
-          取消
-        </button>
-        <button type="button" onclick="executeResetSchedule()" class="w-1/2 py-2.5 rounded-xl bg-rose-600 hover:bg-rose-700 text-white font-bold shadow-md active:scale-95 transition">
-          確認重設
-        </button>
+        <div class="pt-2 flex items-center gap-2">
+          <button type="button" onclick="closeEditSpotModal()" class="w-1/3 py-2.5 bg-slate-100 text-slate-600 font-bold rounded-xl">取消</button>
+          <button type="button" onclick="saveEditedSpot()" class="w-2/3 py-2.5 bg-amber-500 hover:bg-amber-600 text-slate-900 font-bold rounded-xl shadow active:scale-95 transition">儲存變更</button>
+        </div>
       </div>
     </div>
   </div>
 
-  <!-- Admin Cloud Sync Config Modal (雲端免手動同步設定) -->
+  <!-- Firebase Cloud Config & Status Modal -->
   <div id="cloud-config-modal" class="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm hidden items-center justify-center p-4">
-    <div class="bg-white rounded-3xl p-5 w-full max-w-sm shadow-2xl space-y-3 max-h-[85vh] overflow-y-auto text-xs">
+    <div class="bg-white rounded-3xl p-5 w-full max-w-sm shadow-2xl space-y-3.5 text-xs max-h-[90vh] overflow-y-auto">
       <div class="flex items-center justify-between">
-        <h3 class="font-bold text-base text-slate-800 flex items-center gap-1.5 text-sky-700">
-          <i data-lucide="flame" class="w-5 h-5 text-amber-500"></i> Firebase 雲端即時同步
-        </h3>
+        <div class="flex items-center gap-2">
+          <div class="p-2 rounded-xl bg-emerald-100 text-emerald-700">
+            <i data-lucide="cloud" class="w-5 h-5"></i>
+          </div>
+          <div>
+            <h3 class="font-bold text-base text-slate-800">Firebase 雲端同步狀態</h3>
+            <p class="text-[11px] text-slate-400">即時連線・全員免手動上傳</p>
+          </div>
+        </div>
         <button onclick="closeCloudConfigModal()" class="text-slate-400 hover:text-slate-600 p-1">
           <i data-lucide="x" class="w-5 h-5"></i>
         </button>
       </div>
-      <p class="text-slate-600 leading-relaxed">
-        將 Firebase 的 <code>firebaseConfig</code> 貼到下方，以後你在手機上改時間或排入景點，<b>旅伴的螢幕 0.1 秒內自動跟著變更</b>，完全免上傳！
-      </p>
 
-      <div class="p-3 bg-amber-50 border border-amber-200 rounded-2xl space-y-1">
-        <div class="font-bold text-amber-900 flex items-center justify-between">
-          <span>連線狀態</span>
-          <span id="firebase-status-pill" class="text-[10px] px-2 py-0.5 rounded-full bg-slate-200 text-slate-700 font-bold">未連接</span>
+      <div class="p-3 rounded-2xl bg-slate-50 border border-slate-200 space-y-1.5">
+        <div class="flex items-center justify-between">
+          <span class="text-slate-500 font-medium">連線狀態：</span>
+          <span id="cloud-status-badge" class="font-bold px-2 py-0.5 rounded-full text-[11px] bg-emerald-100 text-emerald-800 flex items-center gap-1">
+            <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span> 已連線 (即時同步中)
+          </span>
         </div>
-        <p id="firebase-status-desc" class="text-[11px] text-slate-600">目前處於單機模式，請貼上金鑰啟動雲端同步。</p>
-      </div>
-
-      <div class="space-y-2">
-        <div>
-          <label class="font-bold text-slate-700 block mb-1">自訂旅程代碼 (Room ID)</label>
-          <input type="text" id="firebase-room-id" placeholder="例如：okinawa2027" class="w-full p-2 bg-slate-50 border border-slate-200 rounded-xl font-bold text-slate-800" />
+        <div class="flex items-center justify-between">
+          <span class="text-slate-500 font-medium">專案 ID：</span>
+          <span class="font-mono font-bold text-slate-700 text-[11px]">okinawa-new-year-trip</span>
         </div>
-        <div>
-          <label class="font-bold text-slate-700 block mb-1">Firebase Config (貼上整段 JSON 或物件)</label>
-          <textarea id="firebase-config-input" rows="5" placeholder='{\n  "apiKey": "AIzaSy...",\n  "authDomain": "...",\n  "projectId": "..."\n}' class="w-full p-2.5 font-mono text-[11px] bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-amber-500 focus:outline-none"></textarea>
+        <div class="flex items-center justify-between">
+          <span class="text-slate-500 font-medium">同步群組：</span>
+          <span class="font-mono font-bold text-slate-700 text-[11px]">okinawa2027</span>
         </div>
       </div>
 
-      <div class="flex items-center gap-2 pt-2">
-        <button type="button" onclick="closeCloudConfigModal()" class="w-1/3 py-2 bg-slate-100 rounded-xl font-bold text-xs">關閉</button>
-        <button type="button" onclick="saveAndConnectFirebase()" class="w-2/3 py-2 bg-amber-500 hover:bg-amber-600 text-white font-bold text-xs rounded-xl shadow active:scale-95 transition">啟動 Firebase 同步</button>
+      <div class="space-y-1.5">
+        <label class="font-bold text-slate-700 block">手動推播同步</label>
+        <p class="text-[11px] text-slate-400">正常情況下修改時會在背景自動推播。若需強制將目前手冊推播給全員，請點下方按鈕：</p>
+        <button onclick="forcePushCurrentScheduleToCloud()" class="w-full py-2 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl shadow active:scale-95 transition flex items-center justify-center gap-1">
+          <i data-lucide="upload-cloud" class="w-4 h-4"></i>
+          <span>立即強制同步至 Firebase</span>
+        </button>
+      </div>
+
+      <div class="pt-2">
+        <button type="button" onclick="closeCloudConfigModal()" class="w-full py-2.5 bg-slate-100 text-slate-700 font-bold rounded-xl">關閉視窗</button>
       </div>
     </div>
   </div>
 
-  <!-- Admin Edit Spot Modal -->
-  <div id="edit-spot-modal" class="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm hidden items-center justify-center p-4">
-    <div class="bg-white rounded-3xl p-5 w-full max-w-sm shadow-2xl space-y-3 max-h-[90vh] overflow-y-auto">
-      <div class="flex items-center justify-between">
-        <h3 class="font-bold text-sm text-slate-800">編輯行程點位</h3>
-        <button onclick="closeEditSpotModal()" class="text-slate-400 hover:text-slate-600 p-1">
-          <i data-lucide="x" class="w-5 h-5"></i>
-        </button>
-      </div>
-      <input type="hidden" id="edit-spot-day" />
-      <input type="hidden" id="edit-spot-id" />
-      <div class="space-y-2 text-xs">
-        <div>
-          <label class="font-bold text-slate-600 block mb-1">地點名稱</label>
-          <input type="text" id="edit-spot-name" class="w-full p-2 bg-slate-50 border border-slate-200 rounded-xl font-bold" />
-        </div>
-        <div>
-          <label class="font-bold text-slate-600 block mb-1">時間區間</label>
-          <input type="text" id="edit-spot-time" class="w-full p-2 bg-slate-50 border border-slate-200 rounded-xl font-bold" />
-        </div>
-        <div>
-          <label class="font-bold text-slate-600 block mb-1">分類標籤</label>
-          <input type="text" id="edit-spot-tag" class="w-full p-2 bg-slate-50 border border-slate-200 rounded-xl font-bold" />
-        </div>
-        <div>
-          <label class="font-bold text-slate-600 block mb-1">行程備註與攻略</label>
-          <textarea id="edit-spot-desc" rows="3" class="w-full p-2 bg-slate-50 border border-slate-200 rounded-xl"></textarea>
-        </div>
-        <div>
-          <label class="font-bold text-slate-600 block mb-1">Google Maps 網址</label>
-          <input type="text" id="edit-spot-url" class="w-full p-2 bg-slate-50 border border-slate-200 rounded-xl font-mono text-[11px]" />
-        </div>
-      </div>
-      <div class="flex items-center gap-2 pt-2">
-        <button type="button" onclick="closeEditSpotModal()" class="w-1/3 py-2 bg-slate-100 rounded-xl font-bold text-xs">取消</button>
-        <button type="button" onclick="saveSpotEdit()" class="w-2/3 py-2 bg-amber-600 hover:bg-amber-700 text-white font-bold text-xs rounded-xl shadow">儲存修改</button>
-      </div>
-    </div>
-  </div>
-
-  <!-- Admin Publish to Everyone Modal -->
-  <div id="publish-modal" class="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm hidden items-center justify-center p-4">
-    <div class="bg-white rounded-3xl p-5 w-full max-w-sm shadow-2xl space-y-3 max-h-[85vh] overflow-y-auto text-xs">
-      <div class="flex items-center justify-between">
-        <h3 class="font-bold text-base text-slate-800 flex items-center gap-1.5 text-amber-700">
-          <i data-lucide="cloud-upload" class="w-5 h-5"></i> 發布更新給所有旅伴
-        </h3>
-        <button onclick="closePublishModal()" class="text-slate-400 hover:text-slate-600 p-1">
-          <i data-lucide="x" class="w-5 h-5"></i>
-        </button>
-      </div>
-      <p class="text-slate-600 leading-relaxed">
-        你已經在管理員模式下完成了行程調整！若未串接 Firebase，請點擊下方按鈕取得更新後的檔案，貼到 GitHub 上提交，大家重新整理就全部能看到最新版本：
-      </p>
-      <div class="space-y-2 pt-1">
-        <button onclick="downloadUpdatedHtmlFile()" class="w-full py-2.5 rounded-xl bg-amber-500 hover:bg-amber-600 text-white font-bold shadow flex items-center justify-center gap-1.5 active:scale-95 transition">
-          <i data-lucide="download" class="w-4 h-4"></i>
-          <span>下載最新 index.html (覆蓋上傳到 GitHub)</span>
-        </button>
-        <button onclick="copyUpdatedHtmlCode()" id="copy-code-btn" class="w-full py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold border border-slate-200 flex items-center justify-center gap-1.5 active:scale-95 transition">
-          <i data-lucide="copy" class="w-4 h-4"></i>
-          <span>一鍵複製全網頁代碼</span>
-        </button>
-      </div>
-    </div>
-  </div>
-
-  <!-- Bottom Floating Bar -->
-  <div class="fixed bottom-3 inset-x-0 max-w-md mx-auto px-4 z-40">
-    <div class="bg-slate-900/90 backdrop-blur-md text-white rounded-2xl px-4 py-2.5 shadow-xl flex items-center justify-between border border-slate-700/60">
-      <div class="flex items-center gap-2">
-        <div class="w-2 h-2 rounded-full bg-emerald-400"></div>
-        <span class="text-xs text-slate-200" id="progress-text">進度：0 / 18 點位</span>
-      </div>
-      <button onclick="resetChecks()" class="text-[11px] text-slate-400 hover:text-slate-200 underline">
-        重設打勾
-      </button>
-    </div>
-  </div>
-
-  <!-- Custom Alert Toast Modal -->
+  <!-- Toast Notification -->
   <div id="notice-toast" class="fixed top-14 inset-x-0 mx-auto max-w-xs z-50 pointer-events-none transition-all duration-300 opacity-0 -translate-y-2 flex justify-center">
     <div class="bg-slate-900/95 text-white text-xs font-semibold px-4 py-2.5 rounded-2xl shadow-2xl border border-slate-700/80 flex items-center gap-2">
       <i data-lucide="info" class="w-4 h-4 text-sky-400 shrink-0"></i>
@@ -820,1669 +645,264 @@
     </div>
   </div>
 
+  <!-- Main JavaScript Logic -->
   <script>
     /* ==========================================================================
-       1. CORE ITINERARY DATA (完整 5 天行程資料)
+       1. INITIAL CORE DATASETS (Official Baseline Schedule)
        ========================================================================== */
-    const INITIAL_DAYS_DATA = {
-      d1: [
-        {
-          id: "d1-1",
-          time: "19:25 - 20:20",
-          name: "那霸機場 (OKA) 抵達入境",
-          tag: "交通移動",
-          tagColor: "bg-sky-100 text-sky-800",
-          desc: "班機降落出關，步行前往單軌電車站（國內線2F連通口），搭乘單軌往小祿站。",
-          mapsUrl: "https://www.google.com/maps/search/?api=1&query=Naha+Airport+Okinawa",
-          tips: "購買單軌單程票或直接刷西瓜卡/ICOCA。"
-        },
-        {
-          id: "d1-2",
-          time: "20:20 - 21:15",
-          name: "琉球新麵 通堂 小祿本店",
-          tag: "必吃晚餐",
-          tagColor: "bg-amber-100 text-amber-800",
-          desc: "「沒有說特別好吃，但就是每次去都要吃一下，請成全鼠叔我」。出站步行 2 分鐘即達。",
-          mapsUrl: "https://www.google.com/maps/place/%E7%90%89%E7%90%83%E6%96%B0%E9%BA%B5+%E9%80%9A%E5%A0%82+%E5%B0%8F%E7%A5%BF%E6%9C%AC%E5%BA%97/data=!4m2!3m1!1s0x34e569b140b3a219:0xdaaf5d41d37c6862",
-          tips: "必點濃郁男人麵 (豚骨) 或清爽女人麵 (鹽味雞湯)，配免費辣豆芽超開胃。"
-        },
-        {
-          id: "d1-3",
-          time: "21:20 - 21:50",
-          name: "壺川住宿 Check-in (3 Chome Tsubogawa)",
-          tag: "住宿放行李",
-          tagColor: "bg-emerald-100 text-emerald-800",
-          desc: "从小禄站搭單軌往壺川站（僅2站），辦理入住並放妥行李，輕裝出發。",
-          mapsUrl: "https://www.google.com/maps/place/3+Chome+Tsubogawa/data=!4m2!3m1!1s0x34e569a1b4ef6bd3:0xb73ef9c9533c140b",
-          tips: "第一晚落腳處，周邊交通非常方便。"
-        },
-        {
-          id: "d1-4",
-          time: "22:00 - 23:15",
-          name: "國際通屋台村（夜市）",
-          tag: "夜生活小酌",
-          tagColor: "bg-rose-100 text-rose-800",
-          desc: "搭單軌至牧志站。聚集 20 間特色熱炒小攤，阿古豬肉串燒、沖繩炒苦瓜與泡盛酒吧。",
-          mapsUrl: "https://www.google.com/maps/place/%E5%9C%8B%E9%9A%9B%E9%80%9A%E5%B1%8B%E5%8F%B0%E6%9D%91%EF%BC%88%E5%A4%9C%E5%B8%82%EF%BC%89/data=!4m2!3m1!1s0x34e56917cdebf7a7:0x384644a940676d33",
-          tips: "營業至 24:00，感受沖繩深夜熱鬧屋台風情。"
-        },
-        {
-          id: "d1-5",
-          time: "23:20 - 00:20",
-          name: "MaxValu 牧志店",
-          tag: "24H補貨",
-          tagColor: "bg-purple-100 text-purple-800",
-          desc: "牧志站旁 24 小時不打烊超大 AEON 生鮮超市，採買零食、沖繩泡麵、熱帶水果與飲料。",
-          mapsUrl: "https://www.google.com/maps/place/MaxValu+Makishi/data=!4m2!3m1!1s0x34e5697b5cdc4c33:0x202b4331951f2689",
-          tips: "採買完可直接搭計程車回壺川住宿（車資約 ¥800-1,000，免趕電車）。"
-        }
-      ],
-      d2: [
-        {
-          id: "d2-1",
-          time: "10:00 - 10:45",
-          name: "壺川退房 → 搭單軌往新都心站",
-          tag: "交通移動",
-          tagColor: "bg-sky-100 text-sky-800",
-          desc: "從壺川站搭單軌直達おもろまち站（歌町站），出站連通 T Galleria DFS。",
-          mapsUrl: "https://www.google.com/maps/search/?api=1&query=Omoromachi+Station+Naha",
-          tips: "單軌車程約 11 分鐘。"
-        },
-        {
-          id: "d2-2",
-          time: "11:00 - 11:45",
-          name: "OTS租車 DFS營業所 (取車)",
-          tag: "租車自駕",
-          tagColor: "bg-blue-100 text-blue-800",
-          desc: "11:00 預約準時於 DFS 櫃檯報到取車，檢查外觀與加購安心保險。",
-          mapsUrl: "https://www.google.com/maps/place/OTS%E7%A7%9F%E8%BB%8A+DFS%E7%87%9F%E6%A5%AD%E6%89%80/data=!4m2!3m1!1s0x34e56bdf4c4bbb81:0x44d863f78e1d4e09",
-          tips: "請備妥台灣駕照正本與日文譯本。"
-        },
-        {
-          id: "d2-3",
-          time: "11:50 - 13:40",
-          name: "Sports Depo 天久店 (天久樂市商圈)",
-          tag: "購物採買",
-          tagColor: "bg-indigo-100 text-indigo-800",
-          desc: "開車 5 分鐘抵達天久樂市，超大運動用品專門店，採買戶外運動服飾與休閒用品。",
-          mapsUrl: "https://www.google.com/maps/search/?api=1&query=Sports+Depo+Ameku+Store",
-          tips: "商圈附免費停車場，午餐可在此隨興享用。"
-        },
-        {
-          id: "d2-4",
-          time: "13:50 - 15:00",
-          name: "首里 達摩寺 (西来院)",
-          tag: "初詣祈福",
-          tagColor: "bg-amber-100 text-amber-800",
-          desc: "供奉滿滿不倒翁達摩的特色古剎，跨年祈求旅途平安與新年新氣象。",
-          mapsUrl: "https://www.google.com/maps/place/%E9%81%94%E6%91%A9%E5%AF%BA/data=!4m2!3m1!1s0x34e56bff7290bbe7:0x193892a7ae016d6d",
-          tips: "可購買可愛的達摩御守或祈願達摩點睛寫字。"
-        },
-        {
-          id: "d2-5",
-          time: "15:00 - 16:30",
-          name: "北上中部住宿 (Awase Piano Lessons)",
-          tag: "入住中谷",
-          tagColor: "bg-emerald-100 text-emerald-800",
-          desc: "走高速公路（那霸IC $\\rightarrow$ 沖繩南IC）前往宇流麻/泡瀨周邊住宿辦理 Check-in。",
-          mapsUrl: "https://www.google.com/maps/place/Awase+Piano+Lessons/data=!4m2!3m1!1s0x34e50dd9d36a8d8f:0xe0278a784154b7e",
-          tips: "12/31-1/3 連住三晚的大本營，放行李稍作休息。"
-        },
-        {
-          id: "d2-6",
-          time: "17:00 - 18:45",
-          name: "壽司市場 泡瀨店",
-          tag: "在地晚餐",
-          tagColor: "bg-amber-100 text-amber-800",
-          desc: "泡瀨在地深受好評的平價迴轉壽司，食材新鮮、種類豐富，CP值極高。",
-          mapsUrl: "https://www.google.com/maps/place/%E5%A3%BD%E5%8F%B8%E5%B8%82%E5%A0%B4+%E6%B3%A1%E7%80%AC%E5%BA%97/data=!4m2!3m1!1s0x34e50d91181ba19d:0x57375191496328a8",
-          tips: "跨年夜建議提早於 17:00 抵達避開排隊人潮。"
-        },
-        {
-          id: "d2-7",
-          time: "19:00 - 21:00",
-          name: "AEON 具志川店 (跨年採買)",
-          tag: "跨年夜宵",
-          tagColor: "bg-purple-100 text-purple-800",
-          desc: "住宿旁大型綜合購物中心，採買跨年炸雞、草莓、零食與跨年蕎麥麵，迎接 2027！",
-          mapsUrl: "https://www.google.com/maps/search/?api=1&query=AEON+Gushikawa+Store",
-          tips: "商場規模極大，亦可順便逛 UNIQLO 與超市。"
-        }
-      ],
-      d3: [
-        {
-          id: "d3-1",
-          time: "08:30 - 10:00",
-          name: "出發北上前往本部町",
-          tag: "景觀兜風",
-          tagColor: "bg-blue-100 text-blue-800",
-          desc: "走沖繩自動車道一路開往本部半島，沿途欣賞蔚藍海岸風光。",
-          mapsUrl: "https://www.google.com/maps/search/?api=1&query=Motobu+Okinawa",
-          tips: "避開元旦午後北上車潮，早點出發路況最順暢。"
-        },
-        {
-          id: "d3-2",
-          time: "10:00 - 10:30",
-          name: "CAMEL SANDWICH & SMOOTHIE",
-          tag: "特色輕食",
-          tagColor: "bg-amber-100 text-amber-800",
-          desc: "「去美麗海之前可以先訂再開去拿」。外帶超澎湃三明治與新鮮果昔。",
-          mapsUrl: "https://www.google.com/maps/place/CAMEL+SANDWICH+%26+SMOOTHIE/data=!4m2!3m1!1s0x34e4fbe39a7051ad:0x310396d0840a630a",
-          tips: "外帶到水族館戶外公園區野餐極為享受。"
-        },
-        {
-          id: "d3-3",
-          time: "10:45 - 14:30",
-          name: "沖繩美麗海水族館",
-          tag: "經典必訪",
-          tagColor: "bg-cyan-100 text-cyan-800",
-          desc: "全球聞名的「黑潮之海」巨型水槽，看鯨鯊與鬼蝠魟悠游，戶外還有海豚表演。",
-          mapsUrl: "https://www.google.com/maps/place/%E6%B2%96%E7%B9%A9%E7%BE%8E%E9%BA%97%E6%B5%B7%E6%B0%B4%E6%97%8F%E9%A4%A8/data=!4m2!3m1!1s0x34e4fa3152619e3d:0xea08a6700fdd9ffe",
-          tips: "建議停在 P7 停車場（立體停車場距水族館最近）。"
-        },
-        {
-          id: "d3-4",
-          time: "15:00 - 16:45",
-          name: "古宇利大橋 南端觀景台",
-          tag: "古宇利藍",
-          tagColor: "bg-teal-100 text-teal-800",
-          desc: "眺望筆直延伸跨海大橋與漸層翡翠藍海水，散步吹海風、拍照取景。",
-          mapsUrl: "https://www.google.com/maps/place/%E5%8F%A4%E5%AE%87%E5%88%A9%E5%A4%A7%E6%A9%8B+%E5%8D%97%E7%AB%AF%E8%A7%80%E6%99%AF%E5%8F%B0/data=!4m2!3m1!1s0x34e4578504115a47:0xb012af2b4d8bdc0e",
-          tips: "附免費停車場，亦可開車過橋至島上環島一圈。"
-        },
-        {
-          id: "d3-5",
-          time: "18:00 - 20:00",
-          name: "返回中部住宿 & 晚餐休息",
-          tag: "自由晚餐",
-          tagColor: "bg-slate-100 text-slate-800",
-          desc: "南下返回具志川/泡瀨住宿，可在住宿周邊享用拉麵或沖繩料理。",
-          mapsUrl: "https://www.google.com/maps/search/?api=1&query=Gushikawa+Uruma",
-          tips: "開車一天較辛苦，提早回住處泡澡休息。"
-        }
-      ],
-      d4: [
-        {
-          id: "d4-1",
-          time: "10:00 - 11:20",
-          name: "海中道路沙灘 (海洋驛站 Ayahashi 館)",
-          tag: "海中道路",
-          tagColor: "bg-blue-100 text-blue-800",
-          desc: "從具志川出發開往勝連半島，行經筆直蔚藍跨海公路，停留中途休息站散步賞海。",
-          mapsUrl: "https://www.google.com/maps/place/%E6%B5%B7%E4%B8%AD%E9%81%93%E8%B7%AF%E6%B2%99%E7%81%98/data=!4m2!3m1!1s0x34e509d000146c77:0xaf68edcf341e8c04",
-          tips: "兩側都是無垠淺灘，退潮時景色極具特色。"
-        },
-        {
-          id: "d4-2",
-          time: "11:30 - 13:00",
-          name: "古民家食堂てぃーらぶい (濱比嘉島)",
-          tag: "沖繩古民家",
-          tagColor: "bg-amber-100 text-amber-800",
-          desc: "跨海開往濱比嘉島傳統聚落，由琉球紅瓦古屋改建，品嘗充滿島野菜溫度的傳統家庭定食。",
-          mapsUrl: "https://www.google.com/maps/place/%E5%8F%A4%E6%B0%91%E5%AE%B6%E9%A3%9F%E5%A0%82%E3%81%A6%E3%81%83%E3%83%BC%E3%82%89%E3%81%B6%E3%81%84/data=!4m2!3m1!1s0x34e509be693b0b73:0x9723a2a7366d05a7",
-          tips: "環境極具海島氛圍，建議提早到達登記候位。"
-        },
-        {
-          id: "d4-3",
-          time: "14:00 - 18:30",
-          name: "PARCO CITY (西海岸超大購物商場)",
-          tag: "購物採買",
-          tagColor: "bg-emerald-100 text-emerald-800",
-          desc: "直面西海岸海景，沖繩規模最大複合型商場！新年折扣季全面採買，買完直接載回民宿打包放行李！",
-          mapsUrl: "https://www.google.com/maps/place/PARCO+CITY/data=!4m2!3m1!1s0x34e56b0af61f94c5:0x78aac934fb2b5c0",
-          tips: "各樓層皆有退稅櫃台，運動休閒、日系服飾、生活雜貨一網打盡。"
-        },
-        {
-          id: "d4-4",
-          time: "19:30 - 21:30",
-          name: "魚がしの銀次 泡瀬店",
-          tag: "海鮮居酒屋",
-          tagColor: "bg-rose-100 text-rose-800",
-          desc: "返回泡瀨住處旁超人氣居酒屋！產地直送超澎湃生魚片刺身拼盤、炭火烤魚與沖繩熱炒。",
-          mapsUrl: "https://www.google.com/maps/place/%E9%AD%9A%E3%81%8C%E3%81%97%E3%81%AE%E9%8A%80%E6%AC%A1+%E6%B3%A1%E7%80%AC%E5%BA%97/data=!4m2!3m1!1s0x34e50dbe0d82d217:0xf30bdfc3963e3f16",
-          tips: "氣氛熱鬧非凡，距離住處近，可安心盡情小酌海味。"
-        }
-      ],
-      d5: [
-        {
-          id: "d5-1",
-          time: "09:30 - 10:30",
-          name: "中部退房 $\\rightarrow$ 行李全數上車往南部",
-          tag: "退房出發",
-          tagColor: "bg-sky-100 text-sky-800",
-          desc: "告別泡瀨住宿，行李全上後車廂，沿沖繩自動車道一路開往南城市。",
-          mapsUrl: "https://www.google.com/maps/search/?api=1&query=Nanjo+Okinawa",
-          tips: "最後一天自駕，沿途順暢南下。"
-        },
-        {
-          id: "d5-2",
-          time: "10:30 - 12:00",
-          name: "奥武島海産物食堂 (貓咪島海產)",
-          tag: "產地海鮮",
-          tagColor: "bg-amber-100 text-amber-800",
-          desc: "開往可愛的貓咪之島奧武島，享用鮮甜實惠的海鮮丼飯、鮮魚湯定食，島上還能品嘗現炸天婦羅。",
-          mapsUrl: "https://www.google.com/maps/place/%E5%A5%A5%E6%AD%A6%E5%B3%B6%E6%B5%B7%E7%94%A3%E7%89%A9%E9%A3%9F%E5%A0%82/data=!4m2!3m1!1s0x34fa9b9e97fe8659:0x8d6658489261682e",
-          tips: "港邊常有親人的貓咪出沒，用餐兼賞海景。"
-        },
-        {
-          id: "d5-3",
-          time: "12:15 - 14:15",
-          name: "Gangala之谷 (鐘乳石山谷秘境)",
-          tag: "自然秘境",
-          tagColor: "bg-teal-100 text-teal-800",
-          desc: "巨大古鐘乳石洞穴崩塌形成的山谷，數百年老榕樹生長其間，洞口處設有獨特的鐘乳石洞穴咖啡館。",
-          mapsUrl: "https://www.google.com/maps/place/Gangala%E4%B9%8B%E8%B0%B7/data=!4m2!3m1!1s0x34e56f694e9fa999:0xad0c7c6998743d6",
-          tips: "若參加導覽行程需事前預約，洞穴咖啡廳則可自由休憩。"
-        },
-        {
-          id: "d5-4",
-          time: "15:00 - 16:00",
-          name: "新都心加油 & OTS DFS 還車",
-          tag: "準時還車",
-          tagColor: "bg-rose-100 text-rose-800",
-          desc: "開車返回新都心 DFS 附近將油箱加滿，於 16:00 前完成還車與驗車手續。",
-          mapsUrl: "https://www.google.com/maps/place/OTS%E7%A7%9F%E8%BB%8A+DFS%E7%87%9F%E6%A5%AD%E6%89%80/data=!4m2!3m1!1s0x34e56bdf4c4bbb81:0x44d863f78e1d4e09",
-          tips: "務必保留最後加油發票供還車人員確認。"
-        },
-        {
-          id: "d5-5",
-          time: "16:15 - 20:25",
-          name: "單軌往那霸機場 $\\rightarrow$ 託運返台",
-          tag: "返國登機",
-          tagColor: "bg-purple-100 text-purple-800",
-          desc: "從新都心搭單軌到那霸機場約 20 分鐘。時間非常充裕，可在國內線 2F 買齊最後伴手禮，搭乘 20:25 班機回台灣！",
-          mapsUrl: "https://www.google.com/maps/search/?api=1&query=Naha+Airport+Departures",
-          tips: "20:25 班機建議於 18:25 前完成報到託運。"
-        }
-      ]
-    };
-
-    // Load custom schedule from localStorage or fallback
-    let DAYS_DATA = JSON.parse(localStorage.getItem("okinawa_schedule_v2") || "null") || JSON.parse(JSON.stringify(INITIAL_DAYS_DATA));
-
-    // Cache of the official cloud snapshot (so non-admins can discard preview and revert)
-    let CLOUD_SNAPSHOT_DAYS = null;
-    let CLOUD_SNAPSHOT_UNSCHEDULED = null;
-    let CLOUD_SNAPSHOT_MASTER = null;
-    let isTemporaryLocalPreview = false;
-
-    function saveDaysData() {
-      // Only persist to localStorage if not currently in a temporary non-admin preview
-      if (!isTemporaryLocalPreview || isAdminLoggedIn) {
-        localStorage.setItem("okinawa_schedule_v2", JSON.stringify(DAYS_DATA));
+    const DEFAULT_DAYS_DATA = [
+      {
+        day: 1,
+        date: "12/30 (二)",
+        summary: "抵達沖繩・國際通迎賓夜",
+        spots: [
+          {
+            time: "16:45",
+            name: "那霸機場 (OKA) 抵達",
+            cat: "交通",
+            note: "星宇 JX870 準時降落，入境檢查約需 40–50 分鐘。領取行李後跟隨單軌電車 (Yui-Rail) 指標前往二樓連通橋。",
+            mapUrl: "https://maps.google.com/?q=Naha+Airport+Okinawa"
+          },
+          {
+            time: "17:45 - 18:15",
+            name: "搭乘單軌電車前往飯店",
+            cat: "交通",
+            note: "購買單軌車票或刷西瓜卡/ICOCA。搭往「美榮橋站」下車，步行約 5 分鐘抵達飯店 Check-in 放置大件行李。",
+            mapUrl: "https://maps.google.com/?q=Miebashi+Station+Okinawa"
+          },
+          {
+            time: "18:30 - 19:30",
+            name: "Nest Hotel Naha Kumoji 辦理入住",
+            cat: "住宿",
+            note: "那霸久茂地巢酒店。房型新穎、生活機能極佳，步行 3 分鐘即有全家便利店。",
+            mapUrl: "https://maps.google.com/?q=Nest+Hotel+Naha+Kumoji"
+          },
+          {
+            time: "19:45 - 21:30",
+            name: "通堂拉麵 (小祿本店) 或 久茂地居酒屋",
+            cat: "美食",
+            note: "首選琉球新麵通堂拉麵（經典男人麵濃厚豚骨、女人麵清爽雞湯，桌上辣豆芽必嚐）。備案：久茂地和牛居酒屋。",
+            mapUrl: "https://maps.google.com/?q=Ryukyu+Shinmen+Tondo+Oroku"
+          },
+          {
+            time: "21:30 - 23:00",
+            name: "國際通夜遊 & 唐吉訶德採買",
+            cat: "購物",
+            note: "漫步國際通夜市氣氛，逛唐吉訶德國際通店採購跨年暖暖包、礦泉水與宵夜零食。",
+            mapUrl: "https://maps.google.com/?q=Don+Quijote+Kokusai+Dori"
+          }
+        ]
+      },
+      {
+        day: 2,
+        date: "12/31 (三)",
+        summary: "取車北上・海景跨年夜",
+        spots: [
+          {
+            time: "09:00 - 10:30",
+            name: "飯店早餐 & 整理行囊退房",
+            cat: "住宿",
+            note: "享受飯店精緻早餐，10:30 辦理退房，行李隨身攜帶步行前往單軌前往新都心營業所。",
+            mapUrl: "https://maps.google.com/?q=Nest+Hotel+Naha+Kumoji"
+          },
+          {
+            time: "11:00 - 11:40",
+            name: "OTS 租車 (DFS 新都心營業所) 取車",
+            cat: "交通",
+            note: "攜帶台灣駕照正本、日文譯本與護照取車。檢查車體刮痕、熟悉右駕雨刷方向燈與 ETC 機器。",
+            mapUrl: "https://maps.google.com/?q=OTS+Rent-a-car+DFS+Naha"
+          },
+          {
+            time: "12:15 - 13:30",
+            name: "港川外人住宅街 & 輕食甜點",
+            cat: "美食",
+            note: "美軍眷舍改建文青聚落。必訪 oHacorté 水果塔或限量天然酵母麵包 Ippe coppe。",
+            mapUrl: "https://maps.google.com/?q=Minatogawa+Stateside+Town"
+          },
+          {
+            time: "14:15 - 16:30",
+            name: "美國村 (American Village) 漫遊",
+            cat: "景點",
+            note: "沿著日落海灘漫步，美式復古商場充滿節慶跨年燈飾，極為好拍。",
+            mapUrl: "https://maps.google.com/?q=American+Village+Okinawa"
+          },
+          {
+            time: "17:30 - 19:00",
+            name: "恩納村海濱度假飯店 Check-in",
+            cat: "住宿",
+            note: "入住恩納村海景度假村，面朝西海岸海景，放鬆身心準備迎接跨年倒數。",
+            mapUrl: "https://maps.google.com/?q=Onna+Village+Resort+Okinawa"
+          },
+          {
+            time: "19:30 - 21:30",
+            name: "琉球之牛 (恩納店) 燒肉大餐",
+            cat: "美食",
+            note: "享用頂級沖繩縣產黑毛和牛燒肉，肉質入口即化。跨年熱門時段請務必準時赴約。",
+            mapUrl: "https://maps.google.com/?q=Ryukyu-no-Ushi+Onna"
+          },
+          {
+            time: "22:00 - 00:30",
+            name: "飯店海灘倒數煙火 & 跨年派對",
+            cat: "景點",
+            note: "恩納海灘跨年跨年倒數活動，伴隨海潮聲與午夜璀璨煙火，喜迎 2027 新年！",
+            mapUrl: "https://maps.google.com/?q=Moon+Beach+Okinawa"
+          }
+        ]
+      },
+      {
+        day: 3,
+        date: "01/01 (四)",
+        summary: "元旦迎新・美麗海與古宇利島",
+        spots: [
+          {
+            time: "08:30 - 09:30",
+            name: "元旦元氣晨光早餐",
+            cat: "美食",
+            note: "享受海景飯店晨光自助餐，補足體力準備出發前往沖繩北部。",
+            mapUrl: "https://maps.google.com/?q=Onna+Village+Resort+Okinawa"
+          },
+          {
+            time: "10:30 - 13:30",
+            name: "沖繩美麗海水族館",
+            cat: "景點",
+            note: "巨大黑潮之海展缸、鯨鯊悠游震撼視覺。戶外海豚劇場（免費參觀）下午 13:00 有精采表演。",
+            mapUrl: "https://maps.google.com/?q=Okinawa+Churaumi+Aquarium"
+          },
+          {
+            time: "14:15 - 15:30",
+            name: "古宇利大橋 & 蝦蝦飯 (Kouri Shrimp)",
+            cat: "美食",
+            note: "馳騁在跨海古宇利大橋上欣賞絕美漸層古宇利藍海景。島上必吃蒜香奶油夏威夷風味蝦蝦飯。",
+            mapUrl: "https://maps.google.com/?q=Kouri+Shrimp+Okinawa"
+          },
+          {
+            time: "15:45 - 17:00",
+            name: "古宇利心形岩 (Heart Rock)",
+            cat: "景點",
+            note: "天然海蝕心形礁岩，是情侶與朋友拍照的元旦祈福聖地。",
+            mapUrl: "https://maps.google.com/?q=Heart+Rock+Kouri+Island"
+          },
+          {
+            time: "18:30 - 20:30",
+            name: "百年古家 大家 (阿古豬涮涮鍋)",
+            cat: "美食",
+            note: "百年月桃木造傳統琉球古民宅，庭園流水造景優雅，享用鮮甜阿古豬涮涮鍋佐沖繩麵。",
+            mapUrl: "https://maps.google.com/?q=Ufuya+Okinawa"
+          }
+        ]
+      },
+      {
+        day: 4,
+        date: "01/02 (五)",
+        summary: "初詣祈福・購物血拚大豐收",
+        spots: [
+          {
+            time: "09:30 - 10:30",
+            name: "波上宮 (琉球第一神社) 初詣新年參拜",
+            cat: "景點",
+            note: "沖繩總鎮守。元旦後初詣抽御籤、購買知名健康書包御守，並在崖邊眺望海景。",
+            mapUrl: "https://maps.google.com/?q=Naminoue+Shrine+Okinawa"
+          },
+          {
+            time: "11:00 - 15:00",
+            name: "PARCO CITY 浦添海景購物中心",
+            cat: "購物",
+            note: "沖繩最大級海景商場！擁有無印良品旗艦店、UNIQLO、ABC-MART、敘敘苑燒肉、Sanrio 等約 250 家店鋪，逛街吹海風。",
+            mapUrl: "https://maps.google.com/?q=San-A+Urasoe+West+Coast+PARCO+CITY"
+          },
+          {
+            time: "15:45 - 17:30",
+            name: "首里城公園 (城廓重建巡禮)",
+            cat: "景點",
+            note: "世界文化遺產，參觀正殿木造重建工坊現場，俯瞰那霸市景與夕陽海平面。",
+            mapUrl: "https://maps.google.com/?q=Shurijo+Castle+Park"
+          },
+          {
+            time: "18:30 - 20:30",
+            name: "Steakhouse 88 辻本店 或 國際通屋台村",
+            cat: "美食",
+            note: "沖繩美式牛排文化代表，肉汁鮮嫩份量十足；或可前往國際通屋台村感受微醺熱鬧氣氛。",
+            mapUrl: "https://maps.google.com/?q=Steakhouse+88+Tsuji+Honten"
+          }
+        ]
+      },
+      {
+        day: 5,
+        date: "01/03 (六)",
+        summary: "南部秘境・還車登機返台",
+        spots: [
+          {
+            time: "09:00 - 10:00",
+            name: "悠閒享用早餐 & 辦理退房手續",
+            cat: "住宿",
+            note: "整理行李，將所有伴手禮塞入大行李箱，準備進行南部海景巡禮。",
+            mapUrl: "https://maps.google.com/?q=Nest+Hotel+Naha+Kumoji"
+          },
+          {
+            time: "10:30 - 11:45",
+            name: "奧武島 (現炸海鮮天婦羅)",
+            cat: "美食",
+            note: "貓咪島嶼奧武島。中本鮮魚店或大城天婦羅店，新鮮現炸花枝、水雲天婦羅外酥內嫩每份僅約百餘日幣！",
+            mapUrl: "https://maps.google.com/?q=Nakamoto+Fresh+Fish+Store+Oujima"
+          },
+          {
+            time: "12:15 - 14:15",
+            name: "Gangala 之谷 (山之谷巨大鐘乳石與榕樹穴)",
+            cat: "景點",
+            note: "數十萬年石灰岩鐘乳石洞穴遺跡，巨大神木氣根漫天，洞穴咖啡廳 CAVE CAFE 極具神秘美感。",
+            mapUrl: "https://maps.google.com/?q=Valley+of+Gangala"
+          },
+          {
+            time: "15:00 - 16:00",
+            name: "OTS DFS 營業所 加油並完成還車",
+            cat: "交通",
+            note: "⚠️ 16:00 前必須還車！還車前請至鄰近加油站將油箱加滿，並出示加油收據發票供服務人員確認。",
+            mapUrl: "https://maps.google.com/?q=OTS+Rent-a-car+DFS+Naha"
+          },
+          {
+            time: "16:20 - 18:00",
+            name: "單軌抵達那霸機場 (國內線大採購)",
+            cat: "購物",
+            note: "搭乘單軌抵達機場。那霸機場國內線 2 樓是全沖繩最強伴手禮特區！紅芋塔、雪鹽脆餅、石垣牛仙貝應有盡有。",
+            mapUrl: "https://maps.google.com/?q=Naha+Airport+Domestic+Terminal"
+          },
+          {
+            time: "18:20 - 20:25",
+            name: "國際線報到 & 星宇 JX871 登機返台",
+            cat: "交通",
+            note: "前往國際線航廈辦理報到手續與安檢出境。班機 20:25 起飛，預計 21:15 抵達桃園國際機場，完美賦歸！",
+            mapUrl: "https://maps.google.com/?q=Naha+Airport+International+Terminal"
+          }
+        ]
       }
-    }
+    ];
 
-    /* ==========================================================================
-       2. UNSCHEDULED PLACES (未排入景點清單)
-       ========================================================================== */
-    const INITIAL_UNSCHEDULED_PLACES = [
+    const DEFAULT_UNSCHEDULED_PLACES = [
       {
-        name: "Buchi Kumojiten",
-        region: "那霸市區",
-        category: "美食",
-        highlight: "久茂地嚴選和牛燒肉",
-        note: "高評價和牛燒肉店，肉質鮮嫩，適合想要奢華燒肉晚餐的時段。",
-        mapsUrl: "https://www.google.com/maps/place/Buchi+Kumojiten/data=!4m2!3m1!1s0x34e56977dac0c9cd:0xa9b836cde5e24546"
-      },
-      {
-        name: "LUCKY MAXIMUM",
-        region: "那霸市區",
-        category: "美食",
-        highlight: "有人推薦+看起來不錯先存",
-        note: "特色餐飲小店，氛圍輕鬆年輕。",
-        mapsUrl: "https://www.google.com/maps/place/LUCKY+MAXIMUM/data=!4m2!3m1!1s0x34e569002b2928bf:0x7c6c40039de2d0dc"
-      },
-      {
-        name: "暖暮拉麵 那霸牧志店",
-        region: "那霸市區",
-        category: "美食",
-        highlight: "國際通人氣排隊拉麵",
-        note: "曾獲九州拉麵總選舉第一位，國際通逛街若想換換口味可備選。",
-        mapsUrl: "https://www.google.com/maps/place/%E6%9A%96%E6%9A%AE%E6%8B%89%E9%BA%B5+%E9%82%A3%E9%9C%B8%E7%89%A7%E5%BF%97%E5%BA%97/data=!4m2!3m1!1s0x34e5697bcfbeaaab:0x860befe404def6ef"
-      },
-      {
-        name: "ラーメン暖暮 首里店",
-        region: "那霸市區",
-        category: "美食",
-        highlight: "暖暮首里分店排隊較少",
-        note: "造訪達摩寺或首里城周邊時的快速拉麵備選。",
-        mapsUrl: "https://www.google.com/maps/place/%E3%83%A9%E3%83%BC%E3%83%A1%E3%83%B3%E6%9A%96%E6%9A%AE+%E9%A6%96%E9%87%8C%E5%BA%97/data=!4m2!3m1!1s0x34e56d00310093d9:0x9486bf8dbe9264fb"
-      },
-      {
-        name: "Shima ShabuShabu NAKAMA",
-        region: "那霸市區",
-        category: "美食",
-        highlight: "阿古豬＆沖繩牛涮涮鍋",
-        note: "精緻島野菜與嚴選沖繩黑毛豬、石垣牛火鍋專門店。",
-        mapsUrl: "https://www.google.com/maps/place/Shima+ShabuShabu+NAKAMA/data=!4m2!3m1!1s0x34e56976328c507b:0x2532b8d46bada01"
-      },
-      {
-        name: "Henry's PIZZA",
-        region: "那霸市區",
-        category: "美食",
-        highlight: "美式紐約街頭切片披薩",
-        note: "人氣打卡美式披薩名店，餅皮酥脆香濃。",
-        mapsUrl: "https://www.google.com/maps/place/Henry's+PIZZA/data=!4m2!3m1!1s0x6000e734818d5af9:0xf626c9df135ab987"
-      },
-      {
-        name: "JUNKUDO Naha (淳久堂書店)",
-        region: "那霸市區",
-        category: "購物",
-        highlight: "B1超多扭蛋機與文具書籍",
-        note: "那霸市區大型書店，B1 設有規模極大的扭蛋機專區，扭蛋控必訪！",
-        mapsUrl: "https://www.google.com/maps/place/JUNKUDO+Naha/data=!4m2!3m1!1s0x34e5697977242e01:0x5fc247c2eb40fe16"
-      },
-      {
-        name: "Okinawa Sanchoku Ichiba",
-        region: "那霸市區",
-        category: "購物",
-        highlight: "可試吃各種伴手禮後再買",
-        note: "沖繩產地產銷市場，匯集各種沖繩名產零食點心，提供豐富試吃。",
-        mapsUrl: "https://www.google.com/maps/place/Okinawa+Sanchoku+Ichiba/data=!4m2!3m1!1s0x34e5698050092917:0xcc0cb11239c66009"
-      },
-      {
-        name: "Umichurara (美麗海專賣店)",
-        region: "那霸市區",
-        category: "購物",
-        highlight: "美麗海水族館市區概念館",
-        note: "位在那霸市區的美麗海水族館直營周邊商品店，有小型水中造景。",
-        mapsUrl: "https://www.google.com/maps/place/Umichurara/data=!4m2!3m1!1s0x34e5697628500001:0xb3c64c132922fe95"
-      },
-      {
-        name: "ミレメーレ (Mille Mele)",
-        region: "那霸市區",
-        category: "美食",
-        highlight: "世界第一香濃義大利蘋果派",
-        note: "外皮層層酥脆，包裹濃郁卡士達醬與青森新鮮蘋果肉的排隊甜點。",
-        mapsUrl: "https://www.google.com/maps/place/%E3%83%9F%E3%83%AC%E3%83%A1%E3%83%BC%E3%83%AC/data=!4m2!3m1!1s0x34e5697905a63c47:0xb3adbef7169d38e5"
-      },
-      {
-        name: "珊瑚田",
-        region: "中部/恩納",
-        category: "美食",
-        highlight: "讀谷村特色海鮮與在地家常菜",
-        note: "遠離市區喧囂的純樸溫馨小食堂，在地食材料理細膩。",
-        mapsUrl: "https://www.google.com/maps/place/%E7%8F%8A%E7%91%9A%E7%94%B0/data=!4m2!3m1!1s0x34e516d034353737:0x97f836f00564d37"
-      },
-      {
-        name: "海人食堂 (讀谷村)",
-        region: "中部/恩納",
-        category: "美食",
-        highlight: "都屋漁港產地直送生魚片丼飯",
-        note: "坐在漁港邊吹海風大啖超澎湃海人丼、炸金楚魚定食。",
-        mapsUrl: "https://www.google.com/maps/place/%E6%B5%B7%E4%BA%BA%E9%A3%9F%E5%A0%82/data=!4m2!3m1!1s0x34e516b4aa651d97:0x1431c220c0d52c32"
-      },
-      {
-        name: "Okinawa City Payao Market (泡瀨漁港)",
-        region: "中部/恩納",
-        category: "美食",
-        highlight: "焗烤半隻龍蝦海膽定食名店",
-        note: "離泡瀨住宿極近的產地直銷漁市，招牌焗烤海膽龍蝦是經典亮點。",
-        mapsUrl: "https://www.google.com/maps/place/Okinawa+City+Fishing+Association+Payao+Market/data=!4m2!3m1!1s0x34e50dc1252fb713:0x49f85d7c13a12272"
-      },
-      {
-        name: "Panza Okinawa Zipline",
-        region: "中部/恩納",
-        category: "景點",
-        highlight: "喜來登海濱空中滑索冒險",
-        note: "跨越純白沙灘與翡翠綠海面的刺激海上空中飛索體驗。",
-        mapsUrl: "https://www.google.com/maps/place/Panza+Okinawa+Zipline/data=!4m2!3m1!1s0x34e505417cfeee85:0xe8fc20a98b8f0e02"
-      },
-      {
-        name: "かどや製麺所 (KADOYA製麵所 星降森啤酒屋)",
-        region: "北部",
-        category: "美食",
-        highlight: "名護特色自製麵條與精釀啤酒",
-        note: "北部特色製麵手作麵館，環境清幽獨特。",
-        mapsUrl: "https://www.google.com/maps/place/%E3%81%8B%E3%81%A9%E3%82%84%E8%A3%BD%E9%BA%BA%E6%89%80+KADOYA%E8%A3%BD%E9%BA%B5%E6%89%80+%E6%98%9F%E9%99%8D%E6%A3%AE%E5%95%A4%E9%85%92%E5%B1%8B/data=!4m2!3m1!1s0x34e4fd71ce97f729:0x502b09d5fef9d3d3"
-      },
-      {
-        name: "COSTCO好市多 沖繩南城店",
+        id: "un-1",
+        name: "瀨長島 Umikaji Terrace",
         region: "南部",
-        category: "購物",
-        highlight: "全新沖繩好市多大賣場",
-        note: "沖繩最新開幕的巨型好市多，回台前採買日本獨家日用品好去處。",
-        mapsUrl: "https://www.google.com/maps/place/COSTCO%E5%A5%BD%E5%B8%82%E5%A4%9A+%E6%B2%96%E7%B9%A9%E5%BA%97/data=!4m2!3m1!1s0x34e56f002d5171dd:0x6f86b1ebb56a155c"
-      }
-    ];
-
-    let UNSCHEDULED_PLACES = JSON.parse(localStorage.getItem("okinawa_unscheduled_v2") || "null") || JSON.parse(JSON.stringify(INITIAL_UNSCHEDULED_PLACES));
-
-    function saveUnscheduledPlaces() {
-      if (!isTemporaryLocalPreview || isAdminLoggedIn) {
-        localStorage.setItem("okinawa_unscheduled_v2", JSON.stringify(UNSCHEDULED_PLACES));
-      }
-    }
-
-    /* ==========================================================================
-       3. MASTER DIRECTORY (清單全部地點)
-       ========================================================================== */
-    const INITIAL_MASTER_PLACES = [
-      { name: "琉球新麵 通堂 小祿本店", cat: "美食", note: "每次去都要吃一下的男人麵/女人麵", url: "https://www.google.com/maps/place/%E7%90%89%E7%90%83%E6%96%B0%E9%BA%B5+%E9%80%9A%E5%A0%82+%E5%B0%8F%E7%A5%BF%E6%9C%AC%E5%BA%97/data=!4m2!3m1!1s0x34e569b140b3a219:0xdaaf5d41d37c6862" },
-      { name: "3 Chome Tsubogawa", cat: "住宿", note: "12/30 壺川第一晚住宿", url: "https://www.google.com/maps/place/3+Chome+Tsubogawa/data=!4m2!3m1!1s0x34e569a1b4ef6bd3:0xb73ef9c9533c140b" },
-      { name: "國際通屋台村（夜市）", cat: "美食", note: "深夜露天居酒屋熱炒串燒", url: "https://www.google.com/maps/place/%E5%9C%8B%E9%9A%9B%E9%80%9A%E5%B1%8B%E5%8F%B0%E6%9D%91%EF%BC%88%E5%A4%9C%E5%B8%82%EF%BC%89/data=!4m2!3m1!1s0x34e56917cdebf7a7:0x384644a940676d33" },
-      { name: "MaxValu Makishi", cat: "購物", note: "24小時營業超大AEON生鮮超市", url: "https://www.google.com/maps/place/MaxValu+Makishi/data=!4m2!3m1!1s0x34e5697b5cdc4c33:0x202b4331951f2689" },
-      { name: "OTS租車 DFS營業所", cat: "交通", note: "12/31 11:00 取車 / 1/3 16:00 還車", url: "https://www.google.com/maps/place/OTS%E7%A7%9F%E8%BB%8A+DFS%E7%87%9F%E6%A5%AD%E6%89%80/data=!4m2!3m1!1s0x34e56bdf4c4bbb81:0x44d863f78e1d4e09" },
-      { name: "Sports Depo 天久店", cat: "購物", note: "天久樂市運動用品大賣場", url: "https://www.google.com/maps/search/?api=1&query=Sports+Depo+Ameku+Store" },
-      { name: "達摩寺 (西来院)", cat: "景點", note: "首里不倒翁達摩初詣祈願古剎", url: "https://www.google.com/maps/place/%E9%81%94%E6%91%A9%E5%AF%BA/data=!4m2!3m1!1s0x34e56bff7290bbe7:0x193892a7ae016d6d" },
-      { name: "Awase Piano Lessons", cat: "住宿", note: "12/31-1/3 中部住宿周邊", url: "https://www.google.com/maps/place/Awase+Piano+Lessons/data=!4m2!3m1!1s0x34e50dd9d36a8d8f:0xe0278a784154b7e" },
-      { name: "壽司市場 泡瀨店", cat: "美食", note: "泡瀨高CP值平價在地迴轉壽司", url: "https://www.google.com/maps/place/%E5%A3%BD%E5%8F%B8%E5%B8%82%E5%A0%B4+%E6%B3%A1%E7%80%AC%E5%BA%97/data=!4m2!3m1!1s0x34e50d91181ba19d:0x57375191496328a8" },
-      { name: "CAMEL SANDWICH & SMOOTHIE", cat: "美食", note: "去美麗海之前先訂再拿的招牌三明治", url: "https://www.google.com/maps/place/CAMEL+SANDWICH+%26+SMOOTHIE/data=!4m2!3m1!1s0x34e4fbe39a7051ad:0x310396d0840a630a" },
-      { name: "沖繩美麗海水族館", cat: "景點", note: "黑潮之海巨型水槽、鯨鯊、海豚秀", url: "https://www.google.com/maps/place/%E6%B2%96%E7%B9%A9%E7%BE%8E%E9%BA%97%E6%B5%B7%E6%B0%B4%E6%97%8F%E9%A4%A8/data=!4m2!3m1!1s0x34e4fa3152619e3d:0xea08a6700fdd9ffe" },
-      { name: "古宇利大橋 南端觀景台", cat: "景點", note: "古宇利藍絕景跨海大橋拍照點", url: "https://www.google.com/maps/place/%E5%8F%A4%E5%AE%87%E5%88%A9%E5%A4%A7%E6%A9%8B+%E5%8D%97%E7%AB%AF%E8%A7%80%E6%99%AF%E5%8F%B0/data=!4m2!3m1!1s0x34e4578504115a47:0xb012af2b4d8bdc0e" },
-      { name: "海中道路沙灘", cat: "景點", note: "勝連半島跨海兜風休息站", url: "https://www.google.com/maps/place/%E6%B5%B7%E4%B8%AD%E9%81%93%E8%B7%AF%E6%B2%99%E7%81%98/data=!4m2!3m1!1s0x34e509d000146c77:0xaf68edcf341e8c04" },
-      { name: "古民家食堂てぃーらぶい", cat: "美食", note: "濱比嘉島紅瓦古民家島野菜定食", url: "https://www.google.com/maps/place/%E5%8F%A4%E6%B0%91%E5%AE%B6%E9%A3%9F%E5%A0%82%E3%81%A6%E3%81%83%E3%83%BC%E3%82%89%E3%81%B6%E3%81%84/data=!4m2!3m1!1s0x34e509be693b0b73:0x9723a2a7366d05a7" },
-      { name: "PARCO CITY", cat: "購物", note: "西海岸無敵海景超大免稅商場", url: "https://www.google.com/maps/place/PARCO+CITY/data=!4m2!3m1!1s0x34e56b0af61f94c5:0x78aac934fb2b5c0" },
-      { name: "魚がしの銀次 泡瀬店", cat: "美食", note: "泡瀨產地直送生魚片海鮮居酒屋", url: "https://www.google.com/maps/place/%E9%AD%9A%E3%81%8C%E3%81%97%E3%81%AE%E9%8A%80%E6%AC%A1+%E6%B3%A1%E7%80%AC%E5%BA%97/data=!4m2!3m1!1s0x34e50dbe0d82d217:0xf30bdfc3963e3f16" },
-      { name: "奥武島海産物食堂", cat: "美食", note: "南城貓島平價海鮮定食與鮮魚湯", url: "https://www.google.com/maps/place/%E5%A5%A5%E6%AD%A6%E5%B3%B6%E6%B5%B7%E7%94%A3%E7%89%A9%E9%A3%9F%E5%A0%82/data=!4m2!3m1!1s0x34fa9b9e97fe8659:0x8d6658489261682e" },
-      { name: "Gangala之谷", cat: "景點", note: "巨型古鐘乳石洞穴與百年榕樹咖啡", url: "https://www.google.com/maps/place/Gangala%E4%B9%8B%E8%B0%B7/data=!4m2!3m1!1s0x34e56f694e9fa999:0xad0c7c6998743d6" },
-      { name: "Buchi Kumojiten", cat: "美食", note: "久茂地和牛燒肉名店", url: "https://www.google.com/maps/place/Buchi+Kumojiten/data=!4m2!3m1!1s0x34e56977dac0c9cd:0xa9b836cde5e24546" },
-      { name: "LUCKY MAXIMUM", cat: "美食", note: "有人推薦看起來不錯先存", url: "https://www.google.com/maps/place/LUCKY+MAXIMUM/data=!4m2!3m1!1s0x34e569002b2928bf:0x7c6c40039de2d0dc" },
-      { name: "暖暮拉麵 那霸牧志店", cat: "美食", note: "國際通人氣排隊拉麵", url: "https://www.google.com/maps/place/%E6%9A%96%E6%9A%AE%E6%8B%89%E9%BA%B5+%E9%82%A3%E9%9C%B8%E7%89%A7%E5%BF%97%E5%BA%97/data=!4m2!3m1!1s0x34e5697bcfbeaaab:0x860befe404def6ef" },
-      { name: "ラーメン暖暮 首里店", cat: "美食", note: "首里分店排隊人潮較少", url: "https://www.google.com/maps/place/%E3%83%A9%E3%83%BC%E3%83%A1%E3%83%B3%E6%9A%96%E6%9A%AE+%E9%A6%96%E9%87%8C%E5%BA%97/data=!4m2!3m1!1s0x34e56d00310093d9:0x9486bf8dbe9264fb" },
-      { name: "Shima ShabuShabu NAKAMA", cat: "美食", note: "阿古豬與石垣牛涮涮鍋", url: "https://www.google.com/maps/place/Shima+ShabuShabu+NAKAMA/data=!4m2!3m1!1s0x34e56976328c507b:0x2532b8d46bada01" },
-      { name: "Henry's PIZZA", cat: "美食", note: "街頭美式紐約切片披薩", url: "https://www.google.com/maps/place/Henry's+PIZZA/data=!4m2!3m1!1s0x6000e734818d5af9:0xf626c9df135ab987" },
-      { name: "JUNKUDO Naha", cat: "購物", note: "B1超多扭蛋機與日本書籍雜誌", url: "https://www.google.com/maps/place/JUNKUDO+Naha/data=!4m2!3m1!1s0x34e5697977242e01:0x5fc247c2eb40fe16" },
-      { name: "Okinawa Sanchoku Ichiba", cat: "購物", note: "可試吃各種伴手禮食物再買", url: "https://www.google.com/maps/place/Okinawa+Sanchoku+Ichiba/data=!4m2!3m1!1s0x34e5698050092917:0xcc0cb11239c66009" },
-      { name: "Umichurara", cat: "購物", note: "美麗海水族館市區概念店", url: "https://www.google.com/maps/place/Umichurara/data=!4m2!3m1!1s0x34e5697628500001:0xb3c64c132922fe95" },
-      { name: "ミレメーレ", cat: "美食", note: "香濃世界第一酥脆蘋果派", url: "https://www.google.com/maps/place/%E3%83%9F%E3%83%AC%E3%83%A1%E3%83%BC%E3%83%AC/data=!4m2!3m1!1s0x34e5697905a63c47:0xb3adbef7169d38e5" },
-      { name: "珊瑚田", cat: "美食", note: "讀谷村特色家常菜與海鮮", url: "https://www.google.com/maps/place/%E7%8F%8A%E7%91%9A%E7%94%B0/data=!4m2!3m1!1s0x34e516d034353737:0x97f836f00564d37" },
-      { name: "海人食堂", cat: "美食", note: "讀谷村都屋漁港海人丼", url: "https://www.google.com/maps/place/%E6%B5%B7%E4%BA%BA%E9%A3%9F%E5%A0%82/data=!4m2!3m1!1s0x34e516b4aa651d97:0x1431c220c0d52c32" },
-      { name: "Okinawa City Payao Market", cat: "美食", note: "泡瀨漁港焗烤半隻龍蝦定食", url: "https://www.google.com/maps/place/Okinawa+City+Fishing+Association+Payao+Market/data=!4m2!3m1!1s0x34e50dc1252fb713:0x49f85d7c13a12272" },
-      { name: "Panza Okinawa Zipline", cat: "景點", note: "喜來登海上空中滑索", url: "https://www.google.com/maps/place/Panza+Okinawa+Zipline/data=!4m2!3m1!1s0x34e505417cfeee85:0xe8fc20a98b8f0e02" },
-      { name: "かどや製麺所 星降森啤酒屋", cat: "美食", note: "名護特色手作麵與精釀啤酒", url: "https://www.google.com/maps/place/%E3%81%8B%E3%81%A9%E3%82%84%E8%A3%BD%E9%BA%BA%E6%89%80+KADOYA%E8%A3%BD%E9%BA%B5%E6%89%80+%E6%98%9F%E9%99%8D%E6%A3%AE%E5%95%A4%E9%85%92%E5%B1%8B/data=!4m2!3m1!1s0x34e4fd71ce97f729:0x502b09d5fef9d3d3" },
-      { name: "COSTCO好市多 沖繩店", cat: "購物", note: "沖繩南部巨型好市多量販店", url: "https://www.google.com/maps/place/COSTCO%E5%A5%BD%E5%B8%82%E5%A4%9A+%E6%B2%96%E7%B9%A9%E5%BA%97/data=!4m2!3m1!1s0x34e56f002d5171dd:0x6f86b1ebb56a155c" },
-      { name: "Ryoshi Shokudo 魚大統領", cat: "美食", note: "YouTuber推薦當地人海鮮定食", url: "https://www.google.com/maps/place/Ryoshi+Shokudo+Obanburumai+Sakana+Daitoryo/data=!4m2!3m1!1s0x34e56b047c4b65c9:0x3e70d1280ee22c7a" },
-      { name: "イツクマの浜", cat: "景點", note: "秘境純白自然沙灘", url: "https://www.google.com/maps/place/%E3%82%A4%E3%83%84%E3%82%AF%E3%83%9E%E3%81%AE%E6%B5%9C/data=!4m2!3m1!1s0x34e5a933a30aaa83:0x100e8098a5a47513" }
-    ];
-
-    let MASTER_PLACES = JSON.parse(localStorage.getItem("okinawa_master_v2") || "null") || JSON.parse(JSON.stringify(INITIAL_MASTER_PLACES));
-
-    function saveMasterPlaces() {
-      if (!isTemporaryLocalPreview || isAdminLoggedIn) {
-        localStorage.setItem("okinawa_master_v2", JSON.stringify(MASTER_PLACES));
-      }
-    }
-
-    /* ==========================================================================
-       4. TAB & CAROUSEL SLIDING LOGIC
-       ========================================================================== */
-    const TABS_ORDER = ['d1', 'd2', 'd3', 'd4', 'd5', 'unscheduled', 'all'];
-    let currentTabIndex = 0;
-    let isAdminLoggedIn = false;
-
-    function switchTab(tabId) {
-      const idx = TABS_ORDER.indexOf(tabId);
-      if (idx === -1) return;
-      currentTabIndex = idx;
-
-      // Update Carousel Slide Track
-      const wrapper = document.getElementById("views-wrapper");
-      if (wrapper) {
-        wrapper.style.transform = `translateX(-${(idx * 100) / 7}%)`;
-      }
-
-      // Update Tab Navigation Button Styling
-      TABS_ORDER.forEach(id => {
-        const btn = document.getElementById(`tab-btn-${id}`);
-        if (!btn) return;
-        if (id === tabId) {
-          btn.className = "tab-btn whitespace-nowrap px-3.5 py-1.5 rounded-full font-bold transition bg-white text-sky-700 shadow-sm shrink-0 inline-flex items-center gap-1.5";
-          btn.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
-        } else {
-          btn.className = "tab-btn whitespace-nowrap px-3.5 py-1.5 rounded-full font-medium transition text-white/80 hover:bg-white/10 shrink-0 inline-flex items-center gap-1.5";
-        }
-      });
-      window.scrollTo({ top: 0, behavior: 'smooth' });
-    }
-
-    function setupSwipeGestures() {
-      const main = document.getElementById("main-content");
-      if (!main) return;
-      let startX = 0;
-      let startY = 0;
-
-      main.addEventListener("touchstart", (e) => {
-        startX = e.touches[0].clientX;
-        startY = e.touches[0].clientY;
-      }, { passive: true });
-
-      main.addEventListener("touchend", (e) => {
-        const diffX = e.changedTouches[0].clientX - startX;
-        const diffY = e.changedTouches[0].clientY - startY;
-
-        // Ensure horizontal swipe is dominant and > 50px
-        if (Math.abs(diffX) > 50 && Math.abs(diffX) > Math.abs(diffY) * 1.5) {
-          if (diffX < 0 && currentTabIndex < TABS_ORDER.length - 1) {
-            switchTab(TABS_ORDER[currentTabIndex + 1]);
-          } else if (diffX > 0 && currentTabIndex > 0) {
-            switchTab(TABS_ORDER[currentTabIndex - 1]);
-          }
-        }
-      }, { passive: true });
-    }
-
-    /* ==========================================================================
-       5. RENDER ITINERARY CARDS (渲染每天景點卡片)
-       ========================================================================== */
-    function renderDays() {
-      ['d1', 'd2', 'd3', 'd4', 'd5'].forEach(dayKey => {
-        const container = document.getElementById(`${dayKey}-cards`);
-        if (!container) return;
-
-        const spots = DAYS_DATA[dayKey] || [];
-        container.innerHTML = spots.map((spot, i) => {
-          return `
-            <div class="bg-white rounded-2xl p-4 shadow-sm border border-slate-200/90 relative hover:shadow transition" id="card-${spot.id}">
-              <div class="flex items-start justify-between gap-2">
-                <div class="flex items-start gap-2.5">
-                  <input type="checkbox" id="check-${spot.id}" onchange="toggleCheck('${spot.id}')"
-                         class="mt-1 w-4 h-4 rounded border-slate-300 text-sky-600 focus:ring-sky-500 cursor-pointer" />
-                  <div>
-                    <div class="flex items-center gap-1.5 flex-wrap">
-                      <span class="text-xs font-bold text-sky-700 bg-sky-50 px-2 py-0.5 rounded-md border border-sky-100">${spot.time}</span>
-                      <span class="text-[11px] font-semibold px-2 py-0.5 rounded-full ${spot.tagColor || 'bg-slate-100 text-slate-700'}">${spot.tag}</span>
-                    </div>
-                    <h3 class="font-bold text-base text-slate-800 mt-1 leading-snug">${spot.name}</h3>
-                  </div>
-                </div>
-
-                ${isAdminLoggedIn ? `
-                  <div class="flex items-center gap-1 shrink-0">
-                    <button onclick="openEditSpotModal('${dayKey}', '${spot.id}')" class="p-1.5 text-slate-400 hover:text-amber-600 rounded-lg hover:bg-slate-100" title="編輯此行程">
-                      <i data-lucide="pencil" class="w-4 h-4"></i>
-                    </button>
-                    <button onclick="deleteSpot('${dayKey}', '${spot.id}')" class="p-1.5 text-slate-400 hover:text-rose-600 rounded-lg hover:bg-slate-100" title="刪除此行程 (自動移至未排入)">
-                      <i data-lucide="trash-2" class="w-4 h-4"></i>
-                    </button>
-                  </div>
-                ` : ''}
-              </div>
-
-              <p class="text-xs text-slate-600 mt-2 leading-relaxed">${spot.desc}</p>
-              ${spot.tips ? `
-                <div class="mt-2 text-[11px] text-amber-800 bg-amber-50/80 p-2 rounded-xl border border-amber-100 flex items-start gap-1.5">
-                  <i data-lucide="lightbulb" class="w-3.5 h-3.5 text-amber-600 shrink-0 mt-0.5"></i>
-                  <span>${spot.tips}</span>
-                </div>
-              ` : ''}
-
-              <div class="mt-3 pt-2.5 border-t border-slate-100 flex items-center justify-between">
-                <a href="${spot.mapsUrl}" target="_blank" rel="noopener noreferrer"
-                   class="inline-flex items-center gap-1.5 text-xs font-bold text-sky-600 hover:text-sky-700 active:scale-95 transition bg-sky-50/80 hover:bg-sky-100 px-3 py-1.5 rounded-xl border border-sky-100">
-                  <i data-lucide="map-pin" class="w-3.5 h-3.5"></i>
-                  <span>在 Google 地圖開啟</span>
-                </a>
-                <span class="text-[10px] text-slate-400 font-medium">第 ${i + 1} 站</span>
-              </div>
-            </div>
-          `;
-        }).join("");
-      });
-
-      if (window.lucide) lucide.createIcons();
-    }
-
-    /* ==========================================================================
-       6. RENDER UNSCHEDULED LIST (未排入景點渲染)
-       ========================================================================== */
-    let currentUnscheduledRegion = "全部";
-
-    function renderUnscheduledList(list) {
-      const container = document.getElementById("unscheduled-cards");
-      if (!container) return;
-
-      const filtered = list.filter(item => {
-        return currentUnscheduledRegion === "全部" || item.region === currentUnscheduledRegion;
-      });
-
-      const countTag = document.getElementById("unscheduled-count-tag");
-      if (countTag) countTag.innerText = `共 ${filtered.length} 處`;
-
-      container.innerHTML = filtered.map(item => {
-        return `
-          <div class="bg-white rounded-2xl p-4 shadow-sm border border-slate-200/90 relative hover:shadow transition">
-            <div class="flex items-center gap-1.5 text-[11px] font-semibold text-slate-500 overflow-x-auto hide-scrollbar whitespace-nowrap">
-              <span class="text-amber-800 bg-amber-50 px-2 py-0.5 rounded-md border border-amber-200/60 font-bold shrink-0">${item.region}</span>
-              <span class="text-slate-600 bg-slate-100 px-2 py-0.5 rounded-md shrink-0">${item.category}</span>
-              <span class="text-amber-700 shrink-0 font-medium truncate">${item.highlight}</span>
-            </div>
-
-            <h3 class="font-bold text-base text-slate-800 mt-1.5 leading-snug">${item.name}</h3>
-            <p class="text-xs text-slate-600 mt-1.5 leading-relaxed">${item.note}</p>
-
-            <div class="mt-3 pt-2.5 border-t border-slate-100 flex items-center justify-between gap-2">
-              <a href="${item.mapsUrl}" target="_blank" rel="noopener noreferrer"
-                 class="inline-flex items-center gap-1.5 text-xs font-bold text-sky-600 hover:text-sky-700 px-2.5 py-1.5 rounded-xl bg-sky-50 border border-sky-100">
-                <i data-lucide="map-pin" class="w-3.5 h-3.5"></i>
-                <span>Google 地圖</span>
-              </a>
-              <button onclick="openScheduleModal('${item.name.replace(/'/g, "\\'")}', '${item.mapsUrl.replace(/'/g, "\\'")}', '${item.note.replace(/'/g, "\\'")}')"
-                      class="inline-flex items-center gap-1.5 text-xs font-bold text-white bg-amber-600 hover:bg-amber-700 px-3 py-1.5 rounded-xl shadow-sm active:scale-95 transition">
-                <i data-lucide="calendar-plus" class="w-3.5 h-3.5"></i>
-                <span>排入行程</span>
-              </button>
-            </div>
-          </div>
-        `;
-      }).join("");
-
-      if (window.lucide) lucide.createIcons();
-    }
-
-    function filterUnscheduledRegion(region) {
-      currentUnscheduledRegion = region;
-      document.querySelectorAll(".unscheduled-pill").forEach(btn => {
-        if (btn.innerText.includes(region)) {
-          btn.className = "unscheduled-pill shrink-0 px-3 py-1 rounded-full font-bold bg-amber-600 text-white shadow-sm";
-        } else {
-          btn.className = "unscheduled-pill shrink-0 px-3 py-1 rounded-full bg-slate-100 text-slate-600";
-        }
-      });
-      renderUnscheduledList(UNSCHEDULED_PLACES);
-    }
-
-    /* ==========================================================================
-       7. RENDER MASTER LIST (全部清單渲染)
-       ========================================================================== */
-    let currentMasterCategory = "全部";
-
-    function renderMasterList(list) {
-      const container = document.getElementById("master-cards");
-      if (!container) return;
-
-      container.innerHTML = list.map(item => {
-        const badgeColor = item.cat === "美食" ? "bg-amber-100 text-amber-800" :
-                           item.cat === "景點" ? "bg-blue-100 text-blue-800" :
-                           item.cat === "購物" ? "bg-emerald-100 text-emerald-800" : "bg-purple-100 text-purple-800";
-        return `
-          <div class="bg-white rounded-2xl p-3.5 shadow-sm border border-slate-200/90 flex items-center justify-between gap-3">
-            <div class="min-w-0">
-              <div class="flex items-center gap-2">
-                <span class="text-[10px] font-bold px-2 py-0.5 rounded-full ${badgeColor}">${item.cat}</span>
-                <h4 class="font-bold text-sm text-slate-800 truncate">${item.name}</h4>
-              </div>
-              <p class="text-xs text-slate-500 mt-1 truncate">${item.note || '沖繩清單推薦地點'}</p>
-            </div>
-            <a href="${item.url}" target="_blank" rel="noopener noreferrer"
-               class="shrink-0 p-2 text-sky-600 hover:text-sky-700 bg-sky-50 hover:bg-sky-100 rounded-xl border border-sky-100">
-              <i data-lucide="navigation-2" class="w-4 h-4"></i>
-            </a>
-          </div>
-        `;
-      }).join("");
-
-      if (window.lucide) lucide.createIcons();
-    }
-
-    function setFilterCategory(cat) {
-      currentMasterCategory = cat;
-      document.querySelectorAll(".cat-pill").forEach(btn => {
-        if (btn.innerText === cat) {
-          btn.className = "cat-pill shrink-0 px-3 py-1 rounded-full font-bold bg-sky-600 text-white";
-        } else {
-          btn.className = "cat-pill shrink-0 px-3 py-1 rounded-full bg-slate-100 text-slate-600";
-        }
-      });
-      filterMasterList();
-    }
-
-    function filterMasterList() {
-      const q = (document.getElementById("all-search-input")?.value || "").toLowerCase().trim();
-      const filtered = MASTER_PLACES.filter(item => {
-        const matchCat = currentMasterCategory === "全部" || item.cat === currentMasterCategory;
-        const matchText = item.name.toLowerCase().includes(q) || (item.note && item.note.toLowerCase().includes(q));
-        return matchCat && matchText;
-      });
-      renderMasterList(filtered);
-    }
-
-    /* ==========================================================================
-       8. HELPER: MOVE A SPOT TO UNSCHEDULED (自動移入未排入清單)
-       ========================================================================== */
-    function moveSpotToUnscheduled(spot) {
-      if (!spot) return;
-
-      const exists = UNSCHEDULED_PLACES.some(u => u.name === spot.name);
-      if (!exists) {
-        let region = "那霸市區";
-        if (spot.name.includes("泡瀨") || spot.name.includes("具志川") || spot.name.includes("海中道路") || spot.name.includes("PARCO") || spot.name.includes("濱比嘉")) {
-          region = "中部/恩納";
-        } else if (spot.name.includes("美麗海") || spot.name.includes("古宇利") || spot.name.includes("本部") || spot.name.includes("名護")) {
-          region = "北部";
-        } else if (spot.name.includes("奧武島") || spot.name.includes("Gangala") || spot.name.includes("南城")) {
-          region = "南部";
-        }
-
-        const unscheduledItem = {
-          name: spot.name,
-          region: region,
-          category: spot.tag?.includes("美食") || spot.tag?.includes("晚餐") ? "美食" :
-                    spot.tag?.includes("購物") ? "購物" :
-                    spot.tag?.includes("交通") || spot.tag?.includes("住宿") ? "住宿" : "景點",
-          highlight: `從原行程替換退出的點位 (${spot.tag || '備選'})`,
-          note: spot.desc || spot.tips || "原排定行程，替換後暫存在未排入清單。",
-          mapsUrl: spot.mapsUrl
-        };
-
-        UNSCHEDULED_PLACES.unshift(unscheduledItem);
-        saveUnscheduledPlaces();
-        renderUnscheduledList(UNSCHEDULED_PLACES);
-      }
-    }
-
-    /* ==========================================================================
-       9. INTERACTIVE SCHEDULE MODAL (排入行程邏輯・含替換自動移回)
-       ========================================================================== */
-    let pendingSpot = null;
-    let selectedDay = "d1";
-    let scheduleMode = "insert";
-
-    function openScheduleModal(name, url, note) {
-      pendingSpot = { name, url, note };
-      const nameEl = document.getElementById("schedule-modal-spot-name");
-      if (nameEl) nameEl.innerText = name;
-
-      selectScheduleDay("d1");
-      setScheduleMode("insert");
-
-      document.getElementById("schedule-modal").classList.remove("hidden");
-      document.getElementById("schedule-modal").classList.add("flex");
-    }
-
-    function closeScheduleModal() {
-      document.getElementById("schedule-modal").classList.add("hidden");
-      document.getElementById("schedule-modal").classList.remove("flex");
-      pendingSpot = null;
-    }
-
-    function selectScheduleDay(dayKey) {
-      selectedDay = dayKey;
-      ['d1', 'd2', 'd3', 'd4', 'd5'].forEach(k => {
-        const btn = document.getElementById(`sch-day-${k}`);
-        if (!btn) return;
-        if (k === dayKey) {
-          btn.className = "sch-day-btn py-2 rounded-xl font-bold border border-sky-600 bg-sky-600 text-white shadow-sm";
-        } else {
-          btn.className = "sch-day-btn py-2 rounded-xl font-bold border border-slate-200 bg-slate-100 text-slate-700";
-        }
-      });
-      populateTargetSpots();
-    }
-
-    function setScheduleMode(mode) {
-      scheduleMode = mode;
-      const insertBtn = document.getElementById("sch-mode-insert");
-      const replaceBtn = document.getElementById("sch-mode-replace");
-      const label = document.getElementById("sch-target-label");
-
-      if (mode === "insert") {
-        insertBtn.className = "p-2.5 rounded-xl border border-sky-500 bg-sky-50 text-sky-800 font-bold text-left transition";
-        replaceBtn.className = "p-2.5 rounded-xl border border-slate-200 bg-slate-50 text-slate-600 font-bold text-left transition";
-        if (label) label.innerText = "3. 插入位置（原行程順序）";
-      } else {
-        replaceBtn.className = "p-2.5 rounded-xl border border-amber-500 bg-amber-50 text-amber-800 font-bold text-left transition";
-        insertBtn.className = "p-2.5 rounded-xl border border-slate-200 bg-slate-50 text-slate-600 font-bold text-left transition";
-        if (label) label.innerText = "3. 選擇要替換掉的原景點 (被取代者移至未排入)";
-      }
-      populateTargetSpots();
-    }
-
-    function populateTargetSpots() {
-      const select = document.getElementById("sch-target-select");
-      if (!select) return;
-
-      const daySpots = DAYS_DATA[selectedDay] || [];
-      if (scheduleMode === "insert") {
-        select.innerHTML = daySpots.map((s, idx) => `
-          <option value="${idx}">排在第 ${idx + 1} 站之前：${s.name} (${s.time})</option>
-        `).join("") + `<option value="${daySpots.length}">排在當天最後一站</option>`;
-      } else {
-        select.innerHTML = daySpots.map((s, idx) => `
-          <option value="${idx}">替換第 ${idx + 1} 站：${s.name} (${s.time})</option>
-        `).join("");
-      }
-      quickFillTime('current');
-    }
-
-    function quickFillTime(mode) {
-      const select = document.getElementById("sch-target-select");
-      const timeInput = document.getElementById("sch-time-input");
-      if (!select || !timeInput) return;
-
-      const daySpots = DAYS_DATA[selectedDay] || [];
-      const idx = parseInt(select.value, 10);
-
-      if (daySpots[idx]) {
-        timeInput.value = daySpots[idx].time;
-      } else {
-        timeInput.value = "14:00 - 15:30";
-      }
-    }
-
-    function confirmAddToSchedule() {
-      if (!pendingSpot) return;
-      const targetIdx = parseInt(document.getElementById("sch-target-select")?.value || "0", 10);
-      const plannedTime = document.getElementById("sch-time-input")?.value.trim() || "14:00 - 15:30";
-
-      const newSpot = {
-        id: `custom-${Date.now()}`,
-        time: plannedTime,
-        name: pendingSpot.name,
-        tag: "自訂排入",
-        tagColor: "bg-amber-100 text-amber-800 font-bold",
-        desc: pendingSpot.note || "從備選清單加入的推薦行程。",
-        mapsUrl: pendingSpot.url,
-        tips: "手動排入景點，可隨時在管理員模式調整。"
-      };
-
-      if (!DAYS_DATA[selectedDay]) DAYS_DATA[selectedDay] = [];
-
-      let replacedSpot = null;
-      if (scheduleMode === "replace") {
-        replacedSpot = DAYS_DATA[selectedDay][targetIdx];
-        DAYS_DATA[selectedDay][targetIdx] = newSpot;
-
-        if (replacedSpot) {
-          moveSpotToUnscheduled(replacedSpot);
-        }
-      } else {
-        DAYS_DATA[selectedDay].splice(targetIdx, 0, newSpot);
-      }
-
-      saveDaysData();
-      renderDays();
-      updateCheckedUi();
-      updateProgress();
-      pushScheduleToCloud();
-
-      closeScheduleModal();
-
-      if (replacedSpot) {
-        alertModalNotice(`✅ 已將【${newSpot.name}】替換原景點，【${replacedSpot.name}】已自動移回未排入清單！`);
-      } else {
-        alertModalNotice(`✅ 已成功將【${newSpot.name}】排入 ${selectedDay.toUpperCase()} 行程！`);
-      }
-      switchTab(selectedDay);
-    }
-
-    /* ==========================================================================
-       9.1 RESET SCHEDULE PERMISSIONS (管理員同步雲端 vs 一般使用者本機暫存)
-       ========================================================================== */
-    function triggerResetScheduleModal() {
-      const modal = document.getElementById("reset-confirm-modal");
-      const title = document.getElementById("reset-modal-title");
-      const badge = document.getElementById("reset-modal-badge");
-      const desc = document.getElementById("reset-modal-desc");
-      if (!modal) return;
-
-      if (isAdminLoggedIn) {
-        title.innerText = "【管理員】重設雲端行程";
-        badge.innerText = "管理員權限已認證";
-        badge.className = "inline-block text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-100 text-amber-800";
-        desc.innerHTML = "您已登入管理員。確認重設後，將把行程還原為官方初始預設，並<b>「同步寫入雲端資料庫」</b>，讓所有旅伴手機全面生效！";
-      } else {
-        title.innerText = "本機暫時重設預覽";
-        badge.innerText = "一般檢視模式";
-        badge.className = "inline-block text-[10px] font-bold px-2 py-0.5 rounded-full bg-slate-100 text-slate-600";
-        desc.innerHTML = "您目前為一般檢視模式。此重設<b>僅供您的本機暫時預覽</b>，絕不影響雲端資料庫；<b>重新整理網頁後將自動跳回雲端儲存的最新版本</b>。";
-      }
-
-      modal.classList.remove("hidden");
-      modal.classList.add("flex");
-      if (window.lucide) lucide.createIcons();
-    }
-
-    function closeResetModal() {
-      const modal = document.getElementById("reset-confirm-modal");
-      if (modal) {
-        modal.classList.add("hidden");
-        modal.classList.remove("flex");
-      }
-    }
-
-    function executeResetSchedule() {
-      closeResetModal();
-
-      if (isAdminLoggedIn) {
-        // ADMIN MODE: Permanent reset that syncs directly to Firebase database
-        localStorage.removeItem("okinawa_schedule_v2");
-        localStorage.removeItem("okinawa_unscheduled_v2");
-        localStorage.removeItem("okinawa_master_v2");
-
-        DAYS_DATA = JSON.parse(JSON.stringify(INITIAL_DAYS_DATA));
-        UNSCHEDULED_PLACES = JSON.parse(JSON.stringify(INITIAL_UNSCHEDULED_PLACES));
-        MASTER_PLACES = JSON.parse(JSON.stringify(INITIAL_MASTER_PLACES));
-
-        isTemporaryLocalPreview = false;
-        hideTempPreviewNotice();
-
-        renderDays();
-        renderUnscheduledList(UNSCHEDULED_PLACES);
-        renderMasterList(MASTER_PLACES);
-        updateCheckedUi();
-        updateProgress();
-
-        pushScheduleToCloud();
-        alertModalNotice("✅ 管理員已重設預設行程，並已成功同步至全體雲端！");
-      } else {
-        // NON-ADMIN USER MODE: Temporary local preview only!
-        DAYS_DATA = JSON.parse(JSON.stringify(INITIAL_DAYS_DATA));
-        UNSCHEDULED_PLACES = JSON.parse(JSON.stringify(INITIAL_UNSCHEDULED_PLACES));
-        MASTER_PLACES = JSON.parse(JSON.stringify(INITIAL_MASTER_PLACES));
-
-        isTemporaryLocalPreview = true;
-        showTempPreviewNotice();
-
-        renderDays();
-        renderUnscheduledList(UNSCHEDULED_PLACES);
-        renderMasterList(MASTER_PLACES);
-        updateCheckedUi();
-        updateProgress();
-
-        alertModalNotice("👀 已切換為預設預覽（僅限本機），重新整理即跳回雲端儲存版本！");
-      }
-    }
-
-    // 保留相容性包裝
-    function resetCustomSchedule() {
-      triggerResetScheduleModal();
-    }
-
-    function showTempPreviewNotice() {
-      const bar = document.getElementById("temp-preview-bar");
-      if (bar) bar.classList.remove("hidden");
-    }
-
-    function hideTempPreviewNotice() {
-      const bar = document.getElementById("temp-preview-bar");
-      if (bar) bar.classList.add("hidden");
-    }
-
-    function restoreCloudSchedule() {
-      if (CLOUD_SNAPSHOT_DAYS) {
-        DAYS_DATA = JSON.parse(JSON.stringify(CLOUD_SNAPSHOT_DAYS));
-        if (CLOUD_SNAPSHOT_UNSCHEDULED) UNSCHEDULED_PLACES = JSON.parse(JSON.stringify(CLOUD_SNAPSHOT_UNSCHEDULED));
-        if (CLOUD_SNAPSHOT_MASTER) MASTER_PLACES = JSON.parse(JSON.stringify(CLOUD_SNAPSHOT_MASTER));
-
-        isTemporaryLocalPreview = false;
-        hideTempPreviewNotice();
-
-        saveDaysData();
-        saveUnscheduledPlaces();
-        saveMasterPlaces();
-
-        renderDays();
-        renderUnscheduledList(UNSCHEDULED_PLACES);
-        renderMasterList(MASTER_PLACES);
-        updateCheckedUi();
-        updateProgress();
-        alertModalNotice("🔄 已回復為雲端資料庫的最新行程版本！");
-      } else {
-        window.location.reload();
-      }
-    }
-
-    /* ==========================================================================
-       10. ADD BRAND-NEW PLACE FEATURE (新增全新地點)
-       ========================================================================== */
-    function openNewPlaceModal() {
-      document.getElementById("new-place-name").value = "";
-      document.getElementById("new-place-highlight").value = "";
-      document.getElementById("new-place-note").value = "";
-      document.getElementById("new-place-url").value = "";
-      document.getElementById("new-place-time").value = "14:00 - 15:30";
-      
-      toggleNewPlaceTarget(false);
-      document.querySelector('input[name="new-dest"][value="unscheduled"]').checked = true;
-
-      document.getElementById("new-place-modal").classList.remove("hidden");
-      document.getElementById("new-place-modal").classList.add("flex");
-      document.getElementById("new-place-name").focus();
-    }
-
-    function closeNewPlaceModal() {
-      document.getElementById("new-place-modal").classList.add("hidden");
-      document.getElementById("new-place-modal").classList.remove("flex");
-    }
-
-    function toggleNewPlaceTarget(isDirectSchedule) {
-      const field = document.getElementById("new-place-schedule-fields");
-      if (field) {
-        if (isDirectSchedule) {
-          field.classList.remove("hidden");
-        } else {
-          field.classList.add("hidden");
-        }
-      }
-    }
-
-    function saveNewPlace() {
-      const name = document.getElementById("new-place-name").value.trim();
-      if (!name) {
-        alertModalNotice("請輸入地點名稱！");
-        return;
-      }
-
-      const region = document.getElementById("new-place-region").value;
-      const cat = document.getElementById("new-place-cat").value;
-      const highlight = document.getElementById("new-place-highlight").value.trim() || `${region}・自訂新點`;
-      const note = document.getElementById("new-place-note").value.trim() || "旅伴自訂推薦地點。";
-      let url = document.getElementById("new-place-url").value.trim();
-
-      if (!url) {
-        url = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(name + ' 沖繩')}`;
-      }
-
-      const isDirectSchedule = document.querySelector('input[name="new-dest"]:checked')?.value === 'schedule';
-
-      // 1. Add to Master Directory
-      MASTER_PLACES.unshift({ name, cat, note, url });
-      saveMasterPlaces();
-      renderMasterList(MASTER_PLACES);
-
-      // 2. Either insert to itinerary directly or add to unscheduled list
-      if (isDirectSchedule) {
-        const dayKey = document.getElementById("new-place-day").value;
-        const plannedTime = document.getElementById("new-place-time").value.trim() || "14:00 - 15:30";
-
-        const newSpot = {
-          id: `custom-${Date.now()}`,
-          time: plannedTime,
-          name: name,
-          tag: cat || "自訂景點",
-          tagColor: "bg-amber-100 text-amber-800 font-bold",
-          desc: note,
-          mapsUrl: url,
-          tips: highlight
-        };
-
-        if (!DAYS_DATA[dayKey]) DAYS_DATA[dayKey] = [];
-        DAYS_DATA[dayKey].push(newSpot);
-
-        saveDaysData();
-        renderDays();
-        updateProgress();
-        pushScheduleToCloud();
-
-        closeNewPlaceModal();
-        alertModalNotice(`✅ 已將全新地點【${name}】直接排入 ${dayKey.toUpperCase()} 行程！`);
-        switchTab(dayKey);
-      } else {
-        const unscheduledItem = {
-          name: name,
-          region: region,
-          category: cat,
-          highlight: highlight,
-          note: note,
-          mapsUrl: url
-        };
-
-        UNSCHEDULED_PLACES.unshift(unscheduledItem);
-        saveUnscheduledPlaces();
-        renderUnscheduledList(UNSCHEDULED_PLACES);
-        pushScheduleToCloud();
-
-        closeNewPlaceModal();
-        alertModalNotice(`✅ 全新地點【${name}】已加入未排入清單！`);
-        switchTab("unscheduled");
-      }
-    }
-
-    /* ==========================================================================
-       11. ADMIN EDIT & PIN CODE (密碼 0000)
-       ========================================================================== */
-    function toggleAdminPrompt() {
-      if (isAdminLoggedIn) {
-        exitAdminMode();
-      } else {
-        document.getElementById("admin-pin-modal").classList.remove("hidden");
-        document.getElementById("admin-pin-modal").classList.add("flex");
-        document.getElementById("admin-pin-input").value = "";
-        document.getElementById("admin-pin-input").focus();
-      }
-    }
-
-    function closeAdminPinModal() {
-      document.getElementById("admin-pin-modal").classList.add("hidden");
-      document.getElementById("admin-pin-modal").classList.remove("flex");
-    }
-
-    function verifyAdminPin() {
-      const input = document.getElementById("admin-pin-input")?.value;
-      if (input === "0000") {
-        isAdminLoggedIn = true;
-        closeAdminPinModal();
-        document.getElementById("admin-active-bar")?.classList.remove("hidden");
-        document.getElementById("admin-lock-icon")?.setAttribute("data-lucide", "unlock");
-        alertModalNotice("🔓 管理員模式解鎖成功！");
-        renderDays();
-      } else {
-        alertModalNotice("❌ 密碼錯誤，請輸入 0000");
-      }
-    }
-
-    function exitAdminMode() {
-      isAdminLoggedIn = false;
-      document.getElementById("admin-active-bar")?.classList.add("hidden");
-      document.getElementById("admin-lock-icon")?.setAttribute("data-lucide", "lock");
-      alertModalNotice("管理員已登出");
-      renderDays();
-    }
-
-    function openEditSpotModal(dayKey, spotId) {
-      const spot = (DAYS_DATA[dayKey] || []).find(s => s.id === spotId);
-      if (!spot) return;
-
-      document.getElementById("edit-spot-day").value = dayKey;
-      document.getElementById("edit-spot-id").value = spotId;
-      document.getElementById("edit-spot-name").value = spot.name;
-      document.getElementById("edit-spot-time").value = spot.time;
-      document.getElementById("edit-spot-tag").value = spot.tag;
-      document.getElementById("edit-spot-desc").value = spot.desc;
-      document.getElementById("edit-spot-url").value = spot.mapsUrl;
-
-      document.getElementById("edit-spot-modal").classList.remove("hidden");
-      document.getElementById("edit-spot-modal").classList.add("flex");
-    }
-
-    function closeEditSpotModal() {
-      document.getElementById("edit-spot-modal").classList.add("hidden");
-      document.getElementById("edit-spot-modal").classList.remove("flex");
-    }
-
-    function saveSpotEdit() {
-      const dayKey = document.getElementById("edit-spot-day").value;
-      const spotId = document.getElementById("edit-spot-id").value;
-
-      const spot = (DAYS_DATA[dayKey] || []).find(s => s.id === spotId);
-      if (spot) {
-        spot.name = document.getElementById("edit-spot-name").value.trim();
-        spot.time = document.getElementById("edit-spot-time").value.trim();
-        spot.tag = document.getElementById("edit-spot-tag").value.trim();
-        spot.desc = document.getElementById("edit-spot-desc").value.trim();
-        spot.mapsUrl = document.getElementById("edit-spot-url").value.trim();
-
-        saveDaysData();
-        renderDays();
-        pushScheduleToCloud();
-        closeEditSpotModal();
-        alertModalNotice("點位修改已儲存！");
-      }
-    }
-
-    function deleteSpot(dayKey, spotId) {
-      const spotToDelete = (DAYS_DATA[dayKey] || []).find(s => s.id === spotId);
-      if (confirm(`確定要將【${spotToDelete ? spotToDelete.name : '此行程'}】自當天移除嗎？它會自動移至「未排入景點」備存。`)) {
-        if (spotToDelete) {
-          moveSpotToUnscheduled(spotToDelete);
-        }
-        DAYS_DATA[dayKey] = (DAYS_DATA[dayKey] || []).filter(s => s.id !== spotId);
-        saveDaysData();
-        renderDays();
-        updateProgress();
-        pushScheduleToCloud();
-        alertModalNotice("行程已自當天移除，並自動歸入未排入景點！");
-      }
-    }
-
-    /* ==========================================================================
-       12. REAL-TIME TAIWAN BANK CURRENCY CALCULATOR
-       ========================================================================== */
-    let currentRate = 0.2150;
-    let isTaxFree = false;
-
-    function openCalcModal() {
-      document.getElementById("calc-modal").classList.remove("hidden");
-      document.getElementById("calc-modal").classList.add("flex");
-      calculateExchange();
-    }
-
-    function closeCalcModal() {
-      document.getElementById("calc-modal").classList.add("hidden");
-      document.getElementById("calc-modal").classList.remove("flex");
-    }
-
-    async function fetchLiveExchangeRate(isManual = false) {
-      const refreshIcon = document.getElementById("rate-refresh-icon");
-      if (refreshIcon) refreshIcon.classList.add("animate-spin");
-
-      try {
-        const res = await fetch("https://open.er-api.com/v6/latest/JPY");
-        const data = await res.json();
-        if (data && data.rates && data.rates.TWD) {
-          currentRate = parseFloat(data.rates.TWD.toFixed(4));
-          const rateInput = document.getElementById("calc-rate");
-          if (rateInput) rateInput.value = currentRate;
-
-          const now = new Date();
-          const timeStr = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
-          
-          const timeTag = document.getElementById("rate-time-tag");
-          if (timeTag) timeTag.innerText = `更新時間 ${timeStr}・台銀即時水位`;
-
-          const statusText = document.getElementById("rate-status-text");
-          if (statusText) statusText.innerText = `即時匯率：1 JPY ≈ ${currentRate} TWD`;
-
-          calculateExchange();
-          if (isManual) alertModalNotice(`匯率已更新至最新盤價：${currentRate}`);
-        }
-      } catch (e) {
-        console.warn("Live rate sync fallback:", e);
-      } finally {
-        if (refreshIcon) refreshIcon.classList.remove("animate-spin");
-      }
-    }
-
-    function calculateExchange() {
-      const jpy = parseFloat(document.getElementById("calc-jpy")?.value) || 0;
-      const rate = parseFloat(document.getElementById("calc-rate")?.value) || currentRate;
-      
-      const effectiveJpy = isTaxFree ? (jpy / 1.1) : jpy;
-      const twd = Math.round(effectiveJpy * rate);
-
-      const twdEl = document.getElementById("calc-twd");
-      if (twdEl) twdEl.innerText = `NT$ ${twd.toLocaleString()}`;
-
-      const breakdownEl = document.getElementById("calc-breakdown");
-      if (breakdownEl) {
-        breakdownEl.innerText = isTaxFree
-          ? `(¥ ${Math.round(jpy).toLocaleString()} ÷ 1.1 免稅) × ${rate}`
-          : `¥ ${Math.round(jpy).toLocaleString()} × ${rate}`;
-      }
-    }
-
-    function toggleTaxFree() {
-      isTaxFree = !isTaxFree;
-      const btn = document.getElementById("calc-tax-btn");
-      if (btn) {
-        if (isTaxFree) {
-          btn.className = "w-full py-2 rounded-xl text-xs font-bold border border-emerald-500 bg-emerald-50 text-emerald-800 transition";
-          btn.innerText = "已免稅 10% (點我切換)";
-        } else {
-          btn.className = "w-full py-2 rounded-xl text-xs font-bold border border-slate-200 bg-slate-100 text-slate-700 hover:bg-slate-200 transition";
-          btn.innerText = "含稅 (點我免稅 10%)";
-        }
-      }
-      calculateExchange();
-    }
-
-    function setQuickJpy(val) {
-      const input = document.getElementById("calc-jpy");
-      if (input) {
-        input.value = val;
-        calculateExchange();
-      }
-    }
-
-    function onCustomRateInput() {
-      calculateExchange();
-    }
-
-    /* ==========================================================================
-       13. CHECKBOXES, PROGRESS, AND TOASTS
-       ========================================================================== */
-    function toggleCheck(id) {
-      const checks = JSON.parse(localStorage.getItem("okinawa_checked") || "{}");
-      checks[id] = !checks[id];
-      localStorage.setItem("okinawa_checked", JSON.stringify(checks));
-      updateCheckedUi();
-      updateProgress();
-    }
-
-    function updateCheckedUi() {
-      const checks = JSON.parse(localStorage.getItem("okinawa_checked") || "{}");
-      Object.keys(checks).forEach(id => {
-        const checkbox = document.getElementById(`check-${id}`);
-        const card = document.getElementById(`card-${id}`);
-        if (checkbox) checkbox.checked = !!checks[id];
-        if (card) {
-          if (checks[id]) {
-            card.classList.add("opacity-60", "bg-slate-50");
-          } else {
-            card.classList.remove("opacity-60", "bg-slate-50");
-          }
-        }
-      });
-    }
-
-    function updateProgress() {
-      let total = 0;
-      let checkedCount = 0;
-      const checks = JSON.parse(localStorage.getItem("okinawa_checked") || "{}");
-
-      ['d1', 'd2', 'd3', 'd4', 'd5'].forEach(d => {
-        const spots = DAYS_DATA[d] || [];
-        total += spots.length;
-        spots.forEach(s => {
-          if (checks[s.id]) checkedCount++;
-        });
-      });
-
-      const pText = document.getElementById("progress-text");
-      if (pText) pText.innerText = `進度：${checkedCount} / ${total} 點位`;
-    }
-
-    function resetChecks() {
-      if (confirm("要清空所有已打勾的進度嗎？")) {
-        localStorage.removeItem("okinawa_checked");
-        updateCheckedUi();
-        updateProgress();
-        alertModalNotice("打勾進度已重設");
-      }
-    }
-
-    function alertModalNotice(msg) {
-      const toast = document.getElementById("notice-toast");
-      const text = document.getElementById("notice-toast-text");
-      if (!toast || !text) return;
-
-      text.innerText = msg;
-      toast.classList.remove("opacity-0", "-translate-y-2");
-      toast.classList.add("opacity-100", "translate-y-0");
-
-      setTimeout(() => {
-        toast.classList.remove("opacity-100", "translate-y-0");
-        toast.classList.add("opacity-0", "-translate-y-2");
-      }, 2500);
-    }
-
-    function copyShareLink() {
-      const url = window.location.href;
-      if (navigator.clipboard && navigator.clipboard.writeText) {
-        navigator.clipboard.writeText(url).then(() => {
-          alertModalNotice("📋 專屬網址已複製！直接貼至 LINE 即可分享");
-        }).catch(() => {
-          fallbackCopyText(url);
-        });
-      } else {
-        fallbackCopyText(url);
-      }
-    }
-
-    function fallbackCopyText(text) {
-      const textArea = document.createElement("textarea");
-      textArea.value = text;
-      document.body.appendChild(textArea);
-      textArea.select();
-      try {
-        document.execCommand('copy');
-        alertModalNotice("📋 專屬網址已複製！直接貼至 LINE 即可分享");
-      } catch (err) {
-        alertModalNotice("網址：" + text);
-      }
-      document.body.removeChild(textArea);
-    }
-
-    function downloadSelfHtml() {
-      const htmlContent = "<!DOCTYPE html>\n" + document.documentElement.outerHTML;
-      const blob = new Blob([htmlContent], { type: "text/html;charset=utf-8" });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = "沖繩跨年5天4夜手冊.html";
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      URL.revokeObjectURL(url);
-      alertModalNotice("📥 已下載離線網頁檔案！");
-    }
-
-    function openEmergencyModal() {
-      document.getElementById("emergency-modal").classList.remove("hidden");
-      document.getElementById("emergency-modal").classList.add("flex");
-    }
-
-    function closeEmergencyModal() {
-      document.getElementById("emergency-modal").classList.add("hidden");
-      document.getElementById("emergency-modal").classList.remove("flex");
-    }
-
-    /* ==========================================================================
-       14. FIREBASE / BROADCAST CLOUD SYNC
-       ========================================================================== */
-    const DEFAULT_FIREBASE_CONFIG = {
-      apiKey: "AIzaSyCRgoBOwtGRQyvCj3huinnhwB4Pzv6Nv_o",
-      authDomain: "okinawa-new-year-trip.firebaseapp.com",
-      projectId: "okinawa-new-year-trip",
-      storageBucket: "okinawa-new-year-trip.firebasestorage.app",
-      messagingSenderId: "263791427961",
-      appId: "1:263791427961:web:52f7d410b02e1fa194afa8",
-      measurementId: "G-ZM6TJKBZ9T"
-    };
-
-    let fbApp = null;
-    let fbDb = null;
-    let fbAuth = null;
-    let fbUnsubscribe = null;
-    let currentRoomId = localStorage.getItem("okinawa_fb_room") || "okinawa2027";
-
-    function initFirebaseClient() {
-      const storedConfig = localStorage.getItem("okinawa_fb_config");
-      const config = storedConfig ? JSON.parse(storedConfig) : DEFAULT_FIREBASE_CONFIG;
-
-      if (!window.FirebaseModule) {
-        updateFirebaseStatusUi(false, "Firebase SDK 載入中，請稍候...");
-        return;
-      }
-
-      try {
-        const { initializeApp, getFirestore, getAuth, signInAnonymously } = window.FirebaseModule;
-
-        if (!fbApp) {
-          fbApp = initializeApp(config);
-        }
-        fbDb = getFirestore(fbApp);
-        fbAuth = getAuth(fbApp);
-
-        signInAnonymously(fbAuth).then(() => {
-          updateFirebaseStatusUi(true);
-          listenToFirestoreChanges();
-        }).catch(authErr => {
-          console.warn("Firebase Auth bypassed or not enabled, attempting direct database link:", authErr);
-          updateFirebaseStatusUi(true, "已連線 (直連資料庫模式)");
-          listenToFirestoreChanges();
-        });
-      } catch (err) {
-        console.error("Firebase init error:", err);
-        updateFirebaseStatusUi(false, `連線錯誤: ${err.message || '請確認 Firestore 規則'}`);
-      }
-    }
-
-    function listenToFirestoreChanges() {
-      if (!fbDb || !window.FirebaseModule) return;
-      const { doc, onSnapshot } = window.FirebaseModule;
-
-      if (fbUnsubscribe) fbUnsubscribe();
-
-      const docRef = doc(fbDb, "artifacts", "okinawa-new-year", "public", "data", currentRoomId);
-      fbUnsubscribe = onSnapshot(docRef, (docSnap) => {
-        if (docSnap.exists()) {
-          const data = docSnap.data();
-
-          // Keep a reference of the latest official cloud state
-          if (data && data.daysData) CLOUD_SNAPSHOT_DAYS = data.daysData;
-          if (data && data.unscheduledPlaces) CLOUD_SNAPSHOT_UNSCHEDULED = data.unscheduledPlaces;
-          if (data && data.masterPlaces) CLOUD_SNAPSHOT_MASTER = data.masterPlaces;
-
-          // If current user is currently in a temporary preview mode, do not immediately overwrite their preview
-          // unless they refresh or click "回復雲端行程"
-          if (isTemporaryLocalPreview && !isAdminLoggedIn) {
-            return;
-          }
-
-          let shouldReRender = false;
-          if (data && data.daysData) {
-            DAYS_DATA = data.daysData;
-            saveDaysData();
-            shouldReRender = true;
-          }
-          if (data && data.unscheduledPlaces) {
-            UNSCHEDULED_PLACES = data.unscheduledPlaces;
-            saveUnscheduledPlaces();
-            shouldReRender = true;
-          }
-          if (data && data.masterPlaces) {
-            MASTER_PLACES = data.masterPlaces;
-            saveMasterPlaces();
-            shouldReRender = true;
-          }
-
-          if (shouldReRender) {
-            hideTempPreviewNotice();
-            renderDays();
-            renderUnscheduledList(UNSCHEDULED_PLACES);
-            renderMasterList(MASTER_PLACES);
-            updateCheckedUi();
-            updateProgress();
-            alertModalNotice("⚡ 收到最新行程更新！已即時同步");
-          }
-        }
-      }, (err) => {
-        console.warn("Firestore snapshot error:", err);
-        if (err.code === "permission-denied") {
-          updateFirebaseStatusUi(false, "權限不足：請在 Firebase 後台將 Firestore 規則設為測試模式");
-        } else {
-          updateFirebaseStatusUi(false, `監聽錯誤: ${err.message}`);
-        }
-      });
-    }
-
-    async function pushScheduleToCloud() {
-      // Check admin authority before pushing to cloud
-      if (!isAdminLoggedIn) {
-        console.info("Non-admin edit: changes preserved locally only, skipping cloud push.");
-        return;
-      }
-
-      if (fbDb && window.FirebaseModule) {
-        try {
-          const { doc, setDoc } = window.FirebaseModule;
-          const docRef = doc(fbDb, "artifacts", "okinawa-new-year", "public", "data", currentRoomId);
-          await setDoc(docRef, {
-            daysData: DAYS_DATA,
-            unscheduledPlaces: UNSCHEDULED_PLACES,
-            masterPlaces: MASTER_PLACES,
-            updatedAt: new Date().toISOString()
-          }, { merge: true });
-          alertModalNotice("🔥 行程與地點已自動同步至全員雲端！");
-          return;
-        } catch (e) {
-          console.warn("Firebase save error:", e);
-          if (e.code === "permission-denied") {
-            alertModalNotice("⚠️ 寫入失敗：請至 Firebase 後台開啟 Firestore 讀寫規則");
-          }
-        }
-      }
-
-      if (window.BroadcastChannel) {
-        try {
-          const bc = new BroadcastChannel(`okinawa_channel_${currentRoomId}`);
-          bc.postMessage({ type: 'SCHEDULE_UPDATE', data: { daysData: DAYS_DATA, unscheduledPlaces: UNSCHEDULED_PLACES, masterPlaces: MASTER_PLACES } });
-        } catch (e) {}
-      }
-    }
-
-    function openCloudConfigModal() {
-      document.getElementById("firebase-room-id").value = currentRoomId;
-      document.getElementById("firebase-config-input").value = localStorage.getItem("okinawa_fb_config") || JSON.stringify(DEFAULT_FIREBASE_CONFIG, null, 2);
-      document.getElementById("cloud-config-modal").classList.remove("hidden");
-      document.getElementById("cloud-config-modal").classList.add("flex");
-    }
-
-    function closeCloudConfigModal() {
-      document.getElementById("cloud-config-modal").classList.add("hidden");
-      document.getElementById("cloud-config-modal").classList.remove("flex");
-    }
-
-    function updateFirebaseStatusUi(connected, customMsg) {
-      const pill = document.getElementById("firebase-status-pill");
-      const desc = document.getElementById("firebase-status-desc");
-      if (!pill || !desc) return;
-
-      if (connected) {
-        pill.innerText = "已連線 (即時同步中)";
-        pill.className = "text-[10px] px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 font-bold";
-        desc.innerText = customMsg || `● 已連接專案【okinawa-new-year-trip】房間【${currentRoomId}】。任何手機改動將秒級推播！`;
-      } else {
-        pill.innerText = "未連線 / 異常";
-        pill.className = "text-[10px] px-2 py-0.5 rounded-full bg-rose-100 text-rose-800 font-bold";
-        desc.innerText = customMsg || "尚未連線至 Firebase。";
-      }
-    }
-
-    function saveAndConnectFirebase() {
-      const rawConfig = (document.getElementById("firebase-config-input").value || "").trim();
-      currentRoomId = (document.getElementById("firebase-room-id").value || "okinawa2027").trim();
-
-      if (!rawConfig) {
-        alertModalNotice("請先貼上 Firebase Config！");
-        return;
-      }
-
-      try {
-        let cleanedJson = rawConfig;
-        if (rawConfig.includes("const firebaseConfig =")) {
-          cleanedJson = rawConfig.replace(/const firebaseConfig =\s*/, "").replace(/;?\s*$/, "");
-        }
-        JSON.parse(cleanedJson);
-        localStorage.setItem("okinawa_fb_config", cleanedJson);
-        localStorage.setItem("okinawa_fb_room", currentRoomId);
-
-        initFirebaseClient();
-        pushScheduleToCloud();
-        closeCloudConfigModal();
-        alertModalNotice("✅ Firebase 雲端資料庫已成功綁定！");
-      } catch (err) {
-        alertModalNotice("❌ Config 格式無效，請確認為正確 JSON 物件！");
-      }
-    }
-
-    function exportUpdatedCodeForGithub() {
-      document.getElementById("publish-modal").classList.remove("hidden");
-      document.getElementById("publish-modal").classList.add("flex");
-    }
-
-    function closePublishModal() {
-      document.getElementById("publish-modal").classList.add("hidden");
-      document.getElementById("publish-modal").classList.remove("flex");
-    }
-
-    function downloadUpdatedHtmlFile() {
-      downloadSelfHtml();
-      closePublishModal();
-    }
-
-    function copyUpdatedHtmlCode() {
-      const htmlContent = "<!DOCTYPE html>\n" + document.documentElement.outerHTML;
-      fallbackCopyText(htmlContent);
-      closePublishModal();
-    }
-
-    /* ==========================================================================
-       15. INIT ON DOM READY
-       ========================================================================== */
-    window.addEventListener("DOMContentLoaded", () => {
-      // Clear any temporary local preview state on fresh reload so it always loads the latest cloud state
-      sessionStorage.removeItem("is_temp_preview");
-
-      renderDays();
-      renderUnscheduledList(UNSCHEDULED_PLACES);
-      renderMasterList(MASTER_PLACES);
-      updateCheckedUi();
-      updateProgress();
-      setupSwipeGestures();
-      fetchLiveExchangeRate();
-
-      setTimeout(() => {
-        initFirebaseClient();
-      }, 500);
-
-      if (window.lucide) {
-        lucide.createIcons();
-      }
-    });
-  </script>
-</body>
-</html>
+        cat: "景點",
+        highlight: "地中海純白階梯海景商場，近距離觀賞飛機起降，幸福鬆餅超熱門",
+        mapUrl: "https://maps.google.com/?q=Umikaji+Terrace+Senagajima"
+      },
+      {
+        id: "un-2",
+        name: "幸福鬆餅 (瀨長島店)",
+        region: "南部",
+        cat: "美食",
+        highlight: "蓬鬆厚鬆餅佐純天然蜂蜜，面朝絕美夕陽海平線，需提前線上預約",
+        mapUrl: "https://maps.google.com/?q=A+Happy+Pancake+Okinawa+Umikaji"
+      },
+      {
+        id: "un-3",
+        name: "敘敘苑燒肉 (PARCO CITY店)",
+        region: "那霸市區",
+        cat: "美食",
+        highlight: "頂級日式燒肉，坐擁第一排無敵浦添海景，午間套餐 CP 值極高",
+        mapUrl: "https://maps.google.com/?q=Jojoen+PARCO+CITY+Okinawa"
+      },
+      {
+        id: "un-4",
+        name: "暖暮拉麵 (那霸牧志店)",
+        region
