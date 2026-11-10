@@ -1,1 +1,849 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+  <title>沖繩出遊分帳本</title>
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="theme-color" content="#059669" />
 
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Lucide Icons -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+
+  <!-- Google Firebase App & Firestore Modular SDKs -->
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+    import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+    import { getFirestore, doc, setDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+    window.FirebaseModule = {
+      initializeApp,
+      getAuth,
+      signInAnonymously,
+      getFirestore,
+      doc,
+      setDoc,
+      onSnapshot
+    };
+  </script>
+
+  <style>
+    body {
+      -webkit-tap-highlight-color: transparent;
+      padding-top: env(safe-area-inset-top);
+      padding-bottom: env(safe-area-inset-bottom);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    }
+    .hide-scrollbar::-webkit-scrollbar {
+      display: none;
+    }
+    .hide-scrollbar {
+      -ms-overflow-style: none;
+      scrollbar-width: none;
+    }
+  </style>
+</head>
+<body class="bg-slate-100 text-slate-800 antialiased min-h-screen pb-20">
+
+  <!-- Sticky Top Header -->
+  <header class="sticky top-0 z-50 bg-gradient-to-r from-emerald-700 via-teal-700 to-sky-700 text-white shadow-md">
+    <div class="max-w-md mx-auto px-4 pt-3 pb-2.5">
+      <div class="flex items-center justify-between">
+        <div class="flex items-center gap-2">
+          <!-- Back to Itinerary link -->
+          <a href="index.html" class="p-1.5 rounded-xl bg-white/20 hover:bg-white/30 active:scale-95 transition" title="返回行程手冊">
+            <i data-lucide="arrow-left" class="w-4 h-4"></i>
+          </a>
+          <div>
+            <h1 class="text-base font-bold tracking-tight flex items-center gap-1.5">
+              <span>沖繩旅費分帳本</span>
+              <span id="sync-status-dot" class="w-2 h-2 rounded-full bg-emerald-300 animate-pulse" title="雲端同步中"></span>
+            </h1>
+            <p class="text-[11px] text-emerald-100">支援日幣/台幣・自由加入成員・全體自動算平</p>
+          </div>
+        </div>
+
+        <div class="flex items-center gap-1.5">
+          <button onclick="copySettlementSummary()" class="px-2.5 py-1.5 rounded-xl bg-white/20 hover:bg-white/30 text-white text-xs font-bold flex items-center gap-1 active:scale-95 transition" title="複製結算摘要">
+            <i data-lucide="copy" class="w-3.5 h-3.5"></i>
+            <span>複製結算</span>
+          </button>
+          <a href="index.html" class="px-2.5 py-1.5 rounded-xl bg-amber-400 text-slate-900 font-bold text-xs shadow active:scale-95 transition flex items-center gap-1">
+            <i data-lucide="calendar" class="w-3.5 h-3.5 text-amber-900"></i>
+            <span>看行程</span>
+          </a>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Container -->
+  <main class="max-w-md mx-auto px-4 mt-3 space-y-3.5">
+
+    <!-- Total Stats Grid Card -->
+    <div class="bg-gradient-to-br from-emerald-600 via-teal-600 to-sky-700 text-white rounded-3xl p-4 shadow-sm space-y-2.5">
+      <div class="flex items-center justify-between text-xs">
+        <span class="text-emerald-100">即時牌告換算 (1 JPY ≈ <span id="rate-display">0.215</span> TWD)</span>
+        <button onclick="fetchLiveExchangeRate(true)" class="text-[11px] text-emerald-200 hover:text-white underline flex items-center gap-0.5">
+          <i data-lucide="refresh-cw" class="w-3 h-3" id="rate-refresh-icon"></i> 更新匯率
+        </button>
+      </div>
+
+      <div class="grid grid-cols-2 gap-2 text-xs">
+        <div class="bg-black/15 p-3 rounded-2xl">
+          <span class="text-emerald-200 block text-[10px] font-medium">總花費折合 (TWD)</span>
+          <span class="text-xl font-black text-amber-300 tracking-tight" id="split-stat-total-twd">NT$ 0</span>
+        </div>
+        <div class="bg-black/15 p-3 rounded-2xl">
+          <span class="text-emerald-200 block text-[10px] font-medium">日幣總計 / 支出筆數</span>
+          <span class="text-sm font-bold text-white block mt-1" id="split-stat-total-jpy">¥ 0 <span class="text-[11px] font-normal text-emerald-200">/ 0 筆</span></span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Members Management Box -->
+    <div class="bg-white rounded-3xl p-4 shadow-sm border border-slate-200/90 space-y-2.5">
+      <div class="flex items-center justify-between">
+        <div class="flex items-center gap-1.5 font-bold text-slate-800 text-xs">
+          <i data-lucide="users" class="w-4 h-4 text-emerald-600"></i>
+          <span>同行成員名單</span>
+          <span id="members-count-badge" class="text-[10px] bg-emerald-100 text-emerald-800 px-1.5 py-0.2 rounded-full font-bold">0 人</span>
+        </div>
+        <button onclick="promptAddMember()" class="text-xs bg-emerald-50 text-emerald-700 hover:bg-emerald-100 px-2.5 py-1 rounded-xl font-bold flex items-center gap-1 border border-emerald-200 active:scale-95 transition">
+          <i data-lucide="user-plus" class="w-3.5 h-3.5"></i>
+          <span>加入自己 / 成員</span>
+        </button>
+      </div>
+
+      <!-- Members Chips Horizontal Scroll -->
+      <div id="members-chip-container" class="flex items-center gap-1.5 overflow-x-auto hide-scrollbar py-1">
+        <!-- populated dynamically -->
+      </div>
+    </div>
+
+    <!-- Quick Action Buttons -->
+    <div class="grid grid-cols-2 gap-2">
+      <button onclick="openNewExpenseModal()" class="py-2.5 rounded-2xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs shadow-sm flex items-center justify-center gap-1.5 active:scale-95 transition">
+        <i data-lucide="plus-circle" class="w-4 h-4"></i>
+        <span>記一筆新支出</span>
+      </button>
+      <button onclick="openSettlementModal()" class="py-2.5 rounded-2xl bg-amber-500 hover:bg-amber-600 text-white font-bold text-xs shadow-sm flex items-center justify-center gap-1.5 active:scale-95 transition">
+        <i data-lucide="scale" class="w-4 h-4"></i>
+        <span>查看誰該轉給誰</span>
+      </button>
+    </div>
+
+    <!-- Expense Records List -->
+    <div class="space-y-2">
+      <div class="flex items-center justify-between text-xs text-slate-500 px-1">
+        <span class="font-bold text-slate-700">支出明細紀錄</span>
+        <span id="expenses-count-tag" class="text-[11px]">共 0 筆</span>
+      </div>
+      <div id="expenses-list-container" class="space-y-2.5">
+        <!-- Dynamically populated -->
+      </div>
+    </div>
+
+  </main>
+
+  <!-- Modals -->
+
+  <!-- Add Member Prompt Modal -->
+  <div id="add-member-modal" class="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm hidden items-center justify-center p-4">
+    <div class="bg-white rounded-3xl p-5 w-full max-w-xs shadow-2xl space-y-3.5 text-xs">
+      <div class="flex items-center justify-between">
+        <div class="flex items-center gap-2">
+          <div class="p-2 rounded-xl bg-emerald-100 text-emerald-700">
+            <i data-lucide="user-plus" class="w-5 h-5"></i>
+          </div>
+          <div>
+            <h3 class="font-bold text-base text-slate-800">加入成員名單</h3>
+            <p class="text-[11px] text-slate-400">輸入你的名字加入分帳</p>
+          </div>
+        </div>
+        <button onclick="closeAddMemberModal()" class="text-slate-400 hover:text-slate-600 p-1">
+          <i data-lucide="x" class="w-5 h-5"></i>
+        </button>
+      </div>
+
+      <div>
+        <label class="font-bold text-slate-700 block mb-1">姓名 / 暱稱</label>
+        <input type="text" id="member-name-input" placeholder="例如：阿豪、小美、阿倫、鼠叔"
+               class="w-full px-3 py-2.5 bg-slate-50 border border-slate-200 rounded-xl font-bold text-slate-800 focus:ring-2 focus:ring-emerald-500 text-sm" />
+      </div>
+
+      <div class="flex items-center gap-2 pt-1">
+        <button type="button" onclick="closeAddMemberModal()" class="w-1/3 py-2.5 bg-slate-100 text-slate-600 font-bold rounded-xl">取消</button>
+        <button type="button" onclick="confirmAddMember()" class="w-2/3 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl shadow active:scale-95 transition">加入成員</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Add Expense Record Modal -->
+  <div id="new-expense-modal" class="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm hidden items-center justify-center p-4">
+    <div class="bg-white rounded-3xl p-5 w-full max-w-sm shadow-2xl space-y-3.5 max-h-[90vh] overflow-y-auto text-xs">
+      <div class="flex items-center justify-between">
+        <div class="flex items-center gap-2">
+          <div class="p-2 rounded-xl bg-emerald-100 text-emerald-700">
+            <i data-lucide="receipt" class="w-5 h-5"></i>
+          </div>
+          <div>
+            <h3 class="font-bold text-base text-slate-800">記一筆新支出</h3>
+            <p class="text-[11px] text-slate-400">自動計算分攤人與金額</p>
+          </div>
+        </div>
+        <button onclick="closeNewExpenseModal()" class="text-slate-400 hover:text-slate-600 p-1">
+          <i data-lucide="x" class="w-5 h-5"></i>
+        </button>
+      </div>
+
+      <div class="space-y-2.5">
+        <div>
+          <label class="font-bold text-slate-700 block mb-1">項目名稱 <span class="text-rose-500">*</span></label>
+          <input type="text" id="exp-title" placeholder="例如：通堂拉麵晚餐、OTS租車加油、美麗海門票"
+                 class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl font-bold text-slate-800 focus:ring-2 focus:ring-emerald-500" />
+        </div>
+
+        <div class="grid grid-cols-2 gap-2">
+          <div>
+            <label class="font-bold text-slate-700 block mb-1">支付金額 <span class="text-rose-500">*</span></label>
+            <input type="number" id="exp-amount" inputmode="decimal" placeholder="0" oninput="calculateExpTwdPreview()"
+                   class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl font-bold text-slate-800 text-base focus:ring-2 focus:ring-emerald-500" />
+          </div>
+          <div>
+            <label class="font-bold text-slate-700 block mb-1">幣別</label>
+            <select id="exp-currency" onchange="calculateExpTwdPreview()" class="w-full p-2 bg-slate-50 border border-slate-200 rounded-xl font-bold text-slate-800">
+              <option value="JPY">日幣 (¥ JPY)</option>
+              <option value="TWD">台幣 ($ TWD)</option>
+            </select>
+          </div>
+        </div>
+
+        <div id="exp-twd-preview" class="text-[11px] text-emerald-700 bg-emerald-50 p-2 rounded-xl font-medium border border-emerald-100 flex items-center justify-between">
+          <span>折合新台幣：</span>
+          <span id="exp-twd-val" class="font-bold">NT$ 0</span>
+        </div>
+
+        <div>
+          <label class="font-bold text-slate-700 block mb-1">付款人（誰先付的？）</label>
+          <select id="exp-payer" class="w-full p-2 bg-slate-50 border border-slate-200 rounded-xl font-bold text-slate-800">
+            <!-- Dynamic members -->
+          </select>
+        </div>
+
+        <div>
+          <div class="flex items-center justify-between mb-1">
+            <label class="font-bold text-slate-700">參與分攤的成員</label>
+            <button type="button" onclick="toggleSelectAllSplitters()" class="text-[11px] font-semibold text-emerald-600 hover:text-emerald-700">全選 / 全消</button>
+          </div>
+          <div id="exp-splitters-container" class="grid grid-cols-2 gap-1.5 max-h-36 overflow-y-auto p-1.5 bg-slate-50 border border-slate-200 rounded-xl">
+            <!-- Dynamic checkboxes -->
+          </div>
+        </div>
+
+        <div class="pt-2 flex items-center gap-2">
+          <button type="button" onclick="closeNewExpenseModal()" class="w-1/3 py-2.5 bg-slate-100 text-slate-600 font-bold rounded-xl">取消</button>
+          <button type="button" onclick="confirmSaveExpense()" class="w-2/3 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl shadow active:scale-95 transition">確認記帳</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Settlement Breakdown & Transfers Modal (結算清冊) -->
+  <div id="settlement-modal" class="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm hidden items-center justify-center p-4">
+    <div class="bg-white rounded-3xl p-5 w-full max-w-sm shadow-2xl space-y-4 max-h-[85vh] overflow-y-auto text-xs">
+      <div class="flex items-center justify-between">
+        <div class="flex items-center gap-2">
+          <div class="p-2 rounded-xl bg-amber-100 text-amber-700">
+            <i data-lucide="scale" class="w-5 h-5"></i>
+          </div>
+          <div>
+            <h3 class="font-bold text-base text-slate-800">最佳化結算清冊</h3>
+            <p class="text-[11px] text-slate-400">最少轉帳次數・直接結清</p>
+          </div>
+        </div>
+        <button onclick="closeSettlementModal()" class="text-slate-400 hover:text-slate-600 p-1">
+          <i data-lucide="x" class="w-5 h-5"></i>
+        </button>
+      </div>
+
+      <!-- Who Pays Whom Optimized List -->
+      <div class="space-y-2">
+        <div class="flex items-center justify-between">
+          <span class="font-bold text-slate-800 flex items-center gap-1">
+            <i data-lucide="send" class="w-3.5 h-3.5 text-sky-600"></i> 建議轉帳方案
+          </span>
+          <button onclick="copySettlementSummary()" class="text-[11px] text-sky-600 hover:text-sky-700 font-bold underline">一鍵複製文字</button>
+        </div>
+        <div id="transfers-container" class="space-y-1.5">
+          <!-- Populated by calculateSettlement() -->
+        </div>
+      </div>
+
+      <!-- Individual Balance Summary -->
+      <div class="space-y-2 pt-2 border-t border-slate-100">
+        <span class="font-bold text-slate-800 block">各人收支明細</span>
+        <div id="members-balance-table" class="space-y-1.5">
+          <!-- Populated -->
+        </div>
+      </div>
+
+      <div class="pt-2">
+        <button type="button" onclick="closeSettlementModal()" class="w-full py-2.5 bg-slate-100 text-slate-700 font-bold rounded-xl">關閉</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast Notification -->
+  <div id="notice-toast" class="fixed top-14 inset-x-0 mx-auto max-w-xs z-50 pointer-events-none transition-all duration-300 opacity-0 -translate-y-2 flex justify-center">
+    <div class="bg-slate-900/95 text-white text-xs font-semibold px-4 py-2.5 rounded-2xl shadow-2xl border border-slate-700/80 flex items-center gap-2">
+      <i data-lucide="info" class="w-4 h-4 text-emerald-400 shrink-0"></i>
+      <span id="notice-toast-text">通知訊息</span>
+    </div>
+  </div>
+
+  <script>
+    /* ==========================================================================
+       DATA & STATE
+       ========================================================================== */
+    const INITIAL_MEMBERS = ["我 (本人)", "旅伴 A", "旅伴 B"];
+    let MEMBERS = JSON.parse(localStorage.getItem("okinawa_members_v1") || "null") || INITIAL_MEMBERS;
+    let EXPENSES = JSON.parse(localStorage.getItem("okinawa_expenses_v1") || "null") || [];
+    let currentRate = 0.2150;
+
+    function saveSplitterData() {
+      localStorage.setItem("okinawa_members_v1", JSON.stringify(MEMBERS));
+      localStorage.setItem("okinawa_expenses_v1", JSON.stringify(EXPENSES));
+    }
+
+    function renderView() {
+      renderMembersChips();
+      renderExpensesList();
+      updateSplitterStats();
+      if (window.lucide) lucide.createIcons();
+    }
+
+    function renderMembersChips() {
+      const container = document.getElementById("members-chip-container");
+      const badge = document.getElementById("members-count-badge");
+      if (badge) badge.innerText = `${MEMBERS.length} 人`;
+      if (!container) return;
+
+      if (MEMBERS.length === 0) {
+        container.innerHTML = `<span class="text-xs text-slate-400 italic">尚無成員，請點擊右上方加入自己！</span>`;
+        return;
+      }
+
+      container.innerHTML = MEMBERS.map((name, i) => `
+        <div class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-2xl bg-slate-100 border border-slate-200 text-xs font-bold text-slate-700 shrink-0">
+          <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
+          <span>${name}</span>
+          <button type="button" onclick="removeMember(${i})" class="text-slate-400 hover:text-rose-600 ml-0.5" title="移除此成員">
+            <i data-lucide="x" class="w-3 h-3"></i>
+          </button>
+        </div>
+      `).join("");
+
+      if (window.lucide) lucide.createIcons();
+    }
+
+    function promptAddMember() {
+      document.getElementById("member-name-input").value = "";
+      document.getElementById("add-member-modal").classList.remove("hidden");
+      document.getElementById("add-member-modal").classList.add("flex");
+      document.getElementById("member-name-input").focus();
+    }
+
+    function closeAddMemberModal() {
+      document.getElementById("add-member-modal").classList.add("hidden");
+      document.getElementById("add-member-modal").classList.remove("flex");
+    }
+
+    function confirmAddMember() {
+      const name = document.getElementById("member-name-input")?.value.trim();
+      if (!name) {
+        alertToast("請輸入名字或暱稱！");
+        return;
+      }
+      if (MEMBERS.includes(name)) {
+        alertToast("該成員名稱已存在！");
+        return;
+      }
+
+      MEMBERS.push(name);
+      saveSplitterData();
+      renderView();
+      pushToCloud();
+      closeAddMemberModal();
+      alertToast(`✅ 已加入成員【${name}】！`);
+    }
+
+    function removeMember(index) {
+      const name = MEMBERS[index];
+      if (confirm(`確定要移除成員【${name}】嗎？`)) {
+        MEMBERS.splice(index, 1);
+        saveSplitterData();
+        renderView();
+        pushToCloud();
+        alertToast(`已移除成員【${name}】`);
+      }
+    }
+
+    function openNewExpenseModal() {
+      if (MEMBERS.length === 0) {
+        alertToast("請先新增至少一位同行成員！");
+        promptAddMember();
+        return;
+      }
+
+      document.getElementById("exp-title").value = "";
+      document.getElementById("exp-amount").value = "";
+      document.getElementById("exp-currency").value = "JPY";
+
+      const payerSel = document.getElementById("exp-payer");
+      payerSel.innerHTML = MEMBERS.map(m => `<option value="${m}">${m}</option>`).join("");
+
+      const splittersBox = document.getElementById("exp-splitters-container");
+      splittersBox.innerHTML = MEMBERS.map(m => `
+        <label class="flex items-center gap-1.5 p-2 bg-white rounded-xl border border-slate-200 cursor-pointer text-xs">
+          <input type="checkbox" name="exp-splitter-check" value="${m}" checked class="rounded text-emerald-600 focus:ring-emerald-500 cursor-pointer" />
+          <span class="font-bold text-slate-700 truncate">${m}</span>
+        </label>
+      `).join("");
+
+      calculateExpTwdPreview();
+      document.getElementById("new-expense-modal").classList.remove("hidden");
+      document.getElementById("new-expense-modal").classList.add("flex");
+      document.getElementById("exp-title").focus();
+    }
+
+    function closeNewExpenseModal() {
+      document.getElementById("new-expense-modal").classList.add("hidden");
+      document.getElementById("new-expense-modal").classList.remove("flex");
+    }
+
+    function calculateExpTwdPreview() {
+      const amt = parseFloat(document.getElementById("exp-amount")?.value) || 0;
+      const curr = document.getElementById("exp-currency")?.value || "JPY";
+      const preview = document.getElementById("exp-twd-val");
+
+      if (curr === "TWD") {
+        if (preview) preview.innerText = `NT$ ${Math.round(amt).toLocaleString()}`;
+      } else {
+        const twd = Math.round(amt * currentRate);
+        if (preview) preview.innerText = `NT$ ${twd.toLocaleString()} (以匯率 ${currentRate} 計算)`;
+      }
+    }
+
+    function toggleSelectAllSplitters() {
+      const checks = document.querySelectorAll('input[name="exp-splitter-check"]');
+      const allChecked = Array.from(checks).every(c => c.checked);
+      checks.forEach(c => c.checked = !allChecked);
+    }
+
+    function confirmSaveExpense() {
+      const title = document.getElementById("exp-title")?.value.trim();
+      const amount = parseFloat(document.getElementById("exp-amount")?.value) || 0;
+      const currency = document.getElementById("exp-currency")?.value || "JPY";
+      const payer = document.getElementById("exp-payer")?.value;
+
+      const checkedSplitters = Array.from(document.querySelectorAll('input[name="exp-splitter-check"]:checked')).map(c => c.value);
+
+      if (!title) {
+        alertToast("請填寫項目名稱！");
+        return;
+      }
+      if (amount <= 0) {
+        alertToast("請填寫大於 0 的金額！");
+        return;
+      }
+      if (!payer) {
+        alertToast("請選擇付款人！");
+        return;
+      }
+      if (checkedSplitters.length === 0) {
+        alertToast("請至少勾選一位分攤人！");
+        return;
+      }
+
+      const twdAmount = currency === "TWD" ? Math.round(amount) : Math.round(amount * currentRate);
+
+      const record = {
+        id: `exp-${Date.now()}`,
+        date: new Date().toLocaleDateString("zh-TW", { month: "numeric", day: "numeric", hour: "2-digit", minute: "2-digit" }),
+        title,
+        amount,
+        currency,
+        rate: currentRate,
+        twdAmount,
+        payer,
+        splitters: checkedSplitters
+      };
+
+      EXPENSES.unshift(record);
+      saveSplitterData();
+      renderView();
+      pushToCloud();
+      closeNewExpenseModal();
+      alertToast(`✅ 已記錄【${title}】！`);
+    }
+
+    function deleteExpense(id) {
+      if (confirm("確定要刪除這筆支出紀錄嗎？")) {
+        EXPENSES = EXPENSES.filter(e => e.id !== id);
+        saveSplitterData();
+        renderView();
+        pushToCloud();
+        alertToast("已刪除該筆支出！");
+      }
+    }
+
+    function renderExpensesList() {
+      const container = document.getElementById("expenses-list-container");
+      const tag = document.getElementById("expenses-count-tag");
+      if (tag) tag.innerText = `共 ${EXPENSES.length} 筆`;
+      if (!container) return;
+
+      if (EXPENSES.length === 0) {
+        container.innerHTML = `
+          <div class="bg-white rounded-3xl p-6 text-center text-slate-400 border border-slate-200">
+            <i data-lucide="receipt-text" class="w-8 h-8 mx-auto mb-1 text-slate-300"></i>
+            <p class="text-xs">目前尚無任何支出紀錄</p>
+            <p class="text-[11px] text-slate-400 mt-0.5">點擊上方「記一筆新支出」開始記錄！</p>
+          </div>
+        `;
+        return;
+      }
+
+      container.innerHTML = EXPENSES.map(e => `
+        <div class="bg-white rounded-3xl p-3.5 shadow-sm border border-slate-200/90 flex items-start justify-between gap-2.5">
+          <div class="space-y-1 min-w-0">
+            <div class="flex items-center gap-1.5">
+              <span class="text-[10px] font-bold px-1.5 py-0.2 rounded-md ${e.currency === 'JPY' ? 'bg-amber-100 text-amber-800' : 'bg-sky-100 text-sky-800'}">
+                ${e.currency}
+              </span>
+              <h4 class="font-bold text-sm text-slate-800 truncate">${e.title}</h4>
+            </div>
+            <div class="text-[11px] text-slate-500 flex items-center gap-1.5">
+              <span>由 <b class="text-emerald-700">${e.payer}</b> 先付</span>
+              <span>・</span>
+              <span>${e.splitters.length} 人平分</span>
+            </div>
+            <div class="text-[10px] text-slate-400 truncate">平分對象：${e.splitters.join(", ")}</div>
+            <span class="text-[10px] text-slate-300 block">${e.date}</span>
+          </div>
+
+          <div class="text-right shrink-0">
+            <div class="font-black text-slate-900 text-base">
+              ${e.currency === 'JPY' ? '¥' : '$'} ${Math.round(e.amount).toLocaleString()}
+            </div>
+            ${e.currency === 'JPY' ? `<div class="text-[10px] text-slate-400 font-semibold">≈ NT$ ${e.twdAmount.toLocaleString()}</div>` : ''}
+            <button onclick="deleteExpense('${e.id}')" class="text-slate-300 hover:text-rose-500 mt-1 p-0.5" title="刪除此筆">
+              <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
+            </button>
+          </div>
+        </div>
+      `).join("");
+    }
+
+    function updateSplitterStats() {
+      let totalTwd = 0;
+      let totalJpy = 0;
+
+      EXPENSES.forEach(e => {
+        totalTwd += e.twdAmount || 0;
+        if (e.currency === "JPY") totalJpy += e.amount || 0;
+      });
+
+      const twdEl = document.getElementById("split-stat-total-twd");
+      const jpyEl = document.getElementById("split-stat-total-jpy");
+
+      if (twdEl) twdEl.innerText = `NT$ ${Math.round(totalTwd).toLocaleString()}`;
+      if (jpyEl) jpyEl.innerHTML = `¥ ${Math.round(totalJpy).toLocaleString()} <span class="text-[11px] font-normal text-emerald-200">/ ${EXPENSES.length} 筆</span>`;
+    }
+
+    /* ==========================================================================
+       OPTIMIZED DEBT SETTLEMENT ALGORITHM
+       ========================================================================== */
+    function calculateSettlement() {
+      const balances = {};
+      MEMBERS.forEach(m => balances[m] = 0);
+
+      EXPENSES.forEach(e => {
+        const cost = e.twdAmount || 0;
+        const payer = e.payer;
+        const splitters = e.splitters || [];
+        if (splitters.length === 0) return;
+
+        if (balances[payer] !== undefined) {
+          balances[payer] += cost;
+        }
+
+        const perPerson = cost / splitters.length;
+        splitters.forEach(s => {
+          if (balances[s] !== undefined) {
+            balances[s] -= perPerson;
+          }
+        });
+      });
+
+      const debtors = [];
+      const creditors = [];
+
+      Object.entries(balances).forEach(([name, bal]) => {
+        const rounded = Math.round(bal);
+        if (rounded < -1) {
+          debtors.push({ name, amount: -rounded });
+        } else if (rounded > 1) {
+          creditors.push({ name, amount: rounded });
+        }
+      });
+
+      debtors.sort((a, b) => b.amount - a.amount);
+      creditors.sort((a, b) => b.amount - a.amount);
+
+      const transactions = [];
+      let i = 0, j = 0;
+
+      while (i < debtors.length && j < creditors.length) {
+        const debtor = debtors[i];
+        const creditor = creditors[j];
+        const settleAmt = Math.min(debtor.amount, creditor.amount);
+
+        if (settleAmt > 0) {
+          transactions.push({
+            from: debtor.name,
+            to: creditor.name,
+            amount: settleAmt
+          });
+        }
+
+        debtor.amount -= settleAmt;
+        creditor.amount -= settleAmt;
+
+        if (debtor.amount <= 1) i++;
+        if (creditor.amount <= 1) j++;
+      }
+
+      return { balances, transactions };
+    }
+
+    function openSettlementModal() {
+      const { balances, transactions } = calculateSettlement();
+
+      const transfersBox = document.getElementById("transfers-container");
+      const balanceBox = document.getElementById("members-balance-table");
+
+      if (transactions.length === 0) {
+        transfersBox.innerHTML = `
+          <div class="p-3 bg-emerald-50 text-emerald-800 rounded-2xl text-center font-bold">
+            🎉 目前無積欠款項或款項已完全平衡！
+          </div>
+        `;
+      } else {
+        transfersBox.innerHTML = transactions.map(t => `
+          <div class="p-3 bg-sky-50 border border-sky-100 rounded-2xl flex items-center justify-between">
+            <div class="flex items-center gap-1.5 font-bold text-slate-800">
+              <span class="text-rose-600 font-extrabold">${t.from}</span>
+              <i data-lucide="arrow-right" class="w-3.5 h-3.5 text-slate-400"></i>
+              <span class="text-emerald-700 font-extrabold">${t.to}</span>
+            </div>
+            <div class="font-black text-sky-800 text-sm">
+              NT$ ${t.amount.toLocaleString()}
+            </div>
+          </div>
+        `).join("");
+      }
+
+      balanceBox.innerHTML = Object.entries(balances).map(([name, bal]) => {
+        const net = Math.round(bal);
+        const color = net > 0 ? "text-emerald-700 bg-emerald-50 border-emerald-100" : net < 0 ? "text-rose-700 bg-rose-50 border-rose-100" : "text-slate-500 bg-slate-50 border-slate-100";
+        const sign = net > 0 ? "應收" : net < 0 ? "應補" : "平衡";
+        return `
+          <div class="flex items-center justify-between p-2.5 rounded-2xl bg-slate-50 text-xs">
+            <span class="font-bold text-slate-700">${name}</span>
+            <span class="font-bold px-2 py-0.5 rounded-lg border ${color}">
+              ${sign} NT$ ${Math.abs(net).toLocaleString()}
+            </span>
+          </div>
+        `;
+      }).join("");
+
+      document.getElementById("settlement-modal").classList.remove("hidden");
+      document.getElementById("settlement-modal").classList.add("flex");
+      if (window.lucide) lucide.createIcons();
+    }
+
+    function closeSettlementModal() {
+      document.getElementById("settlement-modal").classList.add("hidden");
+      document.getElementById("settlement-modal").classList.remove("flex");
+    }
+
+    function copySettlementSummary() {
+      const { transactions, balances } = calculateSettlement();
+      let text = `✈️【沖繩跨年旅費結算清單】\n`;
+      text += `總支出筆數：${EXPENSES.length} 筆\n\n`;
+
+      text += `📌 建議轉帳方案：\n`;
+      if (transactions.length === 0) {
+        text += `全員帳目平衡，無須轉帳！\n`;
+      } else {
+        transactions.forEach(t => {
+          text += `👉 ${t.from} 應轉給 ${t.to}：NT$ ${t.amount.toLocaleString()}\n`;
+        });
+      }
+
+      text += `\n📊 各人收支明細：\n`;
+      Object.entries(balances).forEach(([m, bal]) => {
+        const net = Math.round(bal);
+        text += `${m}：${net > 0 ? '應收' : net < 0 ? '應補' : '已平'} NT$ ${Math.abs(net).toLocaleString()}\n`;
+      });
+
+      navigator.clipboard.writeText(text).then(() => {
+        alertToast("📋 結算清冊已複製，可直接貼上至 LINE 群組！");
+      }).catch(() => {
+        alertToast("複製成功！");
+      });
+    }
+
+    async function fetchLiveExchangeRate(isManual = false) {
+      const refreshIcon = document.getElementById("rate-refresh-icon");
+      if (refreshIcon) refreshIcon.classList.add("animate-spin");
+
+      try {
+        const res = await fetch("https://open.er-api.com/v6/latest/JPY");
+        const data = await res.json();
+        if (data && data.rates && data.rates.TWD) {
+          currentRate = parseFloat(data.rates.TWD.toFixed(4));
+          const disp = document.getElementById("rate-display");
+          if (disp) disp.innerText = currentRate;
+          renderView();
+          if (isManual) alertToast(`匯率已更新至：${currentRate}`);
+        }
+      } catch (e) {
+        console.warn("Live rate sync fallback:", e);
+      } finally {
+        if (refreshIcon) refreshIcon.classList.remove("animate-spin");
+      }
+    }
+
+    function alertToast(msg) {
+      const toast = document.getElementById("notice-toast");
+      const text = document.getElementById("notice-toast-text");
+      if (!toast || !text) return;
+
+      text.innerText = msg;
+      toast.classList.remove("opacity-0", "-translate-y-2");
+      toast.classList.add("opacity-100", "translate-y-0");
+
+      setTimeout(() => {
+        toast.classList.remove("opacity-100", "translate-y-0");
+        toast.classList.add("opacity-0", "-translate-y-2");
+      }, 2500);
+    }
+
+    /* ==========================================================================
+       FIREBASE REAL-TIME CLOUD SYNC
+       ========================================================================== */
+    const DEFAULT_FIREBASE_CONFIG = {
+      apiKey: "AIzaSyCRgoBOwtGRQyvCj3huinnhwB4Pzv6Nv_o",
+      authDomain: "okinawa-new-year-trip.firebaseapp.com",
+      projectId: "okinawa-new-year-trip",
+      storageBucket: "okinawa-new-year-trip.firebasestorage.app",
+      messagingSenderId: "263791427961",
+      appId: "1:263791427961:web:52f7d410b02e1fa194afa8",
+      measurementId: "G-ZM6TJKBZ9T"
+    };
+
+    let fbApp = null;
+    let fbDb = null;
+    let fbAuth = null;
+    let fbUnsubscribe = null;
+    const currentRoomId = localStorage.getItem("okinawa_fb_room") || "okinawa2027";
+
+    function initFirebaseClient() {
+      const storedConfig = localStorage.getItem("okinawa_fb_config");
+      const config = storedConfig ? JSON.parse(storedConfig) : DEFAULT_FIREBASE_CONFIG;
+
+      if (!window.FirebaseModule) return;
+
+      try {
+        const { initializeApp, getFirestore, getAuth, signInAnonymously } = window.FirebaseModule;
+        if (!fbApp) fbApp = initializeApp(config);
+        fbDb = getFirestore(fbApp);
+        fbAuth = getAuth(fbApp);
+
+        signInAnonymously(fbAuth).then(() => {
+          listenToFirestoreChanges();
+        }).catch(() => {
+          listenToFirestoreChanges();
+        });
+      } catch (err) {
+        console.error("Firebase init error:", err);
+      }
+    }
+
+    function listenToFirestoreChanges() {
+      if (!fbDb || !window.FirebaseModule) return;
+      const { doc, onSnapshot } = window.FirebaseModule;
+
+      if (fbUnsubscribe) fbUnsubscribe();
+
+      const docRef = doc(fbDb, "artifacts", "okinawa-new-year", "public", "data", currentRoomId);
+      fbUnsubscribe = onSnapshot(docRef, (docSnap) => {
+        if (docSnap.exists()) {
+          const data = docSnap.data();
+          let shouldReRender = false;
+
+          if (data && data.members) {
+            MEMBERS = data.members;
+            shouldReRender = true;
+          }
+          if (data && data.expenses) {
+            EXPENSES = data.expenses;
+            shouldReRender = true;
+          }
+
+          if (shouldReRender) {
+            saveSplitterData();
+            renderView();
+          }
+        }
+      });
+    }
+
+    async function pushToCloud() {
+      if (fbDb && window.FirebaseModule) {
+        try {
+          const { doc, setDoc } = window.FirebaseModule;
+          const docRef = doc(fbDb, "artifacts", "okinawa-new-year", "public", "data", currentRoomId);
+          await setDoc(docRef, {
+            members: MEMBERS,
+            expenses: EXPENSES,
+            updatedAt: new Date().toISOString()
+          }, { merge: true });
+        } catch (e) {
+          console.warn("Firebase save error:", e);
+        }
+      }
+
+      if (window.BroadcastChannel) {
+        try {
+          const bc = new BroadcastChannel(`okinawa_channel_${currentRoomId}`);
+          bc.postMessage({ type: 'SPLIT_UPDATE', data: { members: MEMBERS, expenses: EXPENSES } });
+        } catch (e) {}
+      }
+    }
+
+    window.addEventListener("DOMContentLoaded", () => {
+      renderView();
+      fetchLiveExchangeRate();
+      setTimeout(initFirebaseClient, 500);
+      if (window.lucide) lucide.createIcons();
+    });
+  </script>
+</body>
+</html>
