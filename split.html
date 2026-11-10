@@ -792,7 +792,7 @@
 
       if (fbUnsubscribe) fbUnsubscribe();
 
-      const docRef = doc(fbDb, "artifacts", "okinawa-new-year", "public", "data", currentRoomId);
+      const docRef = doc(fbDb, "trip_expenses", currentRoomId);
       fbUnsubscribe = onSnapshot(docRef, (docSnap) => {
         if (docSnap.exists()) {
           const data = docSnap.data();
@@ -819,7 +819,7 @@
       if (fbDb && window.FirebaseModule) {
         try {
           const { doc, setDoc } = window.FirebaseModule;
-          const docRef = doc(fbDb, "artifacts", "okinawa-new-year", "public", "data", currentRoomId);
+          const docRef = doc(fbDb, "trip_expenses", currentRoomId);
           await setDoc(docRef, {
             members: MEMBERS,
             expenses: EXPENSES,
