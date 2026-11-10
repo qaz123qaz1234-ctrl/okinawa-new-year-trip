@@ -272,7 +272,7 @@
 
   <!-- Live Rate Calculator Modal -->
   <div id="rate-modal" class="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm hidden items-center justify-center p-4">
-    <div class="bg-white rounded-3xl p-5 w-full max-w-xs shadow-2xl space-y-4 text-xs">
+    <div class="bg-white rounded-3xl p-5 w-full max-w-sm shadow-2xl space-y-4 text-xs max-h-[90vh] overflow-y-auto">
       <div class="flex items-center justify-between">
         <div class="flex items-center gap-2">
           <div class="p-2 rounded-xl bg-sky-100 text-sky-700">
@@ -280,7 +280,7 @@
           </div>
           <div>
             <h3 class="font-bold text-sm text-slate-800">日幣即時匯率換算</h3>
-            <p class="text-[11px] text-slate-400">目前匯率：1 JPY ≈ <span id="rate-modal-current">0.215</span> TWD</p>
+            <p class="text-[11px] text-slate-400">目前參考匯率：1 JPY ≈ <span id="rate-modal-current" class="font-bold text-sky-600">0.215</span> TWD</p>
           </div>
         </div>
         <button onclick="closeRateModal()" class="text-slate-400 hover:text-slate-600 p-1">
@@ -288,21 +288,55 @@
         </button>
       </div>
 
+      <!-- Quick presets -->
+      <div>
+        <label class="text-[11px] font-bold text-slate-500 block mb-1">常用金額快速填入</label>
+        <div class="grid grid-cols-5 gap-1.5 text-center">
+          <button type="button" onclick="setQuickJpy(1000)" class="py-1.5 rounded-xl bg-slate-100 hover:bg-sky-50 hover:text-sky-700 font-bold text-[11px] border border-slate-200 transition">¥1,000</button>
+          <button type="button" onclick="setQuickJpy(3000)" class="py-1.5 rounded-xl bg-slate-100 hover:bg-sky-50 hover:text-sky-700 font-bold text-[11px] border border-slate-200 transition">¥3,000</button>
+          <button type="button" onclick="setQuickJpy(5000)" class="py-1.5 rounded-xl bg-slate-100 hover:bg-sky-50 hover:text-sky-700 font-bold text-[11px] border border-slate-200 transition">¥5,000</button>
+          <button type="button" onclick="setQuickJpy(10000)" class="py-1.5 rounded-xl bg-slate-100 hover:bg-sky-50 hover:text-sky-700 font-bold text-[11px] border border-slate-200 transition">¥1萬</button>
+          <button type="button" onclick="setQuickJpy(30000)" class="py-1.5 rounded-xl bg-slate-100 hover:bg-sky-50 hover:text-sky-700 font-bold text-[11px] border border-slate-200 transition">¥3萬</button>
+        </div>
+      </div>
+
+      <!-- Inputs -->
       <div class="space-y-3">
-        <div>
-          <label class="font-bold text-slate-600 block mb-1">日幣金額 (¥ JPY)</label>
-          <input type="number" id="calc-jpy-input" inputmode="decimal" placeholder="例如：2500" oninput="calculateExchange('JPY')"
-                 class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl font-bold text-slate-800 text-base focus:ring-2 focus:ring-sky-500" />
+        <div class="relative">
+          <label class="font-bold text-slate-600 block mb-1">日幣金額 (JPY ¥)</label>
+          <div class="relative flex items-center">
+            <span class="absolute left-3 font-bold text-slate-400 text-sm">¥</span>
+            <input type="number" id="calc-jpy-input" inputmode="decimal" placeholder="例如：2500" oninput="calculateExchange('JPY')"
+                   class="w-full pl-8 pr-3 py-2.5 bg-slate-50 border border-slate-200 rounded-2xl font-black text-slate-800 text-base focus:ring-2 focus:ring-sky-500 focus:bg-white" />
+          </div>
         </div>
-        <div>
-          <label class="font-bold text-slate-600 block mb-1">折合台幣 (約 NT$ TWD)</label>
-          <input type="number" id="calc-twd-input" inputmode="decimal" placeholder="例如：538" oninput="calculateExchange('TWD')"
-                 class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl font-bold text-slate-800 text-base focus:ring-2 focus:ring-sky-500" />
+
+        <div class="relative">
+          <label class="font-bold text-slate-600 block mb-1">折合台幣 (TWD NT$)</label>
+          <div class="relative flex items-center">
+            <span class="absolute left-3 font-bold text-slate-400 text-sm">NT$</span>
+            <input type="number" id="calc-twd-input" inputmode="decimal" placeholder="例如：538" oninput="calculateExchange('TWD')"
+                   class="w-full pl-11 pr-3 py-2.5 bg-slate-50 border border-slate-200 rounded-2xl font-black text-slate-800 text-base focus:ring-2 focus:ring-sky-500 focus:bg-white" />
+          </div>
         </div>
-        <div class="pt-1 flex items-center justify-between text-[11px] text-slate-400">
-          <span>支援即時網路浮動匯率</span>
-          <button onclick="fetchLiveExchangeRate(true)" class="text-sky-600 font-bold hover:underline flex items-center gap-1">
-            <i data-lucide="refresh-cw" class="w-3 h-3"></i> 重新抓取
+
+        <!-- Credit Card Fee Simulation Card -->
+        <div class="p-3 bg-amber-50/80 rounded-2xl border border-amber-200/80 space-y-1.5">
+          <div class="flex items-center justify-between text-[11px] font-bold text-amber-900">
+            <span class="flex items-center gap-1">
+              <i data-lucide="credit-card" class="w-3.5 h-3.5 text-amber-700"></i>
+              <span>刷卡試算 (含 1.5% 海外手續費)</span>
+            </span>
+            <span id="calc-card-total" class="font-black text-xs text-amber-950">約 NT$ 546</span>
+          </div>
+          <p class="text-[10px] text-amber-800/80 leading-tight">出國刷海外回饋 2%～3% 之信用卡通常比現金更划算！</p>
+        </div>
+
+        <!-- Sync Info -->
+        <div class="pt-0.5 flex items-center justify-between text-[11px] text-slate-400">
+          <span id="calc-rate-time">牌告匯率即時連線更新</span>
+          <button type="button" onclick="fetchLiveExchangeRate(true)" class="text-sky-600 font-bold hover:underline flex items-center gap-1">
+            <i data-lucide="refresh-cw" class="w-3 h-3" id="calc-refresh-icon"></i> 重新抓取
           </button>
         </div>
       </div>
@@ -388,7 +422,13 @@
 
         <!-- Planned Time Range -->
         <div>
-          <label class="font-bold text-slate-700 block mb-1">指定預計時間區間</label>
+          <div class="flex items-center justify-between mb-1">
+            <label class="font-bold text-slate-700">指定預計時間區間</label>
+            <button type="button" id="copy-selected-time-btn" onclick="applyCurrentSelectedSpotTime()" class="hidden text-[11px] font-bold text-amber-600 hover:text-amber-700 bg-amber-50 hover:bg-amber-100 px-2 py-0.5 rounded-lg border border-amber-200 transition items-center gap-1">
+              <i data-lucide="clock" class="w-3 h-3"></i>
+              <span>帶入現有景點時段</span>
+            </button>
+          </div>
           <input type="text" id="schedule-time-input" placeholder="例如：14:00 - 15:30"
                  class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl font-bold text-slate-800 focus:ring-2 focus:ring-sky-500" />
         </div>
@@ -648,229 +688,201 @@
   <!-- Main JavaScript Logic -->
   <script>
     /* ==========================================================================
-       1. INITIAL CORE DATASETS (Official Baseline Schedule)
+       1. INITIAL CORE DATASETS (Official Baseline Schedule from Uploaded Sheet)
        ========================================================================== */
     const DEFAULT_DAYS_DATA = [
       {
         day: 1,
         date: "12/30 (二)",
-        summary: "抵達沖繩・國際通迎賓夜",
+        summary: "那霸市區單軌漫遊",
         spots: [
           {
             time: "16:45",
             name: "那霸機場 (OKA) 抵達",
             cat: "交通",
-            note: "星宇 JX870 準時降落，入境檢查約需 40–50 分鐘。領取行李後跟隨單軌電車 (Yui-Rail) 指標前往二樓連通橋。",
+            note: "星宇 JX870 抵達沖繩，入境提領行李後搭乘單軌電車 (Yui-Rail)。",
             mapUrl: "https://maps.google.com/?q=Naha+Airport+Okinawa"
           },
           {
-            time: "17:45 - 18:15",
-            name: "搭乘單軌電車前往飯店",
-            cat: "交通",
-            note: "購買單軌車票或刷西瓜卡/ICOCA。搭往「美榮橋站」下車，步行約 5 分鐘抵達飯店 Check-in 放置大件行李。",
-            mapUrl: "https://maps.google.com/?q=Miebashi+Station+Okinawa"
-          },
-          {
-            time: "18:30 - 19:30",
-            name: "Nest Hotel Naha Kumoji 辦理入住",
-            cat: "住宿",
-            note: "那霸久茂地巢酒店。房型新穎、生活機能極佳，步行 3 分鐘即有全家便利店。",
-            mapUrl: "https://maps.google.com/?q=Nest+Hotel+Naha+Kumoji"
-          },
-          {
-            time: "19:45 - 21:30",
-            name: "通堂拉麵 (小祿本店) 或 久茂地居酒屋",
+            time: "18:00 - 19:15",
+            name: "琉球新麵 通堂 小祿本店",
             cat: "美食",
-            note: "首選琉球新麵通堂拉麵（經典男人麵濃厚豚骨、女人麵清爽雞湯，桌上辣豆芽必嚐）。備案：久茂地和牛居酒屋。",
+            note: "小祿站旁經典名店！濃厚豚骨男人麵、清爽鹽味女人麵，桌上辣豆芽必吃。",
             mapUrl: "https://maps.google.com/?q=Ryukyu+Shinmen+Tondo+Oroku"
           },
           {
-            time: "21:30 - 23:00",
-            name: "國際通夜遊 & 唐吉訶德採買",
+            time: "19:30 - 20:30",
+            name: "壺川住宿 (3 Chome)",
+            cat: "住宿",
+            note: "抵達壺川 3 Chome 住宿辦理 Check-in，放置行李與稍作梳洗休息。",
+            mapUrl: "https://maps.google.com/?q=Tsubogawa+3+Chome+Naha"
+          },
+          {
+            time: "20:45 - 22:30",
+            name: "國際通屋台村",
+            cat: "美食",
+            note: "聚集 20 間下町居酒屋，串燒、在地泡盛與熱絡微醺氛圍。",
+            mapUrl: "https://maps.google.com/?q=Kokusai+Dori+Yataimura"
+          },
+          {
+            time: "22:45 - 23:45",
+            name: "MaxValu 牧志店 (24H 採買)",
             cat: "購物",
-            note: "漫步國際通夜市氣氛，逛唐吉訶德國際通店採購跨年暖暖包、礦泉水與宵夜零食。",
-            mapUrl: "https://maps.google.com/?q=Don+Quijote+Kokusai+Dori"
+            note: "24 小時營業大型超市，採買飲料、沖繩零食、水果及宵夜泡麵。",
+            mapUrl: "https://maps.google.com/?q=MaxValu+Makishi+Okinawa"
           }
         ]
       },
       {
         day: 2,
         date: "12/31 (三)",
-        summary: "取車北上・海景跨年夜",
+        summary: "新都心取車・初詣祈福・入住中部",
         spots: [
           {
-            time: "09:00 - 10:30",
-            name: "飯店早餐 & 整理行囊退房",
-            cat: "住宿",
-            note: "享受飯店精緻早餐，10:30 辦理退房，行李隨身攜帶步行前往單軌前往新都心營業所。",
-            mapUrl: "https://maps.google.com/?q=Nest+Hotel+Naha+Kumoji"
-          },
-          {
-            time: "11:00 - 11:40",
-            name: "OTS 租車 (DFS 新都心營業所) 取車",
+            time: "09:30 - 10:30",
+            name: "OTS 租車 DFS 營業所 (取車)",
             cat: "交通",
-            note: "攜帶台灣駕照正本、日文譯本與護照取車。檢查車體刮痕、熟悉右駕雨刷方向燈與 ETC 機器。",
+            note: "新都心 DFS 營業所取車，出示護照、台灣駕照正本與日文譯本，檢查車況與熟悉右駕。",
             mapUrl: "https://maps.google.com/?q=OTS+Rent-a-car+DFS+Naha"
           },
           {
-            time: "12:15 - 13:30",
-            name: "港川外人住宅街 & 輕食甜點",
-            cat: "美食",
-            note: "美軍眷舍改建文青聚落。必訪 oHacorté 水果塔或限量天然酵母麵包 Ippe coppe。",
-            mapUrl: "https://maps.google.com/?q=Minatogawa+Stateside+Town"
+            time: "10:45 - 12:00",
+            name: "Sports Depo 天久店",
+            cat: "購物",
+            note: "天久樂市超大運動用品旗艦店，各式運動鞋、戶外休閒服飾齊全好逛。",
+            mapUrl: "https://maps.google.com/?q=Sports+Depo+Ameku+Okinawa"
           },
           {
-            time: "14:15 - 16:30",
-            name: "美國村 (American Village) 漫遊",
+            time: "12:30 - 14:00",
+            name: "達摩寺 (西來院祈願不倒翁)",
             cat: "景點",
-            note: "沿著日落海灘漫步，美式復古商場充滿節慶跨年燈飾，極為好拍。",
-            mapUrl: "https://maps.google.com/?q=American+Village+Okinawa"
+            note: "首里隱藏版靈驗古剎！摸不倒翁祈福求開運、朱紅鳥居與畫眼達摩求好彩頭。",
+            mapUrl: "https://maps.google.com/?q=Sairaiin+Daruma+Temple+Shuri"
           },
           {
-            time: "17:30 - 19:00",
-            name: "恩納村海濱度假飯店 Check-in",
+            time: "15:00 - 16:30",
+            name: "泡瀨住宿 Check-in",
             cat: "住宿",
-            note: "入住恩納村海景度假村，面朝西海岸海景，放鬆身心準備迎接跨年倒數。",
-            mapUrl: "https://maps.google.com/?q=Onna+Village+Resort+Okinawa"
+            note: "開車抵達沖繩市泡瀨住宿地點辦理入住，稍作休整卸下隨身行囊。",
+            mapUrl: "https://maps.google.com/?q=Awase+Okinawa+City"
           },
           {
-            time: "19:30 - 21:30",
-            name: "琉球之牛 (恩納店) 燒肉大餐",
+            time: "17:00 - 19:00",
+            name: "壽司市場 泡瀨店",
             cat: "美食",
-            note: "享用頂級沖繩縣產黑毛和牛燒肉，肉質入口即化。跨年熱門時段請務必準時赴約。",
-            mapUrl: "https://maps.google.com/?q=Ryukyu-no-Ushi+Onna"
+            note: "當地人熱門迴轉壽司名店（グルメ回転寿司市場），海鮮漁獲新鮮、握壽司份量扎實！",
+            mapUrl: "https://maps.google.com/?q=Gurume+Kaiten+Sushi+Market+Awase"
           },
           {
-            time: "22:00 - 00:30",
-            name: "飯店海灘倒數煙火 & 跨年派對",
-            cat: "景點",
-            note: "恩納海灘跨年跨年倒數活動，伴隨海潮聲與午夜璀璨煙火，喜迎 2027 新年！",
-            mapUrl: "https://maps.google.com/?q=Moon+Beach+Okinawa"
+            time: "19:30 - 22:30",
+            name: "AEON 具志川店 (跨年夜宵)",
+            cat: "購物",
+            note: "中部大型永旺購物中心，採購跨年熱食、草莓、下酒小菜與年越しそば迎接新年！",
+            mapUrl: "https://maps.google.com/?q=AEON+Gushikawa+Okinawa"
           }
         ]
       },
       {
         day: 3,
         date: "01/01 (四)",
-        summary: "元旦迎新・美麗海與古宇利島",
+        summary: "元旦北部海景路線",
         spots: [
           {
             time: "08:30 - 09:30",
-            name: "元旦元氣晨光早餐",
+            name: "外帶 CAMEL 三明治果昔",
             cat: "美食",
-            note: "享受海景飯店晨光自助餐，補足體力準備出發前往沖繩北部。",
-            mapUrl: "https://maps.google.com/?q=Onna+Village+Resort+Okinawa"
+            note: "本部町人氣早午餐！份量十足的手作多料厚三明治佐特調新鮮果昔。",
+            mapUrl: "https://maps.google.com/?q=CAMEL+SANDWICH+SMOOTHIE+Motobu"
           },
           {
-            time: "10:30 - 13:30",
+            time: "09:45 - 11:15",
+            name: "瀨底島 (瀨底大橋・瀨底海灘)",
+            cat: "景點",
+            note: "開車跨越瀨底大橋，漫步於透明度極高的白沙海灘（瀨底藍），遠眺伊江島與壯麗珊瑚礁海景。",
+            mapUrl: "https://maps.google.com/?q=Sesoko+Beach+Okinawa"
+          },
+          {
+            time: "11:45 - 15:15",
             name: "沖繩美麗海水族館",
             cat: "景點",
-            note: "巨大黑潮之海展缸、鯨鯊悠游震撼視覺。戶外海豚劇場（免費參觀）下午 13:00 有精采表演。",
+            note: "巨大黑潮之海大水槽、鯨鯊悠游震撼視覺，戶外海豚劇場定時表演！",
             mapUrl: "https://maps.google.com/?q=Okinawa+Churaumi+Aquarium"
           },
           {
-            time: "14:15 - 15:30",
-            name: "古宇利大橋 & 蝦蝦飯 (Kouri Shrimp)",
-            cat: "美食",
-            note: "馳騁在跨海古宇利大橋上欣賞絕美漸層古宇利藍海景。島上必吃蒜香奶油夏威夷風味蝦蝦飯。",
-            mapUrl: "https://maps.google.com/?q=Kouri+Shrimp+Okinawa"
-          },
-          {
-            time: "15:45 - 17:00",
-            name: "古宇利心形岩 (Heart Rock)",
+            time: "16:00 - 17:30",
+            name: "古宇利大橋南端觀景台",
             cat: "景點",
-            note: "天然海蝕心形礁岩，是情侶與朋友拍照的元旦祈福聖地。",
-            mapUrl: "https://maps.google.com/?q=Heart+Rock+Kouri+Island"
-          },
-          {
-            time: "18:30 - 20:30",
-            name: "百年古家 大家 (阿古豬涮涮鍋)",
-            cat: "美食",
-            note: "百年月桃木造傳統琉球古民宅，庭園流水造景優雅，享用鮮甜阿古豬涮涮鍋佐沖繩麵。",
-            mapUrl: "https://maps.google.com/?q=Ufuya+Okinawa"
+            note: "登上展望台飽覽 2 公里直通神之島的漸層古宇利藍跨海絕景，走到下方清澈沙灘拍照。",
+            mapUrl: "https://maps.google.com/?q=Kouri+Bridge+South+View+Point"
           }
         ]
       },
       {
         day: 4,
         date: "01/02 (五)",
-        summary: "初詣祈福・購物血拚大豐收",
+        summary: "海中道路・古民家・PARCO CITY 採買日",
         spots: [
           {
-            time: "09:30 - 10:30",
-            name: "波上宮 (琉球第一神社) 初詣新年參拜",
+            time: "09:30 - 11:00",
+            name: "海中道路沙灘 (海洋驛站)",
             cat: "景點",
-            note: "沖繩總鎮守。元旦後初詣抽御籤、購買知名健康書包御守，並在崖邊眺望海景。",
-            mapUrl: "https://maps.google.com/?q=Naminoue+Shrine+Okinawa"
+            note: "行駛在貫穿金武灣的海上公路，停靠海の駅あやはし館觀景台，漫步兩側白沙灘吹海風。",
+            mapUrl: "https://maps.google.com/?q=Sea+Station+Ayahashikan+Kaichu-doro"
           },
           {
-            time: "11:00 - 15:00",
-            name: "PARCO CITY 浦添海景購物中心",
+            time: "11:30 - 13:30",
+            name: "濱比嘉島古民家食堂てぃーらぶい",
+            cat: "美食",
+            note: "神聖之島上的 90 年紅瓦古民家！品嚐道地島民家常料理套餐，時光寧靜悠閒。",
+            mapUrl: "https://maps.google.com/?q=T-love-e+Hamahigajima"
+          },
+          {
+            time: "14:30 - 18:30",
+            name: "浦添 PARCO CITY (大採買免稅戰利品)",
             cat: "購物",
-            note: "沖繩最大級海景商場！擁有無印良品旗艦店、UNIQLO、ABC-MART、敘敘苑燒肉、Sanrio 等約 250 家店鋪，逛街吹海風。",
+            note: "沖繩最大海景商城血拚（無印良品、UNIQLO、Sanrio等），買完先載回泡瀨民宿放戰利品！",
             mapUrl: "https://maps.google.com/?q=San-A+Urasoe+West+Coast+PARCO+CITY"
           },
           {
-            time: "15:45 - 17:30",
-            name: "首里城公園 (城廓重建巡禮)",
-            cat: "景點",
-            note: "世界文化遺產，參觀正殿木造重建工坊現場，俯瞰那霸市景與夕陽海平面。",
-            mapUrl: "https://maps.google.com/?q=Shurijo+Castle+Park"
-          },
-          {
-            time: "18:30 - 20:30",
-            name: "Steakhouse 88 辻本店 或 國際通屋台村",
+            time: "19:00 - 21:00",
+            name: "魚がしの銀次 泡瀨店 (海鮮生魚片居酒屋)",
             cat: "美食",
-            note: "沖繩美式牛排文化代表，肉汁鮮嫩份量十足；或可前往國際通屋台村感受微醺熱鬧氣氛。",
-            mapUrl: "https://maps.google.com/?q=Steakhouse+88+Tsuji+Honten"
+            note: "產地直送極上刺身盛合、炭火爐端燒，氣氛超熱鬧的高人氣海鮮居酒屋！",
+            mapUrl: "https://maps.google.com/?q=Sakanagashi-no-Ginji+Awase"
           }
         ]
       },
       {
         day: 5,
         date: "01/03 (六)",
-        summary: "南部秘境・還車登機返台",
+        summary: "南部海島秘境・還車返台",
         spots: [
           {
-            time: "09:00 - 10:00",
-            name: "悠閒享用早餐 & 辦理退房手續",
-            cat: "住宿",
-            note: "整理行李，將所有伴手禮塞入大行李箱，準備進行南部海景巡禮。",
-            mapUrl: "https://maps.google.com/?q=Nest+Hotel+Naha+Kumoji"
-          },
-          {
-            time: "10:30 - 11:45",
-            name: "奧武島 (現炸海鮮天婦羅)",
+            time: "10:30 - 12:00",
+            name: "奧武島海產物食堂 (鮮魚丼/現炸天婦羅)",
             cat: "美食",
-            note: "貓咪島嶼奧武島。中本鮮魚店或大城天婦羅店，新鮮現炸花枝、水雲天婦羅外酥內嫩每份僅約百餘日幣！",
-            mapUrl: "https://maps.google.com/?q=Nakamoto+Fresh+Fish+Store+Oujima"
+            note: "造訪貓咪島奧武島！享用漁港直送澎湃鮮魚丼定食與熱騰騰酥脆天婦羅。",
+            mapUrl: "https://maps.google.com/?q=Oujima+Kaisanbutsu+Shokudo"
           },
           {
-            time: "12:15 - 14:15",
-            name: "Gangala 之谷 (山之谷巨大鐘乳石與榕樹穴)",
+            time: "12:30 - 14:45",
+            name: "Gangala之谷 (鐘乳石洞穴咖啡)",
             cat: "景點",
-            note: "數十萬年石灰岩鐘乳石洞穴遺跡，巨大神木氣根漫天，洞穴咖啡廳 CAVE CAFE 極具神秘美感。",
+            note: "數十萬年石灰岩森林遺跡，巨大古老榕樹氣根垂落，在天然天然鐘乳石洞穴 CAVE CAFE 喝咖啡休息。",
             mapUrl: "https://maps.google.com/?q=Valley+of+Gangala"
           },
           {
-            time: "15:00 - 16:00",
-            name: "OTS DFS 營業所 加油並完成還車",
+            time: "15:30 - 16:00",
+            name: "OTS DFS 還車 (16:00 前還車)",
             cat: "交通",
-            note: "⚠️ 16:00 前必須還車！還車前請至鄰近加油站將油箱加滿，並出示加油收據發票供服務人員確認。",
+            note: "⚠️ 16:00 前必須完成還車！先至營業所周邊加油站將油箱加滿並保留收據交車。",
             mapUrl: "https://maps.google.com/?q=OTS+Rent-a-car+DFS+Naha"
           },
           {
-            time: "16:20 - 18:00",
-            name: "單軌抵達那霸機場 (國內線大採購)",
-            cat: "購物",
-            note: "搭乘單軌抵達機場。那霸機場國內線 2 樓是全沖繩最強伴手禮特區！紅芋塔、雪鹽脆餅、石垣牛仙貝應有盡有。",
-            mapUrl: "https://maps.google.com/?q=Naha+Airport+Domestic+Terminal"
-          },
-          {
-            time: "18:20 - 20:25",
-            name: "國際線報到 & 星宇 JX871 登機返台",
+            time: "17:00 - 20:25",
+            name: "那霸機場 (20:25 班機)",
             cat: "交通",
-            note: "前往國際線航廈辦理報到手續與安檢出境。班機 20:25 起飛，預計 21:15 抵達桃園國際機場，完美賦歸！",
+            note: "搭單軌前往機場，國內線二樓採買伴手禮，18:25 前前往國際線辦理星宇 JX871 登機手續返回台灣。",
             mapUrl: "https://maps.google.com/?q=Naha+Airport+International+Terminal"
           }
         ]
@@ -1189,23 +1201,31 @@
         let progressPct = totalSpots > 0 ? Math.round((doneSpots / totalSpots) * 100) : 0;
 
         let html = `
-          <!-- Header Banner (Cleaned up, no sub-pills) -->
-          <div class="bg-gradient-to-r from-sky-600 to-teal-600 text-white rounded-3xl p-4 shadow-sm space-y-2">
-            <div class="flex items-center justify-between">
+          <!-- Header Banner (Restored detailed rich styling) -->
+          <div class="bg-gradient-to-r from-sky-600 via-sky-600 to-teal-600 text-white rounded-3xl p-4 shadow-sm space-y-2.5">
+            <div class="flex items-start justify-between">
               <div>
-                <span class="text-xs font-semibold text-sky-200">DAY ${dayData.day}</span>
-                <h2 class="text-base font-black tracking-tight">${dayData.date}</h2>
+                <div class="flex items-center gap-2 mb-0.5">
+                  <span class="text-[11px] font-black uppercase tracking-wider bg-white/20 px-2 py-0.5 rounded-lg text-sky-100">DAY 0${dayData.day}</span>
+                  <span class="text-xs font-bold text-sky-100">${dayData.date}</span>
+                </div>
+                <h2 class="text-base font-black tracking-tight text-white drop-shadow-sm">${dayData.summary}</h2>
               </div>
-              <div class="text-right">
-                <span class="text-[11px] text-sky-100 block">打卡進度</span>
-                <span class="text-xs font-bold text-amber-300" id="progress-text-${dayIndex}">${doneSpots}/${totalSpots} 景點 (${progressPct}%)</span>
+              <div class="text-right shrink-0">
+                <span class="text-[10px] text-sky-100/90 block">打卡進度</span>
+                <span class="text-xs font-black text-amber-300" id="progress-text-${dayIndex}">${doneSpots} / ${totalSpots} 景點 (${progressPct}%)</span>
               </div>
             </div>
-            <p class="text-xs text-sky-100 font-medium">${dayData.summary}</p>
 
             <!-- Progress bar -->
-            <div class="w-full bg-white/20 h-1.5 rounded-full overflow-hidden">
-              <div id="progress-bar-${dayIndex}" class="bg-amber-400 h-full rounded-full transition-all duration-300" style="width: ${progressPct}%"></div>
+            <div class="space-y-1">
+              <div class="w-full bg-black/20 h-2 rounded-full overflow-hidden p-0.5 backdrop-blur-sm">
+                <div id="progress-bar-${dayIndex}" class="bg-gradient-to-r from-amber-300 to-amber-400 h-full rounded-full transition-all duration-300" style="width: ${progressPct}%"></div>
+              </div>
+              <div class="flex items-center justify-between text-[10px] text-sky-100/80 font-medium">
+                <span>行程完成度</span>
+                <span>${progressPct === 100 ? '🎉 全部完成' : `剩餘 ${totalSpots - doneSpots} 處`}</span>
+              </div>
             </div>
           </div>
 
@@ -1243,6 +1263,14 @@
                 <!-- Admin Action Tools or Navigation -->
                 <div class="flex items-center gap-1 shrink-0">
                   ${isAdminLoggedIn ? `
+                    <div class="flex items-center gap-0.5 mr-1 bg-slate-100 rounded-lg p-0.5">
+                      <button onclick="moveSpotOrder(${dayIndex}, ${spotIndex}, -1)" ${spotIndex === 0 ? 'disabled class="opacity-25 p-1"' : 'class="p-1 text-slate-600 hover:text-sky-600 active:scale-90"'} title="上移順序">
+                        <i data-lucide="arrow-up" class="w-3 h-3"></i>
+                      </button>
+                      <button onclick="moveSpotOrder(${dayIndex}, ${spotIndex}, 1)" ${spotIndex === dayData.spots.length - 1 ? 'disabled class="opacity-25 p-1"' : 'class="p-1 text-slate-600 hover:text-sky-600 active:scale-90"'} title="下移順序">
+                        <i data-lucide="arrow-down" class="w-3 h-3"></i>
+                      </button>
+                    </div>
                     <button onclick="openEditSpotModal(${dayIndex}, ${spotIndex})" class="p-1.5 text-slate-400 hover:text-amber-600 rounded-lg" title="編輯此行程">
                       <i data-lucide="pencil" class="w-3.5 h-3.5"></i>
                     </button>
@@ -1411,17 +1439,38 @@
       const insertBtn = document.getElementById("mode-insert-btn");
       const replaceBtn = document.getElementById("mode-replace-btn");
       const label = document.getElementById("schedule-spot-select-label");
+      const copyTimeBtn = document.getElementById("copy-selected-time-btn");
 
       if (mode === "insert") {
         insertBtn.className = "p-2.5 rounded-xl border-2 border-sky-600 bg-sky-50 text-sky-800 font-bold text-left transition flex items-center justify-between";
         replaceBtn.className = "p-2.5 rounded-xl border border-slate-200 bg-white text-slate-600 font-bold text-left transition flex items-center justify-between";
         label.innerText = "插入在哪個景點之前？";
+        if (copyTimeBtn) {
+          copyTimeBtn.classList.add("hidden");
+          copyTimeBtn.classList.remove("inline-flex");
+        }
       } else {
         replaceBtn.className = "p-2.5 rounded-xl border-2 border-amber-500 bg-amber-50 text-amber-800 font-bold text-left transition flex items-center justify-between";
         insertBtn.className = "p-2.5 rounded-xl border border-slate-200 bg-white text-slate-600 font-bold text-left transition flex items-center justify-between";
         label.innerText = "選擇要被替換刪除的現有景點：";
+        if (copyTimeBtn) {
+          copyTimeBtn.classList.remove("hidden");
+          copyTimeBtn.classList.add("inline-flex");
+        }
       }
       updateScheduleSpotOptions();
+      if (window.lucide) lucide.createIcons();
+    }
+
+    function applyCurrentSelectedSpotTime() {
+      const select = document.getElementById("schedule-spot-select");
+      if (!select) return;
+      const targetSpots = CURRENT_DAYS_DATA[scheduleTargetDay].spots;
+      const idx = parseInt(select.value);
+      if (idx >= 0 && targetSpots[idx]) {
+        document.getElementById("schedule-time-input").value = targetSpots[idx].time;
+        alertToast(`🕒 已成功帶入時段：${targetSpots[idx].time}`);
+      }
     }
 
     function updateScheduleSpotOptions() {
@@ -1434,12 +1483,19 @@
         let opts = targetSpots.map((s, idx) => `<option value="${idx}">第 ${idx + 1} 順位：插在【${s.name}】之前</option>`).join("");
         opts += `<option value="${targetSpots.length}">排在當天最後一個行程</option>`;
         select.innerHTML = opts;
+        select.onchange = null;
       } else {
         // Replace
         if (targetSpots.length === 0) {
           select.innerHTML = `<option value="-1">當天尚無行程可替換</option>`;
+          select.onchange = null;
         } else {
           select.innerHTML = targetSpots.map((s, idx) => `<option value="${idx}">替換掉【${s.time} ${s.name}】</option>`).join("");
+          select.onchange = () => {
+            // Optional: keep manual control or click button to apply
+          };
+          // Apply initial spot time automatically
+          applyCurrentSelectedSpotTime();
         }
       }
     }
@@ -1822,6 +1878,23 @@
       }
     }
 
+    /* Admin: Reorder Spots Up / Down */
+    function moveSpotOrder(dayIndex, spotIndex, direction) {
+      const spots = CURRENT_DAYS_DATA[dayIndex].spots;
+      const targetIndex = spotIndex + direction;
+
+      if (targetIndex < 0 || targetIndex >= spots.length) return;
+
+      // Swap spots
+      const temp = spots[spotIndex];
+      spots[spotIndex] = spots[targetIndex];
+      spots[targetIndex] = temp;
+
+      saveCurrentState(true);
+      renderDays();
+      alertToast("順序已更新並同步！");
+    }
+
     /* ==========================================================================
        11. FIREBASE REAL-TIME CLOUD SYNCHRONIZATION
        ========================================================================== */
@@ -1871,8 +1944,8 @@
 
       if (fbUnsubscribe) fbUnsubscribe();
 
-      // Listen on public sync room document
-      const docRef = doc(fbDb, "artifacts", "okinawa-new-year", "public", "data", currentRoomId);
+      // Listen on public sync room document (Must have an even number of path segments)
+      const docRef = doc(fbDb, "trip_schedules", currentRoomId);
       fbUnsubscribe = onSnapshot(docRef, (docSnap) => {
         if (docSnap.exists()) {
           const data = docSnap.data();
@@ -1900,7 +1973,7 @@
       if (fbDb && window.FirebaseModule) {
         try {
           const { doc, setDoc } = window.FirebaseModule;
-          const docRef = doc(fbDb, "artifacts", "okinawa-new-year", "public", "data", currentRoomId);
+          const docRef = doc(fbDb, "trip_schedules", currentRoomId);
           await setDoc(docRef, {
             schedule: CURRENT_DAYS_DATA,
             unscheduled: CURRENT_UNSCHEDULED_PLACES,
@@ -1941,6 +2014,9 @@
        12. EXCHANGE RATE CALCULATOR & UTILITIES
        ========================================================================== */
     async function fetchLiveExchangeRate(isManual = false) {
+      const refreshIcon = document.getElementById("calc-refresh-icon");
+      if (refreshIcon) refreshIcon.classList.add("animate-spin");
+
       try {
         const res = await fetch("https://open.er-api.com/v6/latest/JPY");
         const data = await res.json();
@@ -1948,19 +2024,32 @@
           currentExchangeRate = parseFloat(data.rates.TWD.toFixed(4));
           const disp = document.getElementById("rate-modal-current");
           if (disp) disp.innerText = currentExchangeRate;
+
+          const timeEl = document.getElementById("calc-rate-time");
+          if (timeEl) {
+            const now = new Date();
+            timeEl.innerText = `最後更新 ${now.getHours()}:${String(now.getMinutes()).padStart(2, '0')}`;
+          }
+
+          calculateExchange("JPY");
           if (isManual) alertToast(`即時匯率更新成功：${currentExchangeRate}`);
         }
       } catch (e) {
         console.warn("Live rate sync fallback:", e);
+      } finally {
+        if (refreshIcon) refreshIcon.classList.remove("animate-spin");
       }
     }
 
     function openRateModal() {
       document.getElementById("rate-modal-current").innerText = currentExchangeRate;
-      document.getElementById("calc-jpy-input").value = "2500";
+      if (!document.getElementById("calc-jpy-input").value) {
+        document.getElementById("calc-jpy-input").value = "2500";
+      }
       calculateExchange("JPY");
       document.getElementById("rate-modal").classList.remove("hidden");
       document.getElementById("rate-modal").classList.add("flex");
+      if (window.lucide) lucide.createIcons();
     }
 
     function closeRateModal() {
@@ -1968,16 +2057,32 @@
       document.getElementById("rate-modal").classList.remove("flex");
     }
 
+    function setQuickJpy(amt) {
+      document.getElementById("calc-jpy-input").value = amt;
+      calculateExchange("JPY");
+    }
+
     function calculateExchange(source) {
       const jpyEl = document.getElementById("calc-jpy-input");
       const twdEl = document.getElementById("calc-twd-input");
+      const cardTotalEl = document.getElementById("calc-card-total");
+
+      let jpyVal = 0;
+      let twdVal = 0;
 
       if (source === "JPY") {
-        const val = parseFloat(jpyEl.value) || 0;
-        twdEl.value = Math.round(val * currentExchangeRate);
+        jpyVal = parseFloat(jpyEl.value) || 0;
+        twdVal = Math.round(jpyVal * currentExchangeRate);
+        twdEl.value = twdVal > 0 ? twdVal : "";
       } else {
-        const val = parseFloat(twdEl.value) || 0;
-        jpyEl.value = Math.round(val / currentExchangeRate);
+        twdVal = parseFloat(twdEl.value) || 0;
+        jpyVal = Math.round(twdVal / currentExchangeRate);
+        jpyEl.value = jpyVal > 0 ? jpyVal : "";
+      }
+
+      if (cardTotalEl) {
+        const cardWithFee = Math.round(twdVal * 1.015);
+        cardTotalEl.innerText = `約 NT$ ${cardWithFee.toLocaleString()}`;
       }
     }
 
